@@ -1,5 +1,5 @@
-Site | Aliases | NSFW
----|
+Site | Aliases | NSFW | Notes
+---|---|---|---
 random | rand | ? | Chooses a random site you search with (respects site blacklist)
 e621.net | e6, e621 | Yes
 hypnohub.net | hh, hypo, hypohub | Yes  

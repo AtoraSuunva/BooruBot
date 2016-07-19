@@ -221,7 +221,7 @@ bot.on("message", function (message) {
     break;
 
     default: //give up
-      bot.sendMessage(message.channel, 'Sorry! But it\'s not supported (yet?)\nhttp://www.mignori.com/servers/ is a list of all available servers (maybe)');
+      bot.sendMessage(message.channel, 'Sorry! But it\'s not supported (yet?)\nhttps://github.com/AtlasTheBot/Booru-Discord/blob/master/sites.md is a list of all available servers');
   }
   bot.stopTyping(message.channel);
 });
