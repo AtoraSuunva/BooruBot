@@ -1005,7 +1005,6 @@ function blacklistRemoveUser(message) {
 
 */
 
-//TODO: Better help
 function help(message) {
   console.log('Help!');
 
@@ -1023,7 +1022,7 @@ function help(message) {
 
 function changeAvy() {
   console.log('New Avy');
-  var fileNames = fs.readdirSync('./avys'); //Images in a folder called "avys" in the same folder as the script
+  var fileNames = fs.readdirSync('./avys/'); //Images in a folder called "avys" in the same folder as the script
   //fileNames is an array of file names
 
   var fileChosen = fileNames[Math.floor(Math.random() * fileNames.length)]; //Randomly choose one
