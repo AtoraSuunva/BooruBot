@@ -18,6 +18,7 @@ var settings = require('./settings.json'); //Blacklists, Users...
 var defaultSettings = require('./defaultSettings.json'); //empty settings used to initialize
 var sites = require('./sites.json'); //aliases, nsfw? for sites
 var helpDocs = require('./helpDocs.json'); //help docs
+var avys = require('./avys/'); //'.' is relative to the working dir, not the script, so I need to do this because otherwise 'node Booru-Discord/booru.js' breaks (and so does forever)
 
 var getSiteRegex = /=([^\s]*)/;
 var getChannelRegex = /<#(\d+)>/;
@@ -1022,12 +1023,12 @@ function help(message) {
 
 function changeAvy() {
   console.log('New Avy');
-  var fileNames = fs.readdirSync('./avys/'); //Images in a folder called "avys" in the same folder as the script
+  var fileNames = fs.readdirSync(avys); //Images in a folder called "avys" in the same folder as the script
   //fileNames is an array of file names
 
   var fileChosen = fileNames[Math.floor(Math.random() * fileNames.length)]; //Randomly choose one
 
-  base64.encode('./avys/' + fileChosen, {"local": true}, function(err, response) {
+  base64.encode(avys + fileChosen, {"local": true}, function(err, response) {
     if (err) {
       console.log(err + '\nError while setting avy\n');
     } else {
