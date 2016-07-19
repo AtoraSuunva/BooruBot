@@ -1,0 +1,10 @@
+//Fill this in with your login/token plus your id if you want to run this bot yourself
+//rename this to auth.json
+//Aaaand delete these lines
+//Should work
+{
+	"email": "",
+	"password": "",
+	"token": "",
+	"ownerID": "74768773940256768"
+}

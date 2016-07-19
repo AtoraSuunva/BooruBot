@@ -83,3 +83,9 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
+
+# Other stuff
+auth.json
+*.json~*
+*.js~*
+*.md~*
