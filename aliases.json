@@ -1,0 +1,5 @@
+{
+  "r:s": "rating:safe",
+  "r:q": "rating:questionable",
+  "r:e": "rating:explicit"
+}
