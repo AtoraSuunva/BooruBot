@@ -6,6 +6,8 @@ Featuring a fully fleshed blacklist, with tag/channel/site blacklisting.
 
 [Invite!](http://discordapp.com/oauth2/authorize?client_id=204721731162734592&scope=bot&permissions=0)
 
+---
+
 ##Commands for all!
 
 **=[site] {tags}** => A random image from [site] with {tags} (tags optional)
@@ -22,7 +24,9 @@ Featuring a fully fleshed blacklist, with tag/channel/site blacklisting.
 
 **=help** => Get some help
 
-##Blacklist
+---
+
+##Mod stuff
 
 ####Certain users only!
 
@@ -37,6 +41,16 @@ Featuring a fully fleshed blacklist, with tag/channel/site blacklisting.
 (You can also use `=blacklist/whitelist all [sites/channels/sites/sfw/nsfw]`)
 
 **=add/remove [mention]** => Add/Remove user from blacklist
+
+**=settings** => View Settings
+
+**=setting [setting] {newValue}** => Edit setting
+
+*setting*: The setting to edit. What did you expect?
+
+*newValue*: The new value for the setting. Type is checked, so don't try to fuck it.
+
+---
 
 ###FAQ
 
@@ -65,6 +79,8 @@ Maybe, if there's enough demand. But my pi can only take so much.
 
 ####>js >not python
 I know I'm a pleb. But hey, it works, right?
+
+---
 
 ###License
 I really don't care. I'd just like if you gave me some credit if you used my code.

@@ -3,6 +3,7 @@
  //help
 
 //scratch the above comments, I rewrote it to work with the other stuff
+
 //aaaaaaaaaa
 // -RoadCrosser, one of the times he spammed 'a'
 
@@ -17,6 +18,7 @@ var Auth = require("./auth.json");
 var settings = require('./settings.json'); //Blacklists, Users...
 var defaultSettings = require('./defaultSettings.json'); //empty settings used to initialize
 var sites = require('./sites.json'); //aliases, nsfw? for sites
+var aliases = require('./aliases.json'); //aliases for tags
 var helpDocs = require('./helpDocs.json'); //help docs
 var path = require('path'); //'.' is relative to the working dir, not the script, so I need to do this because otherwise 'node Booru-Discord/booru.js' breaks (and so does forever)
 
@@ -39,8 +41,10 @@ bot.on("ready", function () {
 });
 
 bot.on("message", function (message) {
-  if (message.author.equals(bot.user) || message.author.bot) return; //Don't reply to itself or bots
-  if (message.content.indexOf('=') !== 0) return; //Don't bother replying if = isn't at the start
+  if (message.author.equals(bot.user) || message.author.bot || //Don't reply to itself or bots
+      message.content.indexOf('=') !== 0 || //Don't bother replying if = isn't at the start
+      !botCanSpeak(message) //Check if the bot can speak
+    ) {return;}
 
   if (message.channel.server !== undefined) {
     serverId = message.channel.server.id;
@@ -55,14 +59,39 @@ bot.on("message", function (message) {
   var siteToSearch = message.content.match(getSiteRegex)[1];
 
   //alias support for sites, so you don't need to type all of the url ('e6' => 'e621.net')
-  for(var site in sites){
-    if(sites[site].aliases.indexOf(siteToSearch) !== -1) {
-      console.log('Expanding ' + siteToSearch + ' to ' + site);
-      message.content = message.content.replace('=' + siteToSearch, '=' + site);
-      siteToSearch = site;
-    }
-  }
+  message.content = message.content.replace(siteToSearch, expandSite(siteToSearch));
+  siteToSearch = expandSite(siteToSearch);
+  console.log(message.content);
+  //alias support for tags because reasons
+  message.content = expandTags(message.content);
+  console.log(message.content);
 
+  /*jshint evil: true*/
+    if (message.content.indexOf('=eval') === 0) {
+      if (message.author.id !== Auth.ownerID) { //ain't nobody else runnin' eval on my watch
+          bot.sendMessage(message.channel, 'Nice try, but no.');
+          return;
+      }
+      var content = message.content.replace('=eval', '');
+      try {
+          var result = eval(content);
+          console.log(result);
+          bot.sendMessage(message.channel, '`' + result + '`');
+      } catch (err) {
+          console.log(err);
+          bot.sendMessage(message.channel, '`' + err + '`');
+      }
+      return;
+    }
+
+  //Block other commands (but allow people to edit the blacklist)
+  if (blacklistContainsChannel(message.channel.id) && !canEditBlacklist(message)) {
+    if (!settings[serverId].options.silentBlacklist) { //Should the bot warn if the channel's blacklisted
+      bot.sendMessage(message.channel, 'This channel\'s blacklisted! Sorry!');
+    }
+    console.log('Channel\'s blacklisted!');
+    return;
+  }
 
   if (message.content.indexOf('=blacklist') === 0) {
     if (canEditBlacklist(message) && message.content.substring('=blacklist '.length) !== '') { //only let certain users modify the blacklist
@@ -116,27 +145,17 @@ bot.on("message", function (message) {
     }
   }
 
-  /*jshint evil: true*/
-    if (message.content.indexOf('=eval') === 0) {
-      if (message.author.id !== Auth.ownerID) { //ain't nobody else runnin' eval on my watch
-          bot.sendMessage(message.channel, 'Nice try, but no.');
-          return;
-      }
-      var content = message.content.replace('=eval', '');
-      try {
-          var result = eval(content);
-          console.log(result);
-          bot.sendMessage(message.channel, '`' + result + '`');
-      } catch (err) {
-          console.log(err);
-          bot.sendMessage(message.channel, '`' + err + '`');
-      }
-      return;
-    }
+  if (message.content.indexOf('=setting') === 0 && canEditBlacklist(message)) {
+    settingsEdit(message);
+    return;
+  }
 
-  //Block other commands
+  //Block other commands (for everyone, managers included)
   if (blacklistContainsChannel(message.channel.id)) {
-    bot.sendMessage(message.channel, 'This channel\'s blacklisted! Sorry!');
+    if (!settings[serverId].options.silentBlacklist) { //Should the bot warn if the channel's blacklisted
+      bot.sendMessage(message.channel, 'This channel\'s blacklisted! Sorry!');
+    }
+    console.log('Channel\'s blacklisted!');
     return;
   }
 
@@ -1049,16 +1068,6 @@ function changeAvy() {
 
 */
 
-function saveSettings() {
-  fs.writeFile('./settings.json', JSON.stringify(settings, null, 4), function(err) {
-    if(err) {
-      console.log(err + '\nError while saving settings\n');
-    } else {
-      console.log('Settings saved');
-    }
-  });
-}
-
 function blacklistContainsChannel(channelId, returnIndex) {
   var containsChannel = false;
   var containsIndex = -1;
@@ -1087,17 +1096,25 @@ function blacklistFormatChannels() {
 
 //takes the content and expands it to the full url (if an alias exsists)
 function expandSite(content) {
-  var unexpandedSite = content;
-
-  //alias support for sites, so you don't need to type all of the url ('e6' => 'e621.net')
   for(var site in sites){
-    if(sites[site].aliases.indexOf(unexpandedSite) !== -1) {
-      console.log('Expanding ' + unexpandedSite + ' to ' + site);
-      unexpandedSite = site;
+    if(sites[site].aliases.indexOf(content) !== -1) {
+      console.log('Expanding ' + content + ' to ' + site);
+      content = site;
+      break;
     }
   }
+  return content;
+}
 
-  return unexpandedSite; //i wrote this while tried, ok?
+//alias support for tags
+function expandTags(content) {
+  for(var alias in aliases) {
+    if(content.indexOf(alias) !== -1) {
+      console.log('Expanding ' + alias + ' to ' + aliases[alias]);
+      content = content.replace(alias, aliases[alias]);
+    }
+  }
+  return content;
 }
 
 function randomSite() {
@@ -1145,6 +1162,60 @@ function userHasPermission(server, user, permisssion) {
   return hasRole;
 }
 
+function botCanSpeak(message) {
+  var canSpeak = message.channel.permissionsOf(bot.user).hasPermission('sendMessages'); //sadly not the longest line in this
+  return canSpeak;
+}
+
+function settingsEdit(message) {
+  console.log('Settings called');
+  var split = message.content.split(' ');
+  var setting; //declare setting
+  var messageToSend = '';
+  console.log(split);
+
+  if (split[1] === undefined) {
+    console.log('Show settings...');
+    messageToSend = '```\n';
+    for (setting in settings[serverId].options) {
+      messageToSend += setting + ': ' + settings[serverId].options[setting] + '\n';
+    }
+    messageToSend += '```';
+  } else if (split[2] === undefined) {
+    if (settings[serverId].options[split[1]] !== undefined) {
+      messageToSend = '`' + split[1] + '` is currently set to `' + settings[serverId].options[split[1]] + '`';
+    } else {
+      messageToSend = 'That\'s not a valid option!';
+    }
+  } else if (split[2] !== undefined) {
+
+    if (split[2] === 'true' || split[2] === 'false') {
+      split[2] = ((split[2] === 'true') ? true : false);
+      console.log('Converted to bool (' + split[2] + ')');
+    }
+
+    if (!isNaN(parseInt(split[2], 10))) {
+      split[2] = parseInt(split[2], 10);
+      console.log('Converted to number (' + split[2] + ')');
+    }
+
+    if (settings[serverId].options[split[1]] !== undefined) {
+      if (typeof settings[serverId].options[split[1]] === typeof split[2]) {
+        settings[serverId].options[split[1]] = split[2];
+        messageToSend = '`' + split[1] + '` is now set to `' + split[2] + '`';
+        saveSettings();
+      } else {
+        messageToSend = 'Hey! You need a ' + (typeof settings[serverId].options[split[1]]) + '!';
+      }
+    } else {
+      messageToSend = 'That\'s not a valid option!';
+    }
+  }
+
+  bot.sendMessage(message.channel, messageToSend);
+  return;
+}
+
 function createServerSettings(serverId) {
   if (settings[serverId] === undefined) {
     console.log('Server has no settings, creating settings for: ' + serverId);
@@ -1158,6 +1229,16 @@ function createServerSettings(serverId) {
       }
     });
   }
+}
+
+function saveSettings() {
+  fs.writeFile('./settings.json', JSON.stringify(settings, null, 2), function(err) {
+    if(err) {
+      console.log(err + '\nError while saving settings\n');
+    } else {
+      console.log('Settings saved');
+    }
+  });
 }
 /*
 

@@ -1,4 +1,7 @@
 {
+  "options": {
+    "silentBlacklist": false
+  },
   "users": [
     "74768773940256768"
   ],

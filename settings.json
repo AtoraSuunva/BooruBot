@@ -1,36 +1,45 @@
 {
-    "201834851962191872": {
-        "users": [
-            "74768773940256768"
-        ],
-        "blacklist": {
-            "tags": [
-                "gore",
-                "loli",
-                "mlp"
-            ],
-            "channels": [],
-            "sites": []
-        }
+  "201834851962191872": {
+    "options": {
+      "silentBlacklist": false
     },
-    "201880737043972107": {
-        "users": [
-            "74768773940256768"
-        ],
-        "blacklist": {
-            "tags": [],
-            "channels": [],
-            "sites": []
-        }
-    },
-    "dm74768773940256768": {
-        "users": [
-            "74768773940256768"
-        ],
-        "blacklist": {
-            "tags": [],
-            "channels": [],
-            "sites": []
-        }
+    "users": [
+      "74768773940256768"
+    ],
+    "blacklist": {
+      "tags": [
+        "gore",
+        "loli",
+        "mlp"
+      ],
+      "channels": [],
+      "sites": []
     }
+  },
+  "201880737043972107": {
+    "options": {
+      "silentBlacklist": false
+    },
+    "users": [
+      "74768773940256768"
+    ],
+    "blacklist": {
+      "tags": [],
+      "channels": [],
+      "sites": []
+    }
+  },
+  "dm74768773940256768": {
+    "options": {
+      "silentBlacklist": false
+    },
+    "users": [
+      "74768773940256768"
+    ],
+    "blacklist": {
+      "tags": [],
+      "channels": [],
+      "sites": []
+    }
+  }
 }
