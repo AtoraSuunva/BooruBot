@@ -28,7 +28,9 @@ Featuring a fully fleshed blacklist, with tag/channel/site blacklisting.
 
 ##Mod stuff
 
-####Certain users only!
+###Certain users only!
+
+**Users with the "Manage Server" or added to the userlist**
 
 **=blacklist/whitelist [tag/channel/site] [thing]** => Edit blacklist
 
@@ -40,7 +42,7 @@ Featuring a fully fleshed blacklist, with tag/channel/site blacklisting.
 
 (You can also use `=blacklist/whitelist all [sites/channels/sites/sfw/nsfw]`)
 
-**=add/remove [mention]** => Add/Remove user from blacklist
+**=add/remove [mention]** => Add/Remove user from userlist
 
 **=settings** => View Settings
 
