@@ -1,13 +1,19 @@
+//Dont' even try to read and understand this code. It's such an ungodly mess of require, async and pain
+
  //protip: look for " to see stolen code (It is mostly rewritten though, just the image fetching part is the same)
  //actually forget that, I've written/rewritten so much code it's not really a copy anymore
  //help
 
 //scratch the above comments, I rewrote it to work with the other stuff
 
+//scratch everything. this has expanded/changed so much there's no more stolen code lol
+
 //aaaaaaaaaa
 // -RoadCrosser, one of the times he spammed 'a'
 
 /*jshint esversion: 6*/ //I fucking love es6
+/*jshint loopfunc: true */ //shh no tears (Also it's not my fault I'm stuck using callbacks in a loop because node goes async all the way)
+
 var Discord = require("discord.js");
 var request = require("request");
 var fs = require('fs');
@@ -25,6 +31,7 @@ var path = require('path'); //'.' is relative to the working dir, not the script
 var getSiteRegex = /=([^\s]*)/;
 var getChannelRegex = /<#(\d+)>/;
 var serverId = ''; //global vars woo
+var avyChance = 0.05; //in %
 
 var bot = new Discord.Client({
   "autoReconnect": true
@@ -41,16 +48,16 @@ bot.on("ready", function () {
 });
 
 bot.on("message", function (message) {
-  if (message.author.equals(bot.user) || message.author.bot || //Don't reply to itself or bots
-      message.content.indexOf('=') !== 0 || //Don't bother replying if = isn't at the start
-      !botCanSpeak(message) //Check if the bot can speak
-    ) {return;}
-
   if (message.channel.server !== undefined) {
     serverId = message.channel.server.id;
   } else {
     serverId = 'dm' + message.author.id; //Settings for DMs (user specific)
   }
+
+  if (message.author.equals(bot.user) || message.author.bot || //Don't reply to itself or bots
+      message.content.indexOf('=') !== 0 || //Don't bother replying if = isn't at the start
+      !botCanSpeak(message) //Check if the bot can speak
+    ) {return;}
 
   createServerSettings(serverId); //Create settings if none exist (also DM settings)
 
@@ -61,7 +68,6 @@ bot.on("message", function (message) {
   //alias support for sites, so you don't need to type all of the url ('e6' => 'e621.net')
   message.content = message.content.replace(siteToSearch, expandSite(siteToSearch));
   siteToSearch = expandSite(siteToSearch);
-  console.log(message.content);
   //alias support for tags because reasons
   message.content = expandTags(message.content);
   console.log(message.content);
@@ -183,69 +189,48 @@ bot.on("message", function (message) {
   bot.startTyping(message.channel); //since the rest is image searching (and that takes quite a bit sometimes)
   //keeps people from thinking the bot died
 
-  if (siteToSearch === 'random' || siteToSearch === 'rand') {
+  beginSearch(message); //actually start searching
+
+  bot.stopTyping(message.channel);
+});
+
+
+function beginSearch(message) {
+  var siteToSearch = message.content.match(getSiteRegex)[1];
+  var messageToSend = false;
+
+  if (siteToSearch === 'random') {
     if (settings[serverId].blacklist.sites.length == Object.keys(sites).length) {
       bot.sendMessage(message.channel, 'All sites are blacklisted...');
       bot.stopTyping(message.channel);
       return;
     }
-    siteToSearch = randomSite();
-    message.content = message.content.replace('=random', '=rand').replace('=rand', '=' + siteToSearch);
-    console.log(message.content);
-    console.log('Random! ' + siteToSearch);
+
+    var index = randomSite(); //returns the index of a random, non-blacklisted site
+    var originalMessage = message.content;
+
+    randSearch(message, originalMessage, index, 0, function(result) {
+      if (result !== false) {
+        if (Math.random() < avyChance) changeAvy(); //hardcoded because reasons
+        bot.sendMessage(message.channel, result);
+        console.log('sentMessage');
+      } else {
+        bot.sendMessage(message.channel, 'No images found. On *any* website. Impressive.');
+      }
+    });
+
+  } else {
+    booruSearch(message, function(result) {
+      if (result !== false) {
+        if (Math.random() < avyChance) changeAvy(); //hardcoded because reasons
+        bot.sendMessage(message.channel, result);
+        console.log('sentMessage');
+      } else {
+        bot.sendMessage(message.channel, 'No images found. Try different tags ¯\\_(ツ)_/¯');
+      }
+    });
   }
-
-  switch (siteToSearch) {
-    case '': //if there's no site just give up
-      help(message);
-    break;
-
-    ///    /post/index.json
-
-    case 'e621.net': //e6
-    case 'hypnohub.net': //hh
-    case 'lolibooru.moe': //lb
-      searchPostsIndex(message);
-    break;
-
-    ///    /posts.json
-
-    case 'danbooru.donmai.us': //db
-      searchPostsJSON(message);
-    break;
-
-    ///    /post.json
-
-    case 'konachan.com': //kc
-    case 'konachan.net': //kn
-    case 'yande.re': //yd
-      searchPostJSON(message);
-    break;
-
-    ///    /index.php?page=dapi&s=post&q=index (xml)
-
-    case 'gelbooru.com': //gb
-    case 'rule34.xxx': //r34
-    case 'safebooru.org': //sb
-    case 'tbib.org': //tbib
-    case 'xbooru.com': //xb
-    case 'youhate.us': //yh
-      searchIndexPHP(message);
-    break;
-
-    ///     /api/danbooru/find_posts/index.xml
-
-    case 'dollbooru.org': //do
-    case 'rule34.paheal.net': //pa
-      searchDanbooruAPI(message);
-    break;
-
-    default: //give up
-      bot.sendMessage(message.channel, 'Sorry! But it\'s not supported (yet?)\nhttps://github.com/AtlasTheBot/Booru-Discord/blob/master/sites.md is a list of all available servers');
-  }
-  bot.stopTyping(message.channel);
-});
-
+}
 /*
 
 
@@ -258,8 +243,126 @@ bot.on("message", function (message) {
 
 */
 
-function searchPostsIndex(message) {
+function randSearch(message, originalMessage, index, sitesSearched, callback) {
+  if (sitesSearched > Object.keys(sites).length) {
+    callback(false);
+    return;
+  }
+
+  if (Object.keys(sites)[index] === undefined) index = 0;
+
+  siteToSearch = Object.keys(sites)[index];
+
+  if (settings[serverId].blacklist.sites.indexOf(siteToSearch) !== -1) {
+    index++;
+    sitesSearched++;
+    randSearch(message, originalMessage, index, sitesSearched, (result) => callback(result));
+    return;
+  }
+
+  message.content = originalMessage.replace('=random', '=' + siteToSearch);
+  console.log('Random! ' + siteToSearch);
+
+  booruSearch(message, function(result) {
+    if (result !== false && result !== undefined && result.indexOf('ERROR:') !== 0) {
+      callback(result);
+      console.log('rand callback');
+    } else {
+      index++; //increase index and continue
+      sitesSearched++;
+      randSearch(message, originalMessage, index, sitesSearched, (result) => callback(result));
+    }
+  });
+
+}
+
+function booruSearch(message, callback) {
+  console.log('Searching...');
+  var messageToSend = false;
+  var siteToSearch = message.content.match(getSiteRegex)[1];
+  console.log(siteToSearch);
+
+  switch (siteToSearch) {
+    case '': //if there's no site just give up
+      messageToSend = false;
+      help(message);
+    break;
+
+    ///    /post/index.json
+
+    case 'e621.net': //e6
+    case 'hypnohub.net': //hh
+    case 'lolibooru.moe': //lb
+      messageToSend = searchPostsIndex(message, function(result) {
+        if (result !== false && result !== undefined) messageToSend = result;
+        console.log('Got image? (Booru ) ' + messageToSend);
+        callback(messageToSend);
+        return;
+      });
+    break;
+
+    ///    /posts.json
+
+    case 'danbooru.donmai.us': //db
+      messageToSend = searchPostsJSON(message, function(result) {
+        if (result !== false && result !== undefined) messageToSend = result;
+        console.log('Got image? (Booru ) ' + messageToSend);
+        callback(messageToSend);
+        return;
+      });
+    break;
+
+    ///    /post.json
+
+    case 'konachan.com': //kc
+    case 'konachan.net': //kn
+    case 'yande.re': //yd
+      messageToSend = searchPostJSON(message, function(result) {
+        if (result !== false && result !== undefined) messageToSend = result;
+        console.log('Got image? (Booru ) ' + messageToSend);
+        callback(messageToSend);
+        return;
+      });
+    break;
+
+    ///    /index.php?page=dapi&s=post&q=index (xml)
+
+    case 'gelbooru.com': //gb
+    case 'rule34.xxx': //r34
+    case 'safebooru.org': //sb
+    case 'tbib.org': //tbib
+    case 'xbooru.com': //xb
+    case 'youhate.us': //yh
+      searchIndexPHP(message, function(result) {
+        if (result !== false && result !== undefined) messageToSend = result;
+        console.log('Got image? (Booru ) ' + messageToSend);
+        callback(messageToSend);
+        return;
+      });
+    break;
+
+    ///     /api/danbooru/find_posts/index.xml
+
+    case 'dollbooru.org': //do
+    case 'rule34.paheal.net': //pa
+      searchDanbooruAPI(message, function(result) {
+        if (result !== false && result !== undefined) messageToSend = result;
+        console.log('Got image? (Booru ) ' + messageToSend);
+        callback(messageToSend);
+        return;
+      });
+    break;
+
+    default: //give up
+      messageToSend = false;
+      callback(messageToSend);
+      return;
+  }
+}
+
+function searchPostsIndex (message, callback) {
   var tagsFormatted = formatTags(message);
+  var messageToSend = false;
   if (tagsFormatted === false) return;
 
   console.log('http://' +  message.content.match(getSiteRegex)[1] + '/post/index.json?tags=order:random+' + tagsFormatted);
@@ -276,17 +379,27 @@ function searchPostsIndex(message) {
       var images = JSON.parse(body);
       var index = 0;
 
-      getImagePostsIndex(index, images, message);
+      getImagePostsIndex(index, images, message, function(result) {
+        if (result !== false) messageToSend = result;
+        console.log('Got image? (Search) ' + messageToSend);
+        callback(messageToSend);
+        return;
+      });
 
     } else {
-      parseError(response, body, message);
+      parseError(response, body, message, function(result) {
+        if (result !== false) messageToSend = result;
+        console.log('fug got an error! ' + messageToSend);
+        callback(messageToSend);
+        return;
+      });
     }
   });
-  return;
 }
 
-function searchPostsJSON(message) {
+function searchPostsJSON  (message, callback) {
   var tagsFormatted = formatTags(message);
+  var messageToSend = false;
   if (tagsFormatted === false) return;
 
   var header = {
@@ -301,17 +414,27 @@ function searchPostsJSON(message) {
       var images = JSON.parse(body);
       var index = 0;
 
-      getImagePostsJSON(index, images, message);
+      getImagePostsJSON(index, images, message, function(result) {
+        if (result !== false) messageToSend = result;
+        console.log('Got image? (Search) ' + messageToSend);
+        callback(messageToSend);
+        return;
+      });
 
     } else {
-      parseError(response, body, message);
+      parseError(response, body, message, function(result) {
+        if (result !== false) messageToSend = result;
+        console.log('fug got an error! ' + messageToSend);
+        callback(messageToSend);
+        return;
+      });
     }
   });
-  return;
 }
 
-function searchPostJSON(message) {
+function searchPostJSON   (message, callback) {
   var tagsFormatted = formatTags(message);
+  var messageToSend = false;
   if (tagsFormatted === false) return;
 
   var header = {
@@ -326,16 +449,27 @@ function searchPostJSON(message) {
       var images = JSON.parse(body);
       var index = 0;
 
-      getImagePostJSON(index, images, message);
+      getImagePostJSON(index, images, message, function(result) {
+        if (result !== false) messageToSend = result;
+        console.log('Got image? (Search) ' + messageToSend);
+        callback(messageToSend);
+        return;
+      });
     } else {
-      parseError(response, body, message);
+      parseError(response, body, message, function(result) {
+        if (result !== false) messageToSend = result;
+        console.log('fug got an error! ' + messageToSend);
+        callback(messageToSend);
+        return;
+      });
     }
   });
-  return;
 }
 
-function searchIndexPHP(message) {
+function searchIndexPHP   (message, callback) {
+  console.log('IndexPHP...');
   var tagsFormatted = formatTags(message);
+  var messageToSend = false;
   if (tagsFormatted === false) return;
 
   var header = {
@@ -353,17 +487,27 @@ function searchIndexPHP(message) {
 
       var index = 0;
 
-      getImagesIndexPHP(index, images, message);
+      getImagesIndexPHP(index, images, message, function(result) {
+        if (result !== false) messageToSend = result;
+        console.log('Got image? (Search) ' + messageToSend);
+        callback(messageToSend);
+        return;
+      });
 
     } else {
-      parseError(response, body, message);
+      parseError(response, body, message, function(result) {
+        if (result !== false) messageToSend = result;
+        console.log('fug got an error! ' + messageToSend);
+        callback(messageToSend);
+        return;
+      });
     }
   });
-  return;
 }
 
-function searchDanbooruAPI(message) {
+function searchDanbooruAPI(message, callback) {
   var tagsFormatted = formatTags(message);
+  var messageToSend = false;
   if (tagsFormatted === false) return;
 
   var header = {
@@ -381,13 +525,22 @@ function searchDanbooruAPI(message) {
 
       var index = 0;
 
-      getImageDanbooruAPI(index, images, message);
+      getImageDanbooruAPI(index, images, message, function(result) {
+        if (result !== false) messageToSend = result;
+        console.log('Got image? (Search) ' + messageToSend);
+        callback(messageToSend);
+        return;
+      });
 
     } else {
-      parseError(response, body, message);
+      parseError(response, body, message, function(result) {
+        if (result !== false) messageToSend = result;
+        console.log('fug got an error! ' + messageToSend);
+        callback(messageToSend);
+        return;
+      });
     }
   });
-  return;
 }
 /*
 
@@ -401,8 +554,9 @@ function searchDanbooruAPI(message) {
 
 */
 
-function getImagePostsIndex(index, images, message) {
+function getImagePostsIndex (index, images, message, callback) {
   var timeToStop = false;
+  var messageToSend = false;
 
   if (typeof (images[index]) != "undefined") {
 
@@ -416,25 +570,29 @@ function getImagePostsIndex(index, images, message) {
 
     if (timeToStop) {
       index++;
-      getImagePostsIndex(index, images, message);
+      getImagePostsIndex(index, images, message, callback);
+      callback(messageToSend);
       return;
     }
 
     if (message.content.match(getSiteRegex)[1] === 'e621.net') {
-      bot.sendMessage(message.channel, images[index].file_url.toString() +
-        '\nhttp://' + message.content.match(getSiteRegex)[1] + '/post/show/' + images[index].id.toString());
+      //bot.sendMessage(message.channel, images[index].file_url.toString() +
+      //  '\nhttp://' + message.content.match(getSiteRegex)[1] + '/post/show/' + images[index].id.toString());
+      messageToSend = images[index].file_url.toString() + '\nhttp://' + message.content.match(getSiteRegex)[1] + '/post/show/' + images[index].id.toString();
     } else {
-      bot.sendMessage(message.channel, 'http://' + message.content.match(getSiteRegex)[1] + '/post/show/' + images[index].id.toString());
+      //bot.sendMessage(message.channel, 'http://' + message.content.match(getSiteRegex)[1] + '/post/show/' + images[index].id.toString());
+      messageToSend = 'http://' + message.content.match(getSiteRegex)[1] + '/post/show/' + images[index].id.toString();
     }
 
-  } else {
-    bot.sendMessage(message.channel, "No images found. Try different tags. ¯\\_(ツ)_/¯");
   }
+  console.log('Got image? (Images) ' + messageToSend);
+  callback(messageToSend);
   return;
 }
 
-function getImagePostsJSON(index, images, message) {
+function getImagePostsJSON  (index, images, message, callback) {
   var timeToStop = false;
+  var messageToSend = false;
 
   if (typeof (images[index]) != "undefined") {
 
@@ -448,23 +606,25 @@ function getImagePostsJSON(index, images, message) {
 
     if (timeToStop) {
       index++;
-      getImagePostsJSON(index, images, message);
+      getImagePostsJSON(index, images, message, callback);
+      console.log('Got image? (Images) ' + messageToSend);
+      callback(messageToSend);
       return;
     }
 
-    console.log('http://' + message.content.match(getSiteRegex)[1] + '/posts/' + images[index].id.toString());
-
       //danbooru embeds!
       //bot.sendMessage(message.channel, 'http://' + message.content.match(getSiteRegex)[1] + images[index].file_url.toString());
-      bot.sendMessage(message.channel, 'http://' + message.content.match(getSiteRegex)[1] + '/posts/' + images[index].id.toString());
-    } else {
-      bot.sendMessage(message.channel, "No images found. Try different tags. ¯\\_(ツ)_/¯");
+      //bot.sendMessage(message.channel, 'http://' + message.content.match(getSiteRegex)[1] + '/posts/' + images[index].id.toString());
+      messageToSend = 'http://' + message.content.match(getSiteRegex)[1] + '/posts/' + images[index].id.toString();
     }
+    console.log('Got image? (Images) ' + messageToSend);
+    callback(messageToSend);
     return;
 }
 
-function getImagePostJSON(index, images, message) {
+function getImagePostJSON   (index, images, message, callback) {
   var timeToStop = false;
+  var messageToSend = false;
 
   if (typeof (images[index]) != "undefined") {
 
@@ -478,29 +638,26 @@ function getImagePostJSON(index, images, message) {
 
     if (timeToStop) {
       index++;
-      getImagePostJSON(index, images, message);
+      getImagePostJSON(index, images, message, callback);
+      callback(messageToSend);
       return;
     }
 
-    console.log('http://' + message.content.match(getSiteRegex)[1] + '/post/show/' + images[index].id.toString());
-
-    bot.sendMessage(message.channel, 'http://' + message.content.match(getSiteRegex)[1] + '/post/show/' + images[index].id.toString());
-
-  } else {
-    bot.sendMessage(message.channel, "No images found. Try different tags. ¯\\_(ツ)_/¯");
+    //bot.sendMessage(message.channel, 'http://' + message.content.match(getSiteRegex)[1] + '/post/show/' + images[index].id.toString());
+    messageToSend = 'http://' + message.content.match(getSiteRegex)[1] + '/post/show/' + images[index].id.toString();
   }
-    return;
+  callback(messageToSend);
 }
 
-function getImagesIndexPHP(index, images, message) {
+function getImagesIndexPHP  (index, images, message, callback) {
   //images.posts.post[0].$;
   var timeToStop = false;
+  var messageToSend = false;
   var numResults;
 
   if (images.posts.post !== undefined) {
     if (images.posts.post[index] === undefined) { //lazy shitty fix ()
-      bot.sendMessage(message.channel, "No images found. Try different tags. ¯\\_(ツ)_/¯");
-      return;
+      return messageToSend;
     }
 
     if (images.posts.$.count < 100) {
@@ -521,35 +678,36 @@ function getImagesIndexPHP(index, images, message) {
 
     if (timeToStop) {
       index++;
-      getImagesIndexPHP(index, images, message);
+      getImagesIndexPHP(index, images, message, callback);
+      console.log('Got image? (Images) ' + messageToSend);
+      callback(messageToSend);
       return;
     }
 
-    console.log('http://' + message.content.match(getSiteRegex)[1] + '/index.php?page=post&s=view&id=' + images.posts.post[index].$.id.toString());
-
     if (message.content.match(getSiteRegex)[1] !== 'rule34.xxx') { //r34 you cuck
-      bot.sendMessage(message.channel, images.posts.post[index].$.file_url +
-        '\nhttp://' + message.content.match(getSiteRegex)[1] + '/index.php?page=post&s=view&id=' + images.posts.post[index].$.id.toString());
+      //bot.sendMessage(message.channel, images.posts.post[index].$.file_url +
+      //  '\nhttp://' + message.content.match(getSiteRegex)[1] + '/index.php?page=post&s=view&id=' + images.posts.post[index].$.id.toString());
+      messageToSend = images.posts.post[index].$.file_url + '\nhttp://' + message.content.match(getSiteRegex)[1] + '/index.php?page=post&s=view&id=' + images.posts.post[index].$.id.toString();
       } else {
-        bot.sendMessage(message.channel, 'http:' + images.posts.post[index].$.file_url +
-          '\nhttp://' + message.content.match(getSiteRegex)[1] + '/index.php?page=post&s=view&id=' + images.posts.post[index].$.id.toString());
+      //  bot.sendMessage(message.channel, 'http:' + images.posts.post[index].$.file_url +
+      //    '\nhttp://' + message.content.match(getSiteRegex)[1] + '/index.php?page=post&s=view&id=' + images.posts.post[index].$.id.toString());
+        messageToSend = 'http:' + images.posts.post[index].$.file_url + '\nhttp://' + message.content.match(getSiteRegex)[1] + '/index.php?page=post&s=view&id=' + images.posts.post[index].$.id.toString();
       }
-
-  } else {
-    bot.sendMessage(message.channel, "No images found. Try different tags. ¯\\_(ツ)_/¯");
   }
+  console.log('Got image? (Images) ' + messageToSend);
+  callback(messageToSend);
   return;
 }
 
-function getImageDanbooruAPI(index, images, message) {
+function getImageDanbooruAPI(index, images, message, callback) {
   //images.posts.post[0].$;
   var timeToStop = false;
+  var messageToSend = false;
   var numResults;
 
   if (images.posts.post !== undefined) {
     if (images.posts.post[index] === undefined) { //lazy shitty fix ()
-      bot.sendMessage(message.channel, "No images found. Try different tags. ¯\\_(ツ)_/¯");
-      return;
+      return false;
     }
 
     if (images.posts.$.count < 100) {
@@ -570,23 +728,25 @@ function getImageDanbooruAPI(index, images, message) {
 
     if (timeToStop) {
       index++;
-      getImagesIndexPHP(index, images, message);
+      getImageDanbooruAPI(index, images, message, callback);
+      callback(messageToSend);
       return;
     }
 
-    console.log('http://' + message.content.match(getSiteRegex)[1] + '/post/view/' + images.posts.post[index].$.id.toString());
-
     if (message.content.match(getSiteRegex)[1] === 'dollbooru.org') { //why can't you keep constant apis?
-      bot.sendMessage(message.channel, 'http://' + message.content.match(getSiteRegex)[1] + images.posts.post[index].$.file_url +
-        '\nhttp://' + message.content.match(getSiteRegex)[1] + '/post/view/' + images.posts.post[index].$.id.toString());
+        //bot.sendMessage(message.channel, 'http://' + message.content.match(getSiteRegex)[1] + images.posts.post[index].$.file_url +
+        //  '\nhttp://' + message.content.match(getSiteRegex)[1] + '/post/view/' + images.posts.post[index].$.id.toString());
+        messageToSend = 'http://' + message.content.match(getSiteRegex)[1] + images.posts.post[index].$.file_url +
+                      '\nhttp://' + message.content.match(getSiteRegex)[1] + '/post/view/' + images.posts.post[index].$.id.toString();
       } else {
-        bot.sendMessage(message.channel, images.posts.post[index].$.file_url +
-          '\nhttp://' + message.content.match(getSiteRegex)[1] + '/post/view/' + images.posts.post[index].$.id.toString());
+        //bot.sendMessage(message.channel, images.posts.post[index].$.file_url +
+        //  '\nhttp://' + message.content.match(getSiteRegex)[1] + '/post/view/' + images.posts.post[index].$.id.toString());
+        messageToSend = images.posts.post[index].$.file_url + '\nhttp://' + message.content.match(getSiteRegex)[1] + '/post/view/' + images.posts.post[index].$.id.toString();
       }
 
-  } else {
-    bot.sendMessage(message.channel, "No images found. Try different tags. ¯\\_(ツ)_/¯");
   }
+  console.log('Got image? (Images) ' + messageToSend);
+  callback(messageToSend);
   return;
 }
 /*
@@ -646,22 +806,22 @@ function containsBlacklistedTag(tags, message) { //checks if one of the tags is 
 
 */
 
-function parseError(response, body, message) {
+function parseError(response, body, message, callback) {
+  var messageToSend = false;
+
   if (response === undefined) {
-    bot.sendMessage(message.channel, '404! That site doesn\'t exist');
+    messageToSend = 'ERROR: 404! That site doesn\'t exist';
   } else {
     var errorMessage = JSON.parse(body);
 
     console.log(errorMessage);
     if (errorMessage.sucess === undefined && errorMessage.message === undefined) {
-      bot.sendMessage(message.channel, "Something is wrong with the API. Or it's my fault.");
-      bot.sendMessage(message.channel, '```\n' + error + '\n```');
+      messageToSend = "ERROR: Something is wrong with the API. Or it's my fault." + '\n```\n' + error + '\n```';
     } else {
-      bot.sendMessage(message.channel, "Whelp, I got an error.");
-      bot.sendMessage(message.channel, '```\n' + errorMessage.message + '\n```');
+      messageToSend = "ERROR: Whelp, I got an error." + '\n```\n' + errorMessage.message + '\n```';
     }
   }
-
+  callback(messageToSend);
   return;
 }
 
@@ -1118,11 +1278,11 @@ function expandTags(content) {
 }
 
 function randomSite() {
-  var siteToSearch = Object.keys(sites)[Math.floor(Math.random()*Object.keys(sites).length)]; //I stopped caring that you very much
-  if (settings[serverId].blacklist.sites.indexOf(siteToSearch) !== -1) {
-     siteToSearch = randomSite();
-  }
-  return siteToSearch;
+  var index = Math.floor(Math.random()*Object.keys(sites).length);
+  var siteToSearch = Object.keys(sites)[index]; //I stopped caring that you very much
+  if (settings[serverId].blacklist.sites.indexOf(siteToSearch) !== -1) index = randomSite();
+  console.log('Random Index: ' + index);
+  return index;
 }
 
 function canEditBlacklist(message) {
@@ -1163,6 +1323,7 @@ function userHasPermission(server, user, permisssion) {
 }
 
 function botCanSpeak(message) {
+  if (serverId.indexOf('dm') === 0) return true; //how can you mute someone in a DM?
   var canSpeak = message.channel.permissionsOf(bot.user).hasPermission('sendMessages'); //sadly not the longest line in this
   return canSpeak;
 }

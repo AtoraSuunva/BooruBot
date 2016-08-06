@@ -1,5 +1,6 @@
 {
   "r:s": "rating:safe",
   "r:q": "rating:questionable",
-  "r:e": "rating:explicit"
+  "r:e": "rating:explicit",
+  "=rand": "=random"
 }

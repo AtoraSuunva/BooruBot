@@ -21,10 +21,13 @@
       "silentBlacklist": false
     },
     "users": [
-      "74768773940256768"
+      "74768773940256768",
+      "155900016354000896"
     ],
     "blacklist": {
-      "tags": [],
+      "tags": [
+        "gore"
+      ],
       "channels": [],
       "sites": []
     }
