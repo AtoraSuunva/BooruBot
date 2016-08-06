@@ -86,6 +86,7 @@ $RECYCLE.BIN/
 
 # Other stuff
 auth.json
+settings.json
 *.json~*
 *.js~*
 *.md~*

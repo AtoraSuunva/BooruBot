@@ -1,6 +1,9 @@
 {
-  "r:s": "rating:safe",
-  "r:q": "rating:questionable",
-  "r:e": "rating:explicit",
-  "=rand": "=random"
+  "r:s" : "rating:safe",
+  "r:q" : "rating:questionable",
+  "r:e" : "rating:explicit",
+  “o:s” : “order:score”,
+  “o:fc”: “order:favcount”,
+  “t:”  : “type:”,
+  "=rand": "=random”
 }
