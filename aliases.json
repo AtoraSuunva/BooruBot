@@ -5,5 +5,6 @@
   "o:s" : "order:score",
   "o:fc": "order:favcount",
   "t:"  : "type:",
-  "=rand": "=random"
+  "=rand": "=random",
+  "=randomom": "=random"
 }

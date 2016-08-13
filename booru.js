@@ -145,7 +145,7 @@ bot.on("message", function (message) {
       blacklistRemoveUser(message);
       return;
     } else {
-      bot.sendMessage(message.channel, ':no_entry_sign:');
+      bot.sendMessage(message.channel, ':no_entry_sign: I won\'t let you');
       return;
     }
   }
@@ -184,8 +184,8 @@ bot.on("message", function (message) {
     bot.sendMessage(message.channel, ':no_entry_sign: As much as I\'d love to search that, that site\'s blacklisted here!');
     return;
   }
-
-  if(Object.keys(sites).indexOf(siteToSearch) === -1) return; //not a supported site, don't bother searching
+  
+  if(Object.keys(sites).indexOf(siteToSearch) === -1 && siteToSearch.indexOf('rand') === -1) return; //not a supported site, don't bother searching
   
   bot.startTyping(message.channel); //since the rest is image searching (and that takes quite a bit sometimes)
   //keeps people from thinking the bot died
@@ -217,19 +217,21 @@ function beginSearch(message) {
         console.log('sentMessage');
       } else {
         bot.sendMessage(message.channel, 'No images found. On *any* website. Impressive.');
+        return;
       }
     });
 
   } else {
     booruSearch(message, function(result) {
+      if (result === undefined) result = false;
       if (result !== false) {
         if (Math.random() < avyChance) changeAvy(); //hardcoded because reasons
         bot.sendMessage(message.channel, result);
         console.log('sentMessage');
+        return;
       } else {
-        if (result !== 'stop') {
-          bot.sendMessage(message.channel, 'No images found. Try different tags ¯\\_(ツ)_/¯');
-        }
+        bot.sendMessage(message.channel, 'No images found. Try different tags ¯\\_(ツ)_/¯');
+        return;
       }
     });
   }
@@ -357,8 +359,6 @@ function booruSearch(message, callback) {
     break;
 
     default: //give up
-      messageToSend = 'stop';
-      callback(messageToSend);
       return;
   }
 }
@@ -1095,7 +1095,11 @@ function whitelist(message) {
   }
 
   if (settings[serverId].blacklist[split[1] + 's'] === undefined) {
-    bot.sendMessage(message.channel, '`' + split[1] + '` ain\'t a valid category. Try harder. (tag, channel, site)');
+    if (split[1] !== undefined) {
+      bot.sendMessage(message.channel, '`' + split[1] + '` ain\'t a valid category. Try harder. (tag, channel, site)');
+    } else {
+      bot.sendMessage(message.channel, 'As much as I\'d love to list every possible tag, I can\'t.');
+    }
     return;
   } else {
     split[1] += 's'; //tag => tags
@@ -1125,7 +1129,7 @@ function whitelist(message) {
 
   saveSettings();
 
-  bot.sendMessage(message.channel, '`' + toRemove + '` removed from blacklist, now enjoy `' + toRemove + '`');
+  bot.sendMessage(message.channel, '`' + toRemove + '` removed from blacklist, now enjoy it');
 }
 
 function blacklistAddUser(message) {
