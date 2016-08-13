@@ -75,7 +75,6 @@ bot.on("message", function (message) {
   /*jshint evil: true*/
     if (message.content.indexOf('=eval') === 0) {
       if (message.author.id !== Auth.ownerID) { //ain't nobody else runnin' eval on my watch
-          bot.sendMessage(message.channel, 'Nice try, but no.');
           return;
       }
       var content = message.content.replace('=eval', '');
@@ -186,6 +185,8 @@ bot.on("message", function (message) {
     return;
   }
 
+  if(Object.keys(sites).indexOf(siteToSearch) === -1) return; //not a supported site, don't bother searching
+  
   bot.startTyping(message.channel); //since the rest is image searching (and that takes quite a bit sometimes)
   //keeps people from thinking the bot died
 
@@ -226,7 +227,9 @@ function beginSearch(message) {
         bot.sendMessage(message.channel, result);
         console.log('sentMessage');
       } else {
-        bot.sendMessage(message.channel, 'No images found. Try different tags ¯\\_(ツ)_/¯');
+        if (result !== 'stop') {
+          bot.sendMessage(message.channel, 'No images found. Try different tags ¯\\_(ツ)_/¯');
+        }
       }
     });
   }
@@ -354,7 +357,7 @@ function booruSearch(message, callback) {
     break;
 
     default: //give up
-      messageToSend = false;
+      messageToSend = 'stop';
       callback(messageToSend);
       return;
   }
@@ -1304,10 +1307,10 @@ function canEditBlacklist(message) {
   return canEdit;
 }
 
-function userHasPermission(server, user, permisssion) {
+function userHasPermission(serverId, user, permisssion) {
   if (serverId.indexOf('dm') === 0) return true; //DMs don't need no server manager!
 
-  var roles = server.detailsOfUser(user).roles; //Array of roles
+  var roles = bot.servers.get('id', serverId).detailsOfUser(user).roles; //Array of roles
 
   var hasRole = false;
 
