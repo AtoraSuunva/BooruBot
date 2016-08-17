@@ -14,7 +14,7 @@ Featuring a fully fleshed blacklist, with tag/channel/site blacklisting.
 
 *site*: Either full url `safebooru.org` or alias `sb` (see [sites](sites.md))
 
-*tags*: Tags separated with `,` (spaces are not allowed [use `_`])
+*tags*: Tags to search with. Either use comma (*tag 1*, *tag 2*) or space syntax (*tag_1* *tag_2*)
 
 **=blacklist** => View blacklist
 

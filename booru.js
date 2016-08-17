@@ -769,7 +769,7 @@ function formatTags(message) { //pulls the tags, verifies none is blacklisted, a
 function getTags(content) { //turns comma seperated tags into an array
   var tags;
   if (content.indexOf(',') !== -1) {
-    tags = content.replace(/(\s*,\s*)/g, ',').split(','); //.filter() ;^)
+    tags = content.replace(/(\s*,\s*)/g, ',').replace(' ', '_').split(','); //.filter() ;^)
     tags = tags.filter(function(e) {return e !== '';}); //clear empty values (be glad it's not a one-liner)
   } else {
     tags = content.split(' '); //.filter() ;^)
