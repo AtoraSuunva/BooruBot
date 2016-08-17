@@ -185,8 +185,12 @@ bot.on("message", function (message) {
     return;
   }
 
-  if(Object.keys(sites).indexOf(siteToSearch) === -1 && siteToSearch.indexOf('rand') === -1) return; //not a supported site, don't bother searching
-
+  if (Object.keys(sites).indexOf(siteToSearch) === -1 && siteToSearch.indexOf('rand') === -1) return; //not a supported site, don't bother searching
+  
+  if (message.content.indexOf('=rand') === 0) {
+    message.content = message.content.replace(message.content.split(' ')[0], '=random');
+  }
+  
   bot.startTyping(message.channel); //since the rest is image searching (and that takes quite a bit sometimes)
   //keeps people from thinking the bot died
 
@@ -958,6 +962,11 @@ function blacklist(message) {
   if (split[2] === undefined) { //see above, we default to blacklisting tags
     split[2] = split[1];
     split[1] = 'tags';
+  } else if(settings[serverId].blacklist[split[1] + 's'] !== undefined) {
+    split[1] += 's';
+  } else {
+    bot.sendMessage(message.channel, 'That\'s not a category');
+    return;
   }
 
   var category = split[1];
@@ -1086,8 +1095,13 @@ function whitelist(message) {
   }
 
   if (split[2] === undefined) { //see above, we default to whitelisting tags
-    split[2] = split[1];
-    split[1] = 'tags';
+      split[2] = split[1];
+      split[1] = 'tags';
+  } else if(settings[serverId].blacklist[split[1] + 's'] !== undefined) {
+      split[1] += 's';
+  } else {
+      bot.sendMessage(message.channel, 'That\'s not a category');
+      return;
   }
 
   var category = split[1];
