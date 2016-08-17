@@ -184,9 +184,9 @@ bot.on("message", function (message) {
     bot.sendMessage(message.channel, ':no_entry_sign: As much as I\'d love to search that, that site\'s blacklisted here!');
     return;
   }
-  
+
   if(Object.keys(sites).indexOf(siteToSearch) === -1 && siteToSearch.indexOf('rand') === -1) return; //not a supported site, don't bother searching
-  
+
   bot.startTyping(message.channel); //since the rest is image searching (and that takes quite a bit sometimes)
   //keeps people from thinking the bot died
 
@@ -610,8 +610,6 @@ function getImagePostsJSON  (index, images, message, callback) {
     if (timeToStop) {
       index++;
       getImagePostsJSON(index, images, message, callback);
-      console.log('Got image? (Images) ' + messageToSend);
-      callback(messageToSend);
       return;
     }
 
@@ -642,11 +640,9 @@ function getImagePostJSON   (index, images, message, callback) {
     if (timeToStop) {
       index++;
       getImagePostJSON(index, images, message, callback);
-      callback(messageToSend);
       return;
     }
 
-    //bot.sendMessage(message.channel, 'http://' + message.content.match(getSiteRegex)[1] + '/post/show/' + images[index].id.toString());
     messageToSend = 'http://' + message.content.match(getSiteRegex)[1] + '/post/show/' + images[index].id.toString();
   }
   callback(messageToSend);
@@ -682,20 +678,14 @@ function getImagesIndexPHP  (index, images, message, callback) {
     if (timeToStop) {
       index++;
       getImagesIndexPHP(index, images, message, callback);
-      console.log('Got image? (Images) ' + messageToSend);
-      callback(messageToSend);
       return;
     }
 
     if (message.content.match(getSiteRegex)[1] !== 'rule34.xxx') { //r34 you cuck
-      //bot.sendMessage(message.channel, images.posts.post[index].$.file_url +
-      //  '\nhttp://' + message.content.match(getSiteRegex)[1] + '/index.php?page=post&s=view&id=' + images.posts.post[index].$.id.toString());
       messageToSend = images.posts.post[index].$.file_url + '\nhttp://' + message.content.match(getSiteRegex)[1] + '/index.php?page=post&s=view&id=' + images.posts.post[index].$.id.toString();
-      } else {
-      //  bot.sendMessage(message.channel, 'http:' + images.posts.post[index].$.file_url +
-      //    '\nhttp://' + message.content.match(getSiteRegex)[1] + '/index.php?page=post&s=view&id=' + images.posts.post[index].$.id.toString());
-        messageToSend = 'http:' + images.posts.post[index].$.file_url + '\nhttp://' + message.content.match(getSiteRegex)[1] + '/index.php?page=post&s=view&id=' + images.posts.post[index].$.id.toString();
-      }
+    } else {
+      messageToSend = 'http:' + images.posts.post[index].$.file_url + '\nhttp://' + message.content.match(getSiteRegex)[1] + '/index.php?page=post&s=view&id=' + images.posts.post[index].$.id.toString();
+    }
   }
   console.log('Got image? (Images) ' + messageToSend);
   callback(messageToSend);
@@ -777,9 +767,15 @@ function formatTags(message) { //pulls the tags, verifies none is blacklisted, a
 }
 
 function getTags(content) { //turns comma seperated tags into an array
-  var tags = content.replace(/(\s*,\s*)/g, ',').split(','); //.filter() ;^)
-  tags = tags.filter(function(e) {return e !== '';}); //clear empty values (be glad it's not a one-liner)
-
+  var tags;
+  if (content.indexOf(',') !== -1) {
+    tags = content.replace(/(\s*,\s*)/g, ',').split(','); //.filter() ;^)
+    tags = tags.filter(function(e) {return e !== '';}); //clear empty values (be glad it's not a one-liner)
+  } else {
+    tags = content.split(' '); //.filter() ;^)
+    tags = tags.filter(function(e) {return e !== '';}); //clear empty values (be glad it's not a one-liner)
+  }
+  console.log('Tags: ' + tags);
   return tags;
 }
 
@@ -946,6 +942,7 @@ function blacklist(message) {
     if (chan !== null) {
       if (!blacklistContainsChannel(chan.id)) {
         settings[serverId].blacklist.channels.push({"id": chan.id, "name": chan.name});
+        saveSettings();
         bot.sendMessage(message.channel, '`#' + chan.name + '` added to blacklist. No searching for them!');
         return;
       } else {
@@ -956,13 +953,6 @@ function blacklist(message) {
       bot.sendMessage(message.channel, 'That\'s not a real channel! Try mentionning one.');
       return;
     }
-  }
-
-  if (settings[serverId].blacklist[split[1] + 's'] === undefined) {
-    bot.sendMessage(message.channel, '`' + split[1] + '` ain\'t a valid category. Try harder. (tag, channel, site)');
-    return;
-  } else {
-    split[1] += 's'; //tag => tags
   }
 
   if (split[2] === undefined) { //see above, we default to blacklisting tags
@@ -1082,6 +1072,7 @@ function whitelist(message) {
       if (blacklistContainsChannel(chan.id)) {
         index = blacklistContainsChannel(chan.id, true); //true makes it return the index of the match
         settings[serverId].blacklist.channels.splice(index, 1);
+        saveSettings();
         bot.sendMessage(message.channel, '`#' + chan.name + '` removed from blacklist. More work for me!');
         return;
       } else {
@@ -1092,17 +1083,6 @@ function whitelist(message) {
       bot.sendMessage(message.channel, 'That\'s not a real channel! Try mentionning one.');
       return;
     }
-  }
-
-  if (settings[serverId].blacklist[split[1] + 's'] === undefined) {
-    if (split[1] !== undefined) {
-      bot.sendMessage(message.channel, '`' + split[1] + '` ain\'t a valid category. Try harder. (tag, channel, site)');
-    } else {
-      bot.sendMessage(message.channel, 'As much as I\'d love to list every possible tag, I can\'t.');
-    }
-    return;
-  } else {
-    split[1] += 's'; //tag => tags
   }
 
   if (split[2] === undefined) { //see above, we default to whitelisting tags

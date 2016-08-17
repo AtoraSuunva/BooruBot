@@ -26,7 +26,9 @@
     ],
     "blacklist": {
       "tags": [
-        "gore"
+        "gore",
+        "mlp",
+        "my_little_pony"
       ],
       "channels": [],
       "sites": []
