@@ -2,12 +2,9 @@
 //rename this to auth.json
 //Aaaand delete these lines
 //Should work
-//logchannel is the channel you want the bot to log to
-//you can leave it empty
 {
 	"email": "",
 	"password": "",
 	"token": "",
-	"ownerID": "74768773940256768",
-	"logChannel": ""
+	"ownerID": "74768773940256768"
 }
