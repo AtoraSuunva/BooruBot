@@ -42,13 +42,13 @@ bot.userAgent.url = "https://github.com/AtlasTheBot/Booru-Discord";
 var inviteLink = 'http://discordapp.com/oauth2/authorize?client_id=204721731162734592&scope=bot&permissions=0';
 
 bot.on("ready", () => {
-  botLog("===\nTime for porn!\n===");
+  console.log("===\nTime for porn!\n===");
   bot.setPlayingGame('=help');
   changeAvy(); //random avy
 });
 
 bot.on('disconnect', () => {
-  botLog('Disconnected... time to kms');
+  console.log('Disconnected... time to kms');
   process.exit(1);
 });
 
@@ -66,7 +66,7 @@ bot.on("message", (message) => {
 
   createServerSettings(serverId); //Create settings if none exist (also DM settings)
 
-  botLog("Treating " + message.content + " from " + message.author + " as command!");
+  console.log("Treating " + message.content + " from " + message.author + " as command!");
 
   var siteToSearch = message.content.match(getSiteRegex)[1];
 
@@ -75,7 +75,7 @@ bot.on("message", (message) => {
   siteToSearch = expandSite(siteToSearch);
   //alias support for tags because reasons
   message.content = expandTags(message.content);
-  botLog(message.content);
+  console.log(message.content);
 
   /*jshint evil: true*/
     if (message.content.indexOf('=eval') === 0) {
@@ -85,10 +85,10 @@ bot.on("message", (message) => {
       var content = message.content.replace('=eval', '');
       try {
           var result = eval(content);
-          botLog(result);
+          console.log(result);
           bot.sendMessage(message.channel, '`' + result + '`');
       } catch (err) {
-          botLog(err);
+          console.log(err);
           bot.sendMessage(message.channel, '`' + err + '`');
       }
       return;
@@ -99,7 +99,7 @@ bot.on("message", (message) => {
     if (!settings[serverId].options.silentBlacklist) { //Should the bot warn if the channel's blacklisted
       bot.sendMessage(message.channel, 'This channel\'s blacklisted! Sorry!');
     }
-    botLog('Channel\'s blacklisted!');
+    console.log('Channel\'s blacklisted!');
     return;
   }
 
@@ -165,7 +165,7 @@ bot.on("message", (message) => {
     if (!settings[serverId].options.silentBlacklist) { //Should the bot warn if the channel's blacklisted
       bot.sendMessage(message.channel, 'This channel\'s blacklisted! Sorry!');
     }
-    botLog('Channel\'s blacklisted!');
+    console.log('Channel\'s blacklisted!');
     return;
   }
 
@@ -223,7 +223,7 @@ function beginSearch(message) {
       if (result !== false) {
         if (Math.random() < avyChance) changeAvy(); //hardcoded because reasons
         bot.sendMessage(message.channel, result);
-        botLog('sentMessage');
+        console.log('sentMessage');
       } else {
         bot.sendMessage(message.channel, 'No images found. On *any* website. Impressive.');
         return;
@@ -236,7 +236,7 @@ function beginSearch(message) {
       if (result !== false) {
         if (Math.random() < avyChance) changeAvy(); //hardcoded because reasons
         bot.sendMessage(message.channel, result);
-        botLog('sentMessage');
+        console.log('sentMessage');
         return;
       } else {
         bot.sendMessage(message.channel, 'No images found. Try different tags ¯\\_(ツ)_/¯');
@@ -275,12 +275,12 @@ function randSearch(message, originalMessage, index, sitesSearched, callback) {
   }
 
   message.content = originalMessage.replace('=random', '=' + siteToSearch);
-  botLog('Random! ' + siteToSearch);
+  console.log('Random! ' + siteToSearch);
 
   booruSearch(message, function(result) {
     if (result !== false && result !== undefined && result.indexOf('ERROR:') !== 0) {
       callback(result);
-      botLog('rand callback');
+      console.log('rand callback');
     } else {
       index++; //increase index and continue
       sitesSearched++;
@@ -291,10 +291,10 @@ function randSearch(message, originalMessage, index, sitesSearched, callback) {
 }
 
 function booruSearch(message, callback) {
-  botLog('Searching...');
+  console.log('Searching...');
   var messageToSend = false;
   var siteToSearch = message.content.match(getSiteRegex)[1];
-  botLog(siteToSearch);
+  console.log(siteToSearch);
 
   switch (siteToSearch) {
     case '': //if there's no site just give up
@@ -309,7 +309,7 @@ function booruSearch(message, callback) {
     case 'lolibooru.moe': //lb
       messageToSend = searchPostsIndex(message, function(result) {
         if (result !== false && result !== undefined) messageToSend = result;
-        botLog('Got image? (Booru ) ' + messageToSend);
+        console.log('Got image? (Booru ) ' + messageToSend);
         callback(messageToSend);
         return;
       });
@@ -320,7 +320,7 @@ function booruSearch(message, callback) {
     case 'danbooru.donmai.us': //db
       messageToSend = searchPostsJSON(message, function(result) {
         if (result !== false && result !== undefined) messageToSend = result;
-        botLog('Got image? (Booru ) ' + messageToSend);
+        console.log('Got image? (Booru ) ' + messageToSend);
         callback(messageToSend);
         return;
       });
@@ -333,7 +333,7 @@ function booruSearch(message, callback) {
     case 'yande.re': //yd
       messageToSend = searchPostJSON(message, function(result) {
         if (result !== false && result !== undefined) messageToSend = result;
-        botLog('Got image? (Booru ) ' + messageToSend);
+        console.log('Got image? (Booru ) ' + messageToSend);
         callback(messageToSend);
         return;
       });
@@ -349,7 +349,7 @@ function booruSearch(message, callback) {
     case 'youhate.us': //yh
       searchIndexPHP(message, function(result) {
         if (result !== false && result !== undefined) messageToSend = result;
-        botLog('Got image? (Booru ) ' + messageToSend);
+        console.log('Got image? (Booru ) ' + messageToSend);
         callback(messageToSend);
         return;
       });
@@ -361,7 +361,7 @@ function booruSearch(message, callback) {
     case 'rule34.paheal.net': //pa
       searchDanbooruAPI(message, function(result) {
         if (result !== false && result !== undefined) messageToSend = result;
-        botLog('Got image? (Booru ) ' + messageToSend);
+        console.log('Got image? (Booru ) ' + messageToSend);
         callback(messageToSend);
         return;
       });
@@ -377,7 +377,7 @@ function searchPostsIndex (message, callback) {
   var messageToSend = false;
   if (tagsFormatted === false) return;
 
-  botLog('http://' +  message.content.match(getSiteRegex)[1] + '/post/index.json?tags=order:random+' + tagsFormatted);
+  console.log('http://' +  message.content.match(getSiteRegex)[1] + '/post/index.json?tags=order:random+' + tagsFormatted);
 
   var header = {
     url: 'http://' +  message.content.match(getSiteRegex)[1] + '/post/index.json?tags=order:random+' + tagsFormatted,
@@ -393,7 +393,7 @@ function searchPostsIndex (message, callback) {
 
       getImagePostsIndex(index, images, message, function(result) {
         if (result !== false) messageToSend = result;
-        botLog('Got image? (Search) ' + messageToSend);
+        console.log('Got image? (Search) ' + messageToSend);
         callback(messageToSend);
         return;
       });
@@ -401,7 +401,7 @@ function searchPostsIndex (message, callback) {
     } else {
       parseError(response, body, message, function(result) {
         if (result !== false) messageToSend = result;
-        botLog('fug got an error! ' + messageToSend);
+        console.log('fug got an error! ' + messageToSend);
         callback(messageToSend);
         return;
       });
@@ -428,7 +428,7 @@ function searchPostsJSON  (message, callback) {
 
       getImagePostsJSON(index, images, message, function(result) {
         if (result !== false) messageToSend = result;
-        botLog('Got image? (Search) ' + messageToSend);
+        console.log('Got image? (Search) ' + messageToSend);
         callback(messageToSend);
         return;
       });
@@ -436,7 +436,7 @@ function searchPostsJSON  (message, callback) {
     } else {
       parseError(response, body, message, function(result) {
         if (result !== false) messageToSend = result;
-        botLog('fug got an error! ' + messageToSend);
+        console.log('fug got an error! ' + messageToSend);
         callback(messageToSend);
         return;
       });
@@ -463,14 +463,14 @@ function searchPostJSON   (message, callback) {
 
       getImagePostJSON(index, images, message, function(result) {
         if (result !== false) messageToSend = result;
-        botLog('Got image? (Search) ' + messageToSend);
+        console.log('Got image? (Search) ' + messageToSend);
         callback(messageToSend);
         return;
       });
     } else {
       parseError(response, body, message, function(result) {
         if (result !== false) messageToSend = result;
-        botLog('fug got an error! ' + messageToSend);
+        console.log('fug got an error! ' + messageToSend);
         callback(messageToSend);
         return;
       });
@@ -479,7 +479,7 @@ function searchPostJSON   (message, callback) {
 }
 
 function searchIndexPHP   (message, callback) {
-  botLog('IndexPHP...');
+  console.log('IndexPHP...');
   var tagsFormatted = formatTags(message);
   var messageToSend = false;
   if (tagsFormatted === false) return;
@@ -501,7 +501,7 @@ function searchIndexPHP   (message, callback) {
 
       getImagesIndexPHP(index, images, message, function(result) {
         if (result !== false) messageToSend = result;
-        botLog('Got image? (Search) ' + messageToSend);
+        console.log('Got image? (Search) ' + messageToSend);
         callback(messageToSend);
         return;
       });
@@ -509,7 +509,7 @@ function searchIndexPHP   (message, callback) {
     } else {
       parseError(response, body, message, function(result) {
         if (result !== false) messageToSend = result;
-        botLog('fug got an error! ' + messageToSend);
+        console.log('fug got an error! ' + messageToSend);
         callback(messageToSend);
         return;
       });
@@ -539,7 +539,7 @@ function searchDanbooruAPI(message, callback) {
 
       getImageDanbooruAPI(index, images, message, function(result) {
         if (result !== false) messageToSend = result;
-        botLog('Got image? (Search) ' + messageToSend);
+        console.log('Got image? (Search) ' + messageToSend);
         callback(messageToSend);
         return;
       });
@@ -547,7 +547,7 @@ function searchDanbooruAPI(message, callback) {
     } else {
       parseError(response, body, message, function(result) {
         if (result !== false) messageToSend = result;
-        botLog('fug got an error! ' + messageToSend);
+        console.log('fug got an error! ' + messageToSend);
         callback(messageToSend);
         return;
       });
@@ -574,7 +574,7 @@ function getImagePostsIndex (index, images, message, callback) {
 
     settings[serverId].blacklist.tags.forEach(function(element) {
       if (images[index].tags.indexOf(element) !== -1) {
-        botLog('Image found has blacklisted tag: `' + element + '`');
+        console.log('Image found has blacklisted tag: `' + element + '`');
         timeToStop = true;
         return;
       }
@@ -597,7 +597,7 @@ function getImagePostsIndex (index, images, message, callback) {
     }
 
   }
-  botLog('Got image? (Images) ' + messageToSend);
+  console.log('Got image? (Images) ' + messageToSend);
   callback(messageToSend);
   return;
 }
@@ -610,7 +610,7 @@ function getImagePostsJSON  (index, images, message, callback) {
 
     settings[serverId].blacklist.tags.forEach(function(element) {
       if (images[index].tag_string.indexOf(element) !== -1) {
-        botLog('Image found has blacklisted tag: `' + element + '`');
+        console.log('Image found has blacklisted tag: `' + element + '`');
         timeToStop = true;
         return;
       }
@@ -627,7 +627,7 @@ function getImagePostsJSON  (index, images, message, callback) {
       //bot.sendMessage(message.channel, 'http://' + message.content.match(getSiteRegex)[1] + '/posts/' + images[index].id.toString());
       messageToSend = 'http://' + message.content.match(getSiteRegex)[1] + '/posts/' + images[index].id.toString();
     }
-    botLog('Got image? (Images) ' + messageToSend);
+    console.log('Got image? (Images) ' + messageToSend);
     callback(messageToSend);
     return;
 }
@@ -640,7 +640,7 @@ function getImagePostJSON   (index, images, message, callback) {
 
     settings[serverId].blacklist.tags.forEach(function(element) {
       if (images[index].tags.indexOf(element) !== -1) {
-        botLog('Image found has blacklisted tag: `' + element + '`');
+        console.log('Image found has blacklisted tag: `' + element + '`');
         timeToStop = true;
         return;
       }
@@ -678,7 +678,7 @@ function getImagesIndexPHP  (index, images, message, callback) {
 
     settings[serverId].blacklist.tags.forEach(function(element) {
       if (images.posts.post[index].$.tags.indexOf(element) !== -1) {
-        botLog('Image found has blacklisted tag: `' + element + '`');
+        console.log('Image found has blacklisted tag: `' + element + '`');
         timeToStop = true;
         return;
       }
@@ -696,7 +696,7 @@ function getImagesIndexPHP  (index, images, message, callback) {
       messageToSend = 'http:' + images.posts.post[index].$.file_url + '\nhttp://' + message.content.match(getSiteRegex)[1] + '/index.php?page=post&s=view&id=' + images.posts.post[index].$.id.toString();
     }
   }
-  botLog('Got image? (Images) ' + messageToSend);
+  console.log('Got image? (Images) ' + messageToSend);
   callback(messageToSend);
   return;
 }
@@ -722,7 +722,7 @@ function getImageDanbooruAPI(index, images, message, callback) {
 
     settings[serverId].blacklist.tags.forEach(function(element) {
       if (images.posts.post[index].$.tags.indexOf(element) !== -1) {
-        botLog('Image found has blacklisted tag: `' + element + '`');
+        console.log('Image found has blacklisted tag: `' + element + '`');
         timeToStop = true;
         return;
       }
@@ -747,7 +747,7 @@ function getImageDanbooruAPI(index, images, message, callback) {
       }
 
   }
-  botLog('Got image? (Images) ' + messageToSend);
+  console.log('Got image? (Images) ' + messageToSend);
   callback(messageToSend);
   return;
 }
@@ -784,7 +784,7 @@ function getTags(content) { //turns comma seperated tags into an array
     tags = content.split(' '); //.filter() ;^)
     tags = tags.filter(function(e) {return e !== '';}); //clear empty values (be glad it's not a one-liner)
   }
-  botLog('Tags: ' + tags);
+  console.log('Tags: ' + tags);
   return tags;
 }
 
@@ -822,7 +822,7 @@ function parseError(response, body, message, callback) {
   } else {
     var errorMessage = JSON.parse(body);
 
-    botLog(errorMessage);
+    console.log(errorMessage);
     if (errorMessage.sucess === undefined && errorMessage.message === undefined) {
       messageToSend = "ERROR: Something is wrong with the API. Or it's my fault." + '\n```\n' + error + '\n```';
     } else {
@@ -849,7 +849,7 @@ function parseError(response, body, message, callback) {
 //But I already wrote this and can't be bothered to rewrite something new that might break
 //P.S. this is a relic of when the bot only supported e621.net. good times
 function blacklist(message) {
-  botLog('blacklist');
+  console.log('blacklist');
 
   var split = message.content.split(' ');
 
@@ -997,7 +997,7 @@ function blacklist(message) {
 }
 
 function whitelist(message) {
-  botLog('Whitelist');
+  console.log('Whitelist');
 
   var split = message.content.split(' ');
   var index = 0; //used to splice
@@ -1132,7 +1132,7 @@ function whitelist(message) {
 }
 
 function blacklistAddUser(message) {
-  botLog('AddUser');
+  console.log('AddUser');
 
   var toAdd = message.mentions;
 
@@ -1156,7 +1156,7 @@ function blacklistAddUser(message) {
 }
 
 function blacklistRemoveUser(message) {
-  botLog('RemoveUser');
+  console.log('RemoveUser');
 
   var toRemove = message.mentions;
 
@@ -1192,7 +1192,7 @@ function blacklistRemoveUser(message) {
 */
 
 function help(message) {
-  botLog('Help!');
+  console.log('Help!');
 
   var helpText = 'You should never see this';
   var param = message.content.substring('=help '.length);
@@ -1207,7 +1207,7 @@ function help(message) {
 }
 
 function changeAvy() {
-  botLog('New Avy');
+  console.log('New Avy');
   var fileNames = fs.readdirSync(path.join(__dirname, 'avys')); //Images in a folder called "avys" in the same folder as the script
   //fileNames is an array of file names
 
@@ -1215,7 +1215,7 @@ function changeAvy() {
 
   base64.encode(path.join(__dirname, 'avys', fileChosen), {"local": true}, function(err, response) {
     if (err) {
-      botLog(err + '\nError while setting avy\n');
+      console.log(err + '\nError while setting avy\n');
     } else {
       bot.setAvatar(response); //Set avy
     }
@@ -1264,7 +1264,7 @@ function blacklistFormatChannels() {
 function expandSite(content) {
   for(var site in sites){
     if(sites[site].aliases.indexOf(content) !== -1) {
-      botLog('Expanding ' + content + ' to ' + site);
+      console.log('Expanding ' + content + ' to ' + site);
       content = site;
       break;
     }
@@ -1276,7 +1276,7 @@ function expandSite(content) {
 function expandTags(content) {
   for(var alias in aliases) {
     if(content.indexOf(alias) !== -1) {
-      botLog('Expanding ' + alias + ' to ' + aliases[alias]);
+      console.log('Expanding ' + alias + ' to ' + aliases[alias]);
       content = content.replace(alias, aliases[alias]);
     }
   }
@@ -1287,7 +1287,7 @@ function randomSite() {
   var index = Math.floor(Math.random()*Object.keys(sites).length);
   var siteToSearch = Object.keys(sites)[index]; //I stopped caring that you very much
   if (settings[serverId].blacklist.sites.indexOf(siteToSearch) !== -1) index = randomSite();
-  botLog('Random Index: ' + index);
+  console.log('Random Index: ' + index);
   return index;
 }
 
@@ -1323,7 +1323,7 @@ function userHasPermission(serverId, user, permisssion) {
     }
   }
 
-  botLog(user.username + ' in server ' + server.name + ' has permission ' + permisssion + '? : ' + hasRole);
+  console.log(user.username + ' in server ' + server.name + ' has permission ' + permisssion + '? : ' + hasRole);
 
   return hasRole;
 }
@@ -1335,14 +1335,14 @@ function botCanSpeak(message) {
 }
 
 function settingsEdit(message) {
-  botLog('Settings called');
+  console.log('Settings called');
   var split = message.content.split(' ');
   var setting; //declare setting
   var messageToSend = '';
-  botLog(split);
+  console.log(split);
 
   if (split[1] === undefined) {
-    botLog('Show settings...');
+    console.log('Show settings...');
     messageToSend = '```\n';
     for (setting in settings[serverId].options) {
       messageToSend += setting + ': ' + settings[serverId].options[setting] + '\n';
@@ -1358,12 +1358,12 @@ function settingsEdit(message) {
 
     if (split[2] === 'true' || split[2] === 'false') {
       split[2] = ((split[2] === 'true') ? true : false);
-      botLog('Converted to bool (' + split[2] + ')');
+      console.log('Converted to bool (' + split[2] + ')');
     }
 
     if (!isNaN(parseInt(split[2], 10))) {
       split[2] = parseInt(split[2], 10);
-      botLog('Converted to number (' + split[2] + ')');
+      console.log('Converted to number (' + split[2] + ')');
     }
 
     if (settings[serverId].options[split[1]] !== undefined) {
@@ -1385,14 +1385,14 @@ function settingsEdit(message) {
 
 function createServerSettings(serverId) {
   if (settings[serverId] === undefined) {
-    botLog('Server has no settings, creating settings for: ' + serverId);
+    console.log('Server has no settings, creating settings for: ' + serverId);
     settings[serverId] = defaultSettings;
 
     fs.writeFile('./settings.json', JSON.stringify(settings, null, 4), function (err) {
       if (err) {
-          botLog(err + '\n===\nError while creating settings');
+          console.log(err + '\n===\nError while creating settings');
       } else {
-          botLog('Settings Created');
+          console.log('Settings Created');
       }
     });
   }
@@ -1401,9 +1401,9 @@ function createServerSettings(serverId) {
 function saveSettings() {
   fs.writeFile('./settings.json', JSON.stringify(settings, null, 2), function(err) {
     if(err) {
-      botLog(err + '\nError while saving settings\n');
+      console.log(err + '\nError while saving settings\n');
     } else {
-      botLog('Settings saved');
+      console.log('Settings saved');
     }
   });
 }
@@ -1421,25 +1421,25 @@ function saveSettings() {
 //Login stuff
 
 if (Auth.token !== '') {
-  botLog('Logged in with token!');
+  console.log('Logged in with token!');
   bot.loginWithToken(Auth.token);
 
 } else if (Auth.email !== '' && Auth.password !== '') {
   bot.login(Auth.email, Auth.password, function (error, token) {
-    botLog('Logged in with email + pass!');
+    console.log('Logged in with email + pass!');
     Auth.token = token;
 
     fs.writeFile('./auth.json', JSON.stringify(Auth, null, 4), function(err) {
       if(err) {
-        botLog(err + '\n===\nError while saving token');
+        console.log(err + '\n===\nError while saving token');
       } else {
-        botLog('Token saved');
+        console.log('Token saved');
       }
     });
 
   });
 } else {
-  botLog('No authentication details found!');
+  console.log('No authentication details found!');
   process.exit(1);
 }
 
@@ -1460,7 +1460,7 @@ process.on('SIGINT', function() {
 
 function exitRobotOtter() { //to lazy to change kek
     bot.logout();
-    botLog('\n=-=-=-=-=-=-=-=' +
+    console.log('\n=-=-=-=-=-=-=-=' +
                 '\nLogged out.');
     process.exit(1);
 }
