@@ -33,17 +33,13 @@ var getChannelRegex = /<#(\d+)>/;
 var serverId = ''; //global vars woo
 var avyChance = 0.05; //in %
 
-var bot = new Discord.Client({
-  "autoReconnect": true
-});
-
-bot.userAgent.url = "https://github.com/AtlasTheBot/Booru-Discord";
+var bot = new Discord.Client();
 
 var inviteLink = 'http://discordapp.com/oauth2/authorize?client_id=204721731162734592&scope=bot&permissions=0';
 
 bot.on("ready", () => {
   console.log("===\nTime for porn!\n===");
-  bot.setPlayingGame('=help');
+  bot.user.setStatus('online', '=help');
   changeAvy(); //random avy
 });
 
@@ -53,8 +49,8 @@ bot.on('disconnect', () => {
 });
 
 bot.on("message", (message) => {
-  if (message.channel.server !== undefined) {
-    serverId = message.channel.server.id;
+  if (message.channel.guild !== undefined) {
+    serverId = message.channel.guild.id;
   } else {
     serverId = 'dm' + message.author.id; //Settings for DMs (user specific)
   }
@@ -86,10 +82,10 @@ bot.on("message", (message) => {
       try {
           var result = eval(content);
           console.log(result);
-          bot.sendMessage(message.channel, '`' + result + '`');
+          message.channel.sendMessage('`' + result + '`');
       } catch (err) {
           console.log(err);
-          bot.sendMessage(message.channel, '`' + err + '`');
+          message.channel.sendMessage('`' + err + '`');
       }
       return;
     }
@@ -97,7 +93,7 @@ bot.on("message", (message) => {
   //Block other commands (but allow people to edit the blacklist)
   if (blacklistContainsChannel(message.channel.id) && !canEditBlacklist(message)) {
     if (!settings[serverId].options.silentBlacklist) { //Should the bot warn if the channel's blacklisted
-      bot.sendMessage(message.channel, 'This channel\'s blacklisted! Sorry!');
+      message.channel.sendMessage('This channel\'s blacklisted! Sorry!');
     }
     console.log('Channel\'s blacklisted!');
     return;
@@ -109,7 +105,7 @@ bot.on("message", (message) => {
       return;
     } else {
       if (message.content.substring('=blacklist '.length) === ''){
-        bot.sendMessage(message.channel, '```xl\nCurrently blacklisted: \n' +
+        message.channel.sendMessage('```xl\nCurrently blacklisted: \n' +
           ((settings[serverId].blacklist.tags[0] !== undefined) ?
             'Tags: ' + settings[serverId].blacklist.tags + '\n' :
             '') +
@@ -130,7 +126,7 @@ bot.on("message", (message) => {
       whitelist(message);
       return;
     } else {
-      bot.sendMessage(message.channel, ':no_entry_sign: No, you can\'t get around the blacklist like that');
+      message.channel.sendMessage(':no_entry_sign: No, you can\'t get around the blacklist like that');
       return;
     }
   }
@@ -140,7 +136,7 @@ bot.on("message", (message) => {
       blacklistAddUser(message);
       return;
     } else {
-      bot.sendMessage(message.channel, ':no_entry_sign: Yeah... No');
+      message.channel.sendMessage(':no_entry_sign: Yeah... No');
       return;
     }
   }
@@ -150,7 +146,7 @@ bot.on("message", (message) => {
       blacklistRemoveUser(message);
       return;
     } else {
-      bot.sendMessage(message.channel, ':no_entry_sign: I won\'t let you');
+      message.channel.sendMessage(':no_entry_sign: I won\'t let you');
       return;
     }
   }
@@ -163,7 +159,7 @@ bot.on("message", (message) => {
   //Block other commands (for everyone, managers included)
   if (blacklistContainsChannel(message.channel.id)) {
     if (!settings[serverId].options.silentBlacklist) { //Should the bot warn if the channel's blacklisted
-      bot.sendMessage(message.channel, 'This channel\'s blacklisted! Sorry!');
+      message.channel.sendMessage('This channel\'s blacklisted! Sorry!');
     }
     console.log('Channel\'s blacklisted!');
     return;
@@ -176,17 +172,17 @@ bot.on("message", (message) => {
 
   if (message.content.indexOf('=avy') === 0) {
     changeAvy();
-    bot.sendMessage(message.channel, 'New avy set!');
+    message.channel.sendMessage('New avy set!');
     return;
   }
 
   if (message.content.indexOf('=invite') === 0) {
-    bot.sendMessage(message.channel, inviteLink);
+    message.channel.sendMessage(inviteLink);
     return;
   }
 
   if (settings[serverId].blacklist.sites.indexOf(siteToSearch) !== -1) {
-    bot.sendMessage(message.channel, ':no_entry_sign: As much as I\'d love to search that, that site\'s blacklisted here!');
+    message.channel.sendMessage(':no_entry_sign: As much as I\'d love to search that, that site\'s blacklisted here!');
     return;
   }
 
@@ -196,12 +192,12 @@ bot.on("message", (message) => {
     message.content = message.content.replace(message.content.split(' ')[0], '=random');
   }
 
-  bot.startTyping(message.channel); //since the rest is image searching (and that takes quite a bit sometimes)
+  message.channel.startTyping(); //since the rest is image searching (and that takes quite a bit sometimes)
   //keeps people from thinking the bot died
 
   beginSearch(message); //actually start searching
 
-  bot.stopTyping(message.channel);
+  message.channel.stopTyping();
 });
 
 
@@ -211,7 +207,7 @@ function beginSearch(message) {
 
   if (siteToSearch === 'random') {
     if (settings[serverId].blacklist.sites.length == Object.keys(sites).length) {
-      bot.sendMessage(message.channel, 'All sites are blacklisted...');
+      message.channel.sendMessage('All sites are blacklisted...');
       bot.stopTyping(message.channel);
       return;
     }
@@ -222,10 +218,10 @@ function beginSearch(message) {
     randSearch(message, originalMessage, index, 0, function(result) {
       if (result !== false) {
         if (Math.random() < avyChance) changeAvy(); //hardcoded because reasons
-        bot.sendMessage(message.channel, result);
+        message.channel.sendMessage(result);
         console.log('sentMessage');
       } else {
-        bot.sendMessage(message.channel, 'No images found. On *any* website. Impressive.');
+        message.channel.sendMessage('No images found. On *any* website. Impressive.');
         return;
       }
     });
@@ -235,11 +231,11 @@ function beginSearch(message) {
       if (result === undefined) result = false;
       if (result !== false) {
         if (Math.random() < avyChance) changeAvy(); //hardcoded because reasons
-        bot.sendMessage(message.channel, result);
+        message.channel.sendMessage(result);
         console.log('sentMessage');
         return;
       } else {
-        bot.sendMessage(message.channel, 'No images found. Try different tags ¯\\_(ツ)_/¯');
+        message.channel.sendMessage('No images found. Try different tags ¯\\_(ツ)_/¯');
         return;
       }
     });
@@ -588,11 +584,11 @@ function getImagePostsIndex (index, images, message, callback) {
     }
 
     if (message.content.match(getSiteRegex)[1] === 'e621.net') {
-      //bot.sendMessage(message.channel, images[index].file_url.toString() +
+      //message.channel.sendMessage(images[index].file_url.toString() +
       //  '\nhttp://' + message.content.match(getSiteRegex)[1] + '/post/show/' + images[index].id.toString());
       messageToSend = images[index].file_url.toString() + '\nhttp://' + message.content.match(getSiteRegex)[1] + '/post/show/' + images[index].id.toString();
     } else {
-      //bot.sendMessage(message.channel, 'http://' + message.content.match(getSiteRegex)[1] + '/post/show/' + images[index].id.toString());
+      //message.channel.sendMessage('http://' + message.content.match(getSiteRegex)[1] + '/post/show/' + images[index].id.toString());
       messageToSend = 'http://' + message.content.match(getSiteRegex)[1] + '/post/show/' + images[index].id.toString();
     }
 
@@ -623,8 +619,8 @@ function getImagePostsJSON  (index, images, message, callback) {
     }
 
       //danbooru embeds!
-      //bot.sendMessage(message.channel, 'http://' + message.content.match(getSiteRegex)[1] + images[index].file_url.toString());
-      //bot.sendMessage(message.channel, 'http://' + message.content.match(getSiteRegex)[1] + '/posts/' + images[index].id.toString());
+      //message.channel.sendMessage('http://' + message.content.match(getSiteRegex)[1] + images[index].file_url.toString());
+      //message.channel.sendMessage('http://' + message.content.match(getSiteRegex)[1] + '/posts/' + images[index].id.toString());
       messageToSend = 'http://' + message.content.match(getSiteRegex)[1] + '/posts/' + images[index].id.toString();
     }
     console.log('Got image? (Images) ' + messageToSend);
@@ -675,7 +671,7 @@ function getImagesIndexPHP  (index, images, message, callback) {
     }
 
     index = Math.floor(Math.random()*numResults); //Randomly select an image
-
+	
     settings[serverId].blacklist.tags.forEach(function(element) {
       if (images.posts.post[index].$.tags.indexOf(element) !== -1) {
         console.log('Image found has blacklisted tag: `' + element + '`');
@@ -736,12 +732,12 @@ function getImageDanbooruAPI(index, images, message, callback) {
     }
 
     if (message.content.match(getSiteRegex)[1] === 'dollbooru.org') { //why can't you keep constant apis?
-        //bot.sendMessage(message.channel, 'http://' + message.content.match(getSiteRegex)[1] + images.posts.post[index].$.file_url +
+        //message.channel.sendMessage('http://' + message.content.match(getSiteRegex)[1] + images.posts.post[index].$.file_url +
         //  '\nhttp://' + message.content.match(getSiteRegex)[1] + '/post/view/' + images.posts.post[index].$.id.toString());
         messageToSend = 'http://' + message.content.match(getSiteRegex)[1] + images.posts.post[index].$.file_url +
                       '\nhttp://' + message.content.match(getSiteRegex)[1] + '/post/view/' + images.posts.post[index].$.id.toString();
       } else {
-        //bot.sendMessage(message.channel, images.posts.post[index].$.file_url +
+        //message.channel.sendMessage(images.posts.post[index].$.file_url +
         //  '\nhttp://' + message.content.match(getSiteRegex)[1] + '/post/view/' + images.posts.post[index].$.id.toString());
         messageToSend = images.posts.post[index].$.file_url + '\nhttp://' + message.content.match(getSiteRegex)[1] + '/post/view/' + images.posts.post[index].$.id.toString();
       }
@@ -794,7 +790,7 @@ function containsBlacklistedTag(tags, message) { //checks if one of the tags is 
   tags.forEach(function(element) {
     if (settings[serverId].blacklist.tags.indexOf(element) !== -1) {
       timeToStop = true;
-      bot.sendMessage(message.channel, '`' + element + '` is in the blacklist! ***Kinkshame!***');
+      message.channel.sendMessage('`' + element + '` is in the blacklist! ***Kinkshame!***');
       return;
     }
   });
@@ -879,7 +875,7 @@ function blacklist(message) {
             settings[serverId].blacklist.sites.push(site);
           }
         }
-        bot.sendMessage(message.channel, 'Blacklisted all nsfw sites! ~~pleb~~');
+        message.channel.sendMessage('Blacklisted all nsfw sites! ~~pleb~~');
       break;
 
       case 'sfw':
@@ -888,7 +884,7 @@ function blacklist(message) {
             settings[serverId].blacklist.sites.push(site);
           }
         }
-        bot.sendMessage(message.channel, 'Blacklisted all sfw sites! ~~;^)~~');
+        message.channel.sendMessage('Blacklisted all sfw sites! ~~;^)~~');
       break;
 
       case 'sites':
@@ -897,27 +893,26 @@ function blacklist(message) {
             settings[serverId].blacklist.sites.push(site);
           }
         }
-        bot.sendMessage(message.channel, 'Blacklisted all sites! ~~But that make me useless :\'(~~');
+        message.channel.sendMessage('Blacklisted all sites! ~~But that make me useless :\'(~~');
       break;
 
       case 'channels':
       //this took way too long to write
       var channel; //woo lazyness
-        for(var i = message.channel.server.channels.length - 1; i >= 0; i--) {
-          channel = message.channel.server.channels[i];
+        for(channel of message.guild.channels.array()) {
           if (!blacklistContainsChannel(channel.id) && channel.type === 'text') {
             settings[serverId].blacklist.channels.push({"id" : channel.id, "name": channel.name});
           }
         }
-        bot.sendMessage(message.channel, 'Blacklisted all channels! ~~Now I can\'t do anything~~');
+        message.channel.sendMessage('Blacklisted all channels! ~~Now I can\'t do anything~~');
       break;
 
       case 'tags':
-        bot.sendMessage(message.channel, 'Blacklisted all ta- wait. How am I supposed to know ALL the tags!?');
+        message.channel.sendMessage('Blacklisted all ta- wait. How am I supposed to know ALL the tags!?');
       break;
 
       default:
-        bot.sendMessage(message.channel, 'Blacklist all... what?');
+        message.channel.sendMessage('Blacklist all... what?');
     }
     saveSettings();
     return;
@@ -930,7 +925,7 @@ function blacklist(message) {
   }
 
   if (split[1] === 'site' && sites[split[2]] === undefined) {
-    bot.sendMessage(message.channel, '`' + split[2] + '` is NOT supported, so blacklisting it is useless.');
+    message.channel.sendMessage('`' + split[2] + '` is NOT supported, so blacklisting it is useless.');
     return;
   }
 
@@ -942,24 +937,24 @@ function blacklist(message) {
     if (chanMatch !== null) {
       chanId = chanMatch[1];
     } else {
-      bot.sendMessage(message.channel, 'You need to supply a channel if you want me to blacklist it...');
+      message.channel.sendMessage('You need to supply a channel if you want me to blacklist it...');
       return;
     }
 
-    var chan = bot.channels.get("id", chanId);
+    var chan = bot.channels.find("id", chanId);
 
     if (chan !== null) {
       if (!blacklistContainsChannel(chan.id)) {
         settings[serverId].blacklist.channels.push({"id": chan.id, "name": chan.name});
         saveSettings();
-        bot.sendMessage(message.channel, '`#' + chan.name + '` added to blacklist. No searching for them!');
+        message.channel.sendMessage('`#' + chan.name + '` added to blacklist. No searching for them!');
         return;
       } else {
-        bot.sendMessage(message.channel, '`#' + chan.name + '` is already blacklisted!');
+        message.channel.sendMessage('`#' + chan.name + '` is already blacklisted!');
         return;
       }
     } else {
-      bot.sendMessage(message.channel, 'That\'s not a real channel! Try mentionning one.');
+      message.channel.sendMessage('That\'s not a real channel! Try mentionning one.');
       return;
     }
   }
@@ -970,7 +965,7 @@ function blacklist(message) {
   } else if(settings[serverId].blacklist[split[1] + 's'] !== undefined) {
     split[1] += 's';
   } else {
-    bot.sendMessage(message.channel, 'That\'s not a category');
+    message.channel.sendMessage('That\'s not a category');
     return;
   }
 
@@ -980,12 +975,12 @@ function blacklist(message) {
   var index = settings[serverId].blacklist[category].indexOf(toAdd);
 
   if (index !== -1) {
-    bot.sendMessage(message.channel, '`' + toAdd + '` is already in the blacklist. Lrn 2 read.');
+    message.channel.sendMessage('`' + toAdd + '` is already in the blacklist. Lrn 2 read.');
     return;
   }
 
   if (toAdd === '') {
-    bot.sendMessage(message.channel, 'You want me to... Blacklist *nothing*?');
+    message.channel.sendMessage('You want me to... Blacklist *nothing*?');
     return;
   }
 
@@ -993,7 +988,7 @@ function blacklist(message) {
 
   saveSettings();
 
-  bot.sendMessage(message.channel, '`' + toAdd + '` added to blacklist. Goodbye!');
+  message.channel.sendMessage('`' + toAdd + '` added to blacklist. Goodbye!');
 }
 
 function whitelist(message) {
@@ -1029,7 +1024,7 @@ function whitelist(message) {
             settings[serverId].blacklist.sites.splice(index, 1);
           }
         }
-        bot.sendMessage(message.channel, 'Whitelisted all nsfw sites! We all need some lewd sometimes.');
+        message.channel.sendMessage('Whitelisted all nsfw sites! We all need some lewd sometimes.');
       break;
 
       case 'sfw':
@@ -1039,26 +1034,26 @@ function whitelist(message) {
             settings[serverId].blacklist.sites.splice(index, 1);
           }
         }
-        bot.sendMessage(message.channel, 'Whitelisted all sfw sites! Because sometimes you just want art.');
+        message.channel.sendMessage('Whitelisted all sfw sites! Because sometimes you just want art.');
       break;
 
       case 'sites':
         settings[serverId].blacklist.sites = []; //just empty it, it's the best and easiest way to whitelist all
-        bot.sendMessage(message.channel, 'Whitelisted all sites! Goodbye censorship!');
+        message.channel.sendMessage('Whitelisted all sites! Goodbye censorship!');
       break;
 
       case 'channels':
         settings[serverId].blacklist.channels = [];
-        bot.sendMessage(message.channel, 'Whitelisted all channels! Call me anywhere!');
+        message.channel.sendMessage('Whitelisted all channels! Call me anywhere!');
       break;
 
       case 'tags':
         settings[serverId].blacklist.tags = [];
-        bot.sendMessage(message.channel, 'Whitelisted all tags! Kinks ahoy!');
+        message.channel.sendMessage('Whitelisted all tags! Kinks ahoy!');
       break;
 
       default:
-        bot.sendMessage(message.channel, 'Whitelist all... things? I need some more info m9.');
+        message.channel.sendMessage('Whitelist all... things? I need some more info m9.');
     }
     saveSettings();
     return;
@@ -1076,25 +1071,25 @@ function whitelist(message) {
     if (chanMatch !== null) {
       chanId = chanMatch[1];
     } else {
-      bot.sendMessage(message.channel, 'You need to supply a channel if you want me to whitelist it...');
+      message.channel.sendMessage('You need to supply a channel if you want me to whitelist it...');
       return;
     }
 
-    var chan = bot.channels.get("id", chanId);
+    var chan = bot.channels.find("id", chanId);
 
     if (chan !== null) {
       if (blacklistContainsChannel(chan.id)) {
         index = blacklistContainsChannel(chan.id, true); //true makes it return the index of the match
         settings[serverId].blacklist.channels.splice(index, 1);
         saveSettings();
-        bot.sendMessage(message.channel, '`#' + chan.name + '` removed from blacklist. More work for me!');
+        message.channel.sendMessage('`#' + chan.name + '` removed from blacklist. More work for me!');
         return;
       } else {
-        bot.sendMessage(message.channel, '`#' + chan.name + '` is not blacklisted m9');
+        message.channel.sendMessage('`#' + chan.name + '` is not blacklisted m9');
         return;
       }
     } else {
-      bot.sendMessage(message.channel, 'That\'s not a real channel! Try mentionning one.');
+      message.channel.sendMessage('That\'s not a real channel! Try mentionning one.');
       return;
     }
   }
@@ -1105,7 +1100,7 @@ function whitelist(message) {
   } else if(settings[serverId].blacklist[split[1] + 's'] !== undefined) {
       split[1] += 's';
   } else {
-      bot.sendMessage(message.channel, 'That\'s not a category');
+      message.channel.sendMessage('That\'s not a category');
       return;
   }
 
@@ -1115,68 +1110,68 @@ function whitelist(message) {
   index = settings[serverId].blacklist[category].indexOf(toRemove);
 
   if (toRemove === '') {
-    bot.sendMessage(message.channel, '...whitelist *what*?');
+    message.channel.sendMessage('...whitelist *what*?');
     return;
   }
 
   if (index !== -1) {
     settings[serverId].blacklist[category].splice(index, 1);
   } else {
-    bot.sendMessage(message.channel, '`' + toRemove + '` is not in the blacklist (yet)');
+    message.channel.sendMessage('`' + toRemove + '` is not in the blacklist (yet)');
     return;
   }
 
   saveSettings();
 
-  bot.sendMessage(message.channel, '`' + toRemove + '` removed from blacklist, now enjoy it');
+  message.channel.sendMessage('`' + toRemove + '` removed from blacklist, now enjoy it');
 }
 
 function blacklistAddUser(message) {
   console.log('AddUser');
 
-  var toAdd = message.mentions;
+  var toAdd = message.mentions.users.first();
 
-  if (toAdd[0] === undefined) {
-    bot.sendMessage(message.channel, 'No user found! You gotta mention someone');
+  if (toAdd.id === undefined) {
+    message.channel.sendMessage('No user found! You gotta mention someone');
     return;
   }
 
-  var index = settings[serverId].users.indexOf(toAdd[0].id);
+  var index = settings[serverId].users.indexOf(toAdd.id);
 
   if (index === -1) {
-    settings[serverId].users.push(toAdd[0].id);
+    settings[serverId].users.push(toAdd.id);
   } else {
-    bot.sendMessage(message.channel, '`' + toAdd[0].id + '` is already in the list m9');
+    message.channel.sendMessage('`' + toAdd.username + '` is already in the list m9');
     return;
   }
 
   saveSettings();
 
-  bot.sendMessage(message.channel, 'Added `' + toAdd[0].id + '`, they can edit the blacklist now.');
+  message.channel.sendMessage('Added `' + toAdd.username + '`, they can edit the blacklist now.');
 }
 
 function blacklistRemoveUser(message) {
   console.log('RemoveUser');
 
-  var toRemove = message.mentions;
+  var toRemove = message.mentions.users.first();
 
-  if (toRemove[0] === undefined) {
-    bot.sendMessage(message.channel, 'No user found! You could try mentionning someone, but that\'d be rude');
+  if (toRemove === undefined) {
+    message.channel.sendMessage('No user found! You could try mentioning someone, but that\'d be rude');
     return;
   }
 
-  var index = settings[serverId].users.indexOf(toRemove[0].id);
+  var index = settings[serverId].users.indexOf(toRemove.id);
 
   if (index !== -1) {
     settings[serverId].users.splice(index, 1);
   } else {
-    bot.sendMessage(message.channel, '`' + toRemove[0].id + '` was never in the list in the first place');
+    message.channel.sendMessage('`' + toRemove.username + '` was never in the list in the first place');
     return;
   }
 
   saveSettings();
 
-  bot.sendMessage(message.channel, '`' + toRemove[0].id + '` removed from blacklist whitelist');
+  message.channel.sendMessage('`' + toRemove.username + '` removed from blacklist whitelist');
 }
 
 /*
@@ -1203,7 +1198,7 @@ function help(message) {
     helpText = 'I can\'t offer you help with... whatever ' +  param + ' is.';
   }
 
-  bot.sendMessage(message.channel, helpText);
+  message.channel.sendMessage(helpText);
 }
 
 function changeAvy() {
@@ -1217,7 +1212,7 @@ function changeAvy() {
     if (err) {
       console.log(err + '\nError while setting avy\n');
     } else {
-      bot.setAvatar(response); //Set avy
+      bot.user.setAvatar(response); //Set avy
     }
   });
 }
@@ -1298,11 +1293,10 @@ function canEditBlacklist(message) {
   //a) You're in the user whitelist
   //b) You have the 'manageServer' permission
   //c) You're in a dm with the bot
-
   //You can probably figure that out without the comments but whatever
 
   if (settings[serverId].users.indexOf(message.author.id) !== -1 ||
-      userHasPermission(serverId, message.author, 'manageServer') || //userHasPermission returns true if in a dm
+      (message.member.hasPermission('MANAGE_SERVER') || message.member.hasPermission('MANAGE_MESSAGES') || serverId.indexOf('dm') === 0) || //True if they have the MANAGE_SERVER, MANAGE_MESSAGES or in a DM
       message.author.id === Auth.ownerID) { //cheap, I know, but it's there so I can control my bot from discord (Also I can use =eval or just edit the .json file /shrug)
     canEdit = true;
   }
@@ -1310,27 +1304,9 @@ function canEditBlacklist(message) {
   return canEdit;
 }
 
-function userHasPermission(serverId, user, permisssion) {
-  if (serverId.indexOf('dm') === 0) return true; //DMs don't need no server manager!
-
-  var roles = bot.servers.get('id', serverId).detailsOfUser(user).roles; //Array of roles
-
-  var hasRole = false;
-
-  for (var roleIndex = 0; roleIndex < roles.length; roleIndex++) {
-    if (roles[roleIndex].hasPermission(permisssion)) {
-      hasRole = true;
-    }
-  }
-
-  console.log(user.username + ' in server ' + server.name + ' has permission ' + permisssion + '? : ' + hasRole);
-
-  return hasRole;
-}
-
 function botCanSpeak(message) {
   if (serverId.indexOf('dm') === 0) return true; //how can you mute someone in a DM?
-  var canSpeak = message.channel.permissionsOf(bot.user).hasPermission('sendMessages'); //sadly not the longest line in this
+  var canSpeak = message.channel.permissionsFor(bot.user).hasPermission('SEND_MESSAGES'); //sadly not the longest line in this
   return canSpeak;
 }
 
@@ -1379,7 +1355,7 @@ function settingsEdit(message) {
     }
   }
 
-  bot.sendMessage(message.channel, messageToSend);
+  message.channel.sendMessage(messageToSend);
   return;
 }
 
@@ -1422,47 +1398,14 @@ function saveSettings() {
 
 if (Auth.token !== '') {
   console.log('Logged in with token!');
-  bot.loginWithToken(Auth.token);
-
+  bot.login(Auth.token);
 } else if (Auth.email !== '' && Auth.password !== '') {
-  bot.login(Auth.email, Auth.password, function (error, token) {
-    console.log('Logged in with email + pass!');
-    Auth.token = token;
-
-    fs.writeFile('./auth.json', JSON.stringify(Auth, null, 4), function(err) {
-      if(err) {
-        console.log(err + '\n===\nError while saving token');
-      } else {
-        console.log('Token saved');
-      }
-    });
-
-  });
+  console.log('Logged in with email + pass!');
+  bot.login(Auth.email, Auth.password);
 } else {
   console.log('No authentication details found!');
   process.exit(1);
 }
 
-//Graceful exit (Like a whale)
-process.stdin.resume();
-
-process.on('SIGINT', function() {
-    bot.logout();
-    exitRobotOtter();
-});
-
- function botLog(message) { //log a thing to both a channel AND the console
-   console.log(message);
-  if (Auth.logChannel !== undefined && Auth.logChannel !== '') {
-     bot.sendMessage(Auth.logChannel, '```xl\n' + message + '\n```');
-   }
- }
-
-function exitRobotOtter() { //to lazy to change kek
-    bot.logout();
-    console.log('\n=-=-=-=-=-=-=-=' +
-                '\nLogged out.');
-    process.exit(1);
-}
 //Congrats! You read all of this bs!
 //Or you scrolled all the way down, either way you didn't give up at the start
