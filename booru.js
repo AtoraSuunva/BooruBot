@@ -16,7 +16,7 @@
 
 var Discord = require("discord.js");
 var request = require("request");
-var fs = require('fs');
+var fs = require('fs-extra');
 var base64 = require('node-base64-image'); //image to base64 for avy changes
 var parseString = require('xml2js').parseString; //for XML apis (Gelbooru pls)
 
@@ -1375,7 +1375,8 @@ function createServerSettings(serverId) {
 }
 
 function saveSettings() {
-	copyFile('./settings.json', './settings.json.bak', console.log); //Create a backup
+	
+	fs.copySync(path.resolve(__dirname,'./settings.json'), 'settings.json.bak');
 	
 	fs.writeFile('./settings.json', JSON.stringify(settings, null, 2), function(err) {
 		if(err) {
@@ -1386,29 +1387,6 @@ function saveSettings() {
   });
 }
 
-function copyFile(source, target, cb) {
-  var cbCalled = false;
-
-  var rd = fs.createReadStream(source);
-  rd.on("error", function(err) {
-    done(err);
-  });
-  var wr = fs.createWriteStream(target);
-  wr.on("error", function(err) {
-    done(err);
-  });
-  wr.on("close", function(ex) {
-    done();
-  });
-  rd.pipe(wr);
-
-  function done(err) {
-    if (!cbCalled) {
-      cb(err);
-      cbCalled = true;
-    }
-  }
-}
 /*
 
 

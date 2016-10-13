@@ -23,6 +23,7 @@
   "homepage": "https://github.com/AtlasTheBot/Booru-Discord#readme",
   "dependencies": {
     "discord.js": "^9.2.0",
+    "fs-extra": "^0.30.0",
     "node-base64-image": "^1.0.1",
     "request": "^2.74.0",
     "xml2js": "^0.4.17"
