@@ -48,5 +48,18 @@
       "channels": [],
       "sites": []
     }
+  },
+  "167763064513363968": {
+    "options": {
+      "silentBlacklist": true
+    },
+    "users": [
+      "74768773940256768"
+    ],
+    "blacklist": {
+      "tags": [],
+      "channels": [],
+      "sites": []
+    }
   }
 }

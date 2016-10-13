@@ -1296,7 +1296,7 @@ function canEditBlacklist(message) {
   //You can probably figure that out without the comments but whatever
 
   if (settings[serverId].users.indexOf(message.author.id) !== -1 ||
-      (message.member.hasPermission('MANAGE_SERVER') || message.member.hasPermission('MANAGE_MESSAGES') || serverId.indexOf('dm') === 0) || //True if they have the MANAGE_SERVER, MANAGE_MESSAGES or in a DM
+      (message.member.hasPermission('MANAGE_GUILD') || message.member.hasPermission('MANAGE_MESSAGES') || serverId.indexOf('dm') === 0) || //True if they have the MANAGE_GUILD, MANAGE_MESSAGES or in a DM
       message.author.id === Auth.ownerID) { //cheap, I know, but it's there so I can control my bot from discord (Also I can use =eval or just edit the .json file /shrug)
     canEdit = true;
   }
@@ -1375,13 +1375,39 @@ function createServerSettings(serverId) {
 }
 
 function saveSettings() {
-  fs.writeFile('./settings.json', JSON.stringify(settings, null, 2), function(err) {
-    if(err) {
-      console.log(err + '\nError while saving settings\n');
-    } else {
-      console.log('Settings saved');
-    }
+	copyFile('./settings.json', './settings.json.bak', console.log); //Create a backup
+	
+	fs.writeFile('./settings.json', JSON.stringify(settings, null, 2), function(err) {
+		if(err) {
+			console.log(err + '\nError while saving settings\n');
+		} else {
+			console.log('Settings saved');
+		}
   });
+}
+
+function copyFile(source, target, cb) {
+  var cbCalled = false;
+
+  var rd = fs.createReadStream(source);
+  rd.on("error", function(err) {
+    done(err);
+  });
+  var wr = fs.createWriteStream(target);
+  wr.on("error", function(err) {
+    done(err);
+  });
+  wr.on("close", function(ex) {
+    done();
+  });
+  rd.pipe(wr);
+
+  function done(err) {
+    if (!cbCalled) {
+      cb(err);
+      cbCalled = true;
+    }
+  }
 }
 /*
 
