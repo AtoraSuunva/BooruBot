@@ -1208,13 +1208,7 @@ function changeAvy() {
 
   var fileChosen = fileNames[Math.floor(Math.random() * fileNames.length)]; //Randomly choose one
 
-  base64.encode(path.join(__dirname, 'avys', fileChosen), {"local": true}, function(err, response) {
-    if (err) {
-      console.log(err + '\nError while setting avy\n');
-    } else {
-      bot.user.setAvatar(response); //Set avy
-    }
-  });
+  bot.user.setAvatar(path.join(__dirname, 'avys', fileChosen)); //Set avy
 }
 
 /*

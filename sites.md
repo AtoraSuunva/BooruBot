@@ -15,4 +15,11 @@ xbooru.com | xb, xbooru | Yes
 youhate.us | yh, you, youhate | Yes  
 dollbooru.org | do, doll, dollbooru | No
 rule34.paheal.net | pa, paheal | Yes  
-lolibooru.moe | lb, lol, loli, lolibooru | yes
+lolibooru.moe | lb, lol, loli, lolibooru | Yes
+
+---
+
+## Sites that can't be added
+
+### chan.sankakucomplex.com
+Trying to access their API returns `403 - Forbiddden`. API is restricted by the devs ¯\_(ツ)_/¯.

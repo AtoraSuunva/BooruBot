@@ -1,67 +1,80 @@
 {
-  "201834851962191872": {
-    "options": {
-      "silentBlacklist": false
+    "201834851962191872": {
+        "options": {
+            "silentBlacklist": false
+        },
+        "users": [
+            "74768773940256768"
+        ],
+        "blacklist": {
+            "tags": [
+                "gore",
+                "loli",
+                "mlp"
+            ],
+            "channels": [],
+            "sites": []
+        }
     },
-    "users": [
-      "74768773940256768"
-    ],
-    "blacklist": {
-      "tags": [
-        "gore",
-        "loli",
-        "mlp"
-      ],
-      "channels": [],
-      "sites": []
-    }
-  },
-  "201880737043972107": {
-    "options": {
-      "silentBlacklist": false
+    "201880737043972107": {
+        "options": {
+            "silentBlacklist": false
+        },
+        "users": [
+            "74768773940256768",
+            "155900016354000896"
+        ],
+        "blacklist": {
+            "tags": [
+                "gore",
+                "mlp",
+                "my_little_pony",
+                "b",
+                "c"
+            ],
+            "channels": [],
+            "sites": [
+                "lolibooru.moe"
+            ]
+        }
     },
-    "users": [
-      "74768773940256768",
-      "155900016354000896"
-    ],
-    "blacklist": {
-      "tags": [
-        "gore",
-        "mlp",
-        "my_little_pony",
-        "b",
-        "c"
-      ],
-      "channels": [],
-      "sites": [
-        "lolibooru.moe"
-      ]
-    }
-  },
-  "dm74768773940256768": {
-    "options": {
-      "silentBlacklist": false
+    "dm74768773940256768": {
+        "options": {
+            "silentBlacklist": false
+        },
+        "users": [
+            "74768773940256768"
+        ],
+        "blacklist": {
+            "tags": [],
+            "channels": [],
+            "sites": []
+        }
     },
-    "users": [
-      "74768773940256768"
-    ],
-    "blacklist": {
-      "tags": [],
-      "channels": [],
-      "sites": []
-    }
-  },
-  "167763064513363968": {
-    "options": {
-      "silentBlacklist": true
+    "167763064513363968": {
+        "options": {
+            "silentBlacklist": true
+        },
+        "users": [
+            "74768773940256768"
+        ],
+        "blacklist": {
+            "tags": [],
+            "channels": [],
+            "sites": []
+        }
     },
-    "users": [
-      "74768773940256768"
-    ],
-    "blacklist": {
-      "tags": [],
-      "channels": [],
-      "sites": []
+    "211956704798048256": {
+        "options": {
+            "silentBlacklist": false
+        },
+        "users": [
+            "74768773940256768"
+        ],
+        "blacklist": {
+            "tags": [],
+            "channels": [],
+            "sites": []
+        }
     }
-  }
 }
