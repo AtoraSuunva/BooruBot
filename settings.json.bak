@@ -29,7 +29,8 @@
         "gore",
         "mlp",
         "my_little_pony",
-        "b"
+        "b",
+        "c"
       ],
       "channels": [],
       "sites": [
@@ -53,6 +54,19 @@
   "167763064513363968": {
     "options": {
       "silentBlacklist": true
+    },
+    "users": [
+      "74768773940256768"
+    ],
+    "blacklist": {
+      "tags": [],
+      "channels": [],
+      "sites": []
+    }
+  },
+  "211956704798048256": {
+    "options": {
+      "silentBlacklist": false
     },
     "users": [
       "74768773940256768"

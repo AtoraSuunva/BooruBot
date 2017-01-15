@@ -93,7 +93,7 @@ bot.on("message", (message) => {
   //Block other commands (but allow people to edit the blacklist)
   if (blacklistContainsChannel(message.channel.id) && !canEditBlacklist(message)) {
     if (!settings[serverId].options.silentBlacklist) { //Should the bot warn if the channel's blacklisted
-      message.channel.sendMessage('This channel\'s blacklisted! Sorry!');
+      //message.channel.sendMessage('This channel\'s blacklisted! Sorry!'); disabled due to issues with this message
     }
     console.log('Channel\'s blacklisted!');
     return;
@@ -159,7 +159,7 @@ bot.on("message", (message) => {
   //Block other commands (for everyone, managers included)
   if (blacklistContainsChannel(message.channel.id)) {
     if (!settings[serverId].options.silentBlacklist) { //Should the bot warn if the channel's blacklisted
-      message.channel.sendMessage('This channel\'s blacklisted! Sorry!');
+      //message.channel.sendMessage('This channel\'s blacklisted! Sorry!'); shut up bot
     }
     console.log('Channel\'s blacklisted!');
     return;
@@ -941,7 +941,7 @@ function blacklist(message) {
       return;
     }
 
-    var chan = bot.channels.find("id", chanId);
+    var chan = bot.channels.get(chanId);
 
     if (chan !== null) {
       if (!blacklistContainsChannel(chan.id)) {
@@ -1075,7 +1075,7 @@ function whitelist(message) {
       return;
     }
 
-    var chan = bot.channels.find("id", chanId);
+    var chan = bot.channels.get(chanId);
 
     if (chan !== null) {
       if (blacklistContainsChannel(chan.id)) {
