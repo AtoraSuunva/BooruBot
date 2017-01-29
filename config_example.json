@@ -1,0 +1,10 @@
+{
+    "token": "your token here",
+    "owner": null,
+    "moduleFolder": "modules",
+    "invokers": [
+        "b!",
+        "booru!"
+    ],
+    "debug": false
+}

@@ -1,0 +1,10 @@
+{
+  "tags": [],
+  "sites": [],
+  "options": {
+    "disableDMs": false,
+    "topicEnable": false,
+    "deprecationWarning": true,
+    "showUpdates": true
+  }
+}
