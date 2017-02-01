@@ -33,6 +33,7 @@ Also don't include `[]` and `<>` in the commands themselves.
 | `b!invite <"server">` | Posts an invite link for BooruBot in chat, or the link to the support server in DMs | None
 | `b!ping` | Pong! Displays BooruBot's ping | None
 | `b!stats` | Some stats about the bot | None
+| `b!info` | Some info about the bot | None
 | `b!settings <setting>` | View the current settings for this server or info about a setting | `set`, `setting`, `seting`
 | `b!blacklist` | View the current blacklist | `bl`
 

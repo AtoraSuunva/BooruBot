@@ -21,7 +21,8 @@ module.exports.events.message = (bot, message) => {
   if (message.guild !== null && message.channel.permissionsFor(message.client.user).hasPermission('EMBED_LINKS')) {
     let Discord = require('discord.js')
     let embed = new Discord.RichEmbed()
-    .setThumbnail(bot.user.avatarURL)
+      .setThumbnail(bot.user.avatarURL)
+      .setFooter('Use b!info for info!')
 
     for(let [title, val] of fields) {
       embed.addField(title, val, true)

@@ -46,7 +46,7 @@ module.exports.events.message = (bot, message) => {
   }
 
   if (settings.options.topicEnable && !message.channel.topic.includes('bb=true'))
-    return message.channel.sendMessage('You need to enable searching in this channel by putting `bb=true` in the topic first.')
+    return message.channel.sendMessage('You need to enable searching in this channel by putting `bb=true` in the topic first (Set `topicEnable` to false to disable this).')
 
   if (args[1] === undefined)
     return message.channel.sendMessage('I at least need a site to work with...')
@@ -67,22 +67,21 @@ module.exports.events.message = (bot, message) => {
     message.channel.startTyping()
     message.botClient = bot
     randSearch([...args.slice(2), ...settings.tags.map(v=>{return `-${v}`})], message)
-      .then((r) => {postEmbed(...r)}) //promises can only return one value, so I return an array then spread it
-      .catch((e) => {
+      .then(r => {postEmbed(...r)}) //promises can only return one value, so I return an array then spread it
+      .catch(e => {
         message.channel.stopTyping()
-        message.channel.sendMessage("Found no images anywhere...")
+        message.channel.send("Found no images anywhere...")
       })
   } else {
     message.channel.startTyping()
     search(args[1], [...args.slice(2), ...settings.tags.map(v=>{return `-${v}`})], message)
-      .then((r) => {postEmbed(...r)})
-      .catch((e) => {
+      .then(r => {postEmbed(...r)})
+      .catch(e => {
         message.channel.stopTyping()
         if (e.message === "You didn't give any images") {
-          message.channel.sendMessage("Didn't find any images...")
+          message.channel.send("Didn't find any images...")
         } else {
-          console.log(e)
-          throw e
+          message.channel.send(e.message)
         }
       })
   }
@@ -100,18 +99,18 @@ function search(site, tags, message) {
       if (imgs[0] !== undefined) {
         resolve([imgs[0], booru.resolveSite(site), process.hrtime(searchStart), message]) //can't resolve multiple values
       } else {
-        reject('No images found')
+        reject(new Error('No images found'))
       }
     })
     .catch((err) => {
       if (err.name === 'booruError') {
-        reject(err.message)
+        reject(err)
         return;
       }
 
       err.message = err.message += `\nError while searching in: ${message.guild.id} (${message.name})\nInput: ${message.content}`
       let errID = bot.modules.reportError(err, 'Search fail')
-      reject(`Something went wrong while searching. Go yell at Atlas#2564 and tell him \`errID: ${errID}\``)
+      reject(new Error(`Something went wrong while searching. Go yell at Atlas#2564 and tell him \`errID: ${errID}\``))
     })
   })
 }
@@ -144,7 +143,7 @@ function randSearch(tags, message) {
   			console.log(`No images found...`)
   		}
   	}
-  	reject('Found no images anywhere...')
+  	reject(new Error('Found no images anywhere...'))
   }) //jshint ignore:line
 }
 //the future is async

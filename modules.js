@@ -465,7 +465,7 @@ startEvents()
 console.log('Starting Login...')
 bot.login(config.token).then(token => {
   console.log('Logged in!')
-  if (config.owner.id === undefined) {
+  if (config.owner === null) {
     console.log('Fetching Owner info...')
     bot.fetchApplication().then(OAuth => {
       config.owner = OAuth.owner
@@ -481,8 +481,8 @@ process.on('exit', (code) => {
   console.log(`About to exit with code: ${code}`)
 })
 
-process.on('unhandledRejection', err => {
-  console.error(`Uncaught Promise Error: \n${err.message}\n${err.stack}`)
+process.on('unhandledRejection', (err, p) => {
+  console.error(`Uncaught Promise Error: \n${err}\nPromise:\n{p}`)
 })
 
 /**
