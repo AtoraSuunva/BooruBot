@@ -40,3 +40,13 @@ module.exports.events.message = (bot, message) => { //TODO: Check for "MANAGE_ME
     })
   }
 }
+
+module.exports.events.messageReactionAdd = (bot, react, user) => {
+  let customEmote = new Map([['264246678347972610', '272782646407593986'],['211956704798048256', '269682750682955777']]).get(react.message.guild.id) || '0'
+
+  if (react.emoji.name === '❌' && react.count >= 2 && react.me)
+    react.message.edit({embed: {description: `Message deleted by ${user.username}#${user.discriminator}`}})
+
+  if (react.emoji.id === customEmote && react.count >= 2 && react.me) //squares
+    react.message.edit({embed: {description: `Message deleted by ${user.username}#${user.discriminator}`}})
+}

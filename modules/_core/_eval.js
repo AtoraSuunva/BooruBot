@@ -2,7 +2,7 @@
 
 module.exports.config = {
   name: 'eval',
-  invokers: ['eval', 'eval!'],
+  invokers: ['eval', 'eval!', 'eval?'],
   help: 'Evals stuff',
   expandedHelp: 'Evals stuff for testing reasons.\nIf you try to use my eval I\'ll kinkshame you.',
   invisible: true
@@ -25,7 +25,7 @@ module.exports.events.message = (bot, message) => {
 
   try {
     let msg = eval(evalMsg)
-    console.log(msg)
+    if (args[0] !== 'eval?') console.log(msg)
     let length = require('util').inspect(msg, { depth: null }).length
     if (length > 2000 && args[0] !== 'eval!') return message.channel.send(`Result over 2k characters (${length} chars), use \`eval!\` to dump everything.`)
     message.channel.sendMessage('```js\n' + require('util').inspect(msg, { depth: null }) + '\n```', {split: {prepend: '```js\n', append: '\n```'}}).catch(console.log)

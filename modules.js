@@ -50,12 +50,23 @@ function startEvents() {
 
     for (let module in modules) {
       if (modules[module].events.message !== undefined && startsWithInvoker(message.content, modules[module].config.invokers)) {
+        if (config.botbans.some(b=>b.id === message.author.id)) return console.log(`Botbanned user: ${message.author.username}#${message.author.discriminator} (${message.author.id})`)
         if (config.debug) console.log(`Running ${module}`)
         try {
           modules[module].events.message(bot, message)
         } catch (e) {
           let errId = reportError(e, 'Module Err: message')
           message.channel.sendMessage(`Whoops, something went wrong!\nBug Atlas and tell him ErrID: \`${errId}\``)
+        }
+      }
+
+      //yay things
+      if (modules[module].events.everyMessage !== undefined) {
+        if (config.debug) console.log(`Running ${module}`)
+        try {
+          modules[module].events.everyMessage(bot, message)
+        } catch (e) {
+          reportError(e, 'Module Err: message')
         }
       }
     }
@@ -166,6 +177,14 @@ function reloadConfig(newConfig) {
     config = require('./config.json')
   }
   module.exports.config = config
+}
+
+/**
+ * Saves the currently stored config
+ * @return {Promise} A promise that resolves when settings are saved
+ */
+function saveConfig() {
+  return writeFile('./config.json', config)
 }
 
 //More helper functions, but this time for managing the module system
@@ -460,6 +479,22 @@ function reportError(err, errType) {
   return errID;
 }
 
+/**
+ * Promisefied fs.writefile
+ * @param  {String} fileName    The filename to write to
+ * @param  {Object} fileContent Some JSON object to save
+ * @return {Promise}            Promise that resolves with nothing on save
+ */
+function writeFile(fileName, fileContent) {
+  return new Promise(function(resolve, reject) {
+    fs.writeFile(fileName, JSON.stringify(fileContent, null, 2), (e) => {
+      if (e) reject(e)
+      resolve()
+    })
+  })
+}
+
+
 startEvents()
 
 console.log('Starting Login...')
@@ -502,8 +537,9 @@ module.exports.loadModules = loadModules
 module.exports.loadModule = loadModule
 module.exports.unloadModule = unloadModule
 module.exports.modules = modules
-module.exports.reloadConfig = reloadConfig
 module.exports.config = config
+module.exports.reloadConfig = reloadConfig
+module.exports.saveConfig = saveConfig
 module.exports.reportError = reportError
 module.exports.settings = settings
 module.exports.saveAndExit = saveAndExit

@@ -12,7 +12,6 @@ module.exports.config = {
 
 module.exports.events = {}
 module.exports.events.message = (bot, message) => {
-  message.bot = bot //wew, instead of passing the bot object I just attach it to the message object
   //Horrible idea, I know, but I'm not rewriting all this code just for color
   let settingsId = (message.guild !== null) ? message.guild.id : message.channel.id //DMs are a channel, interestingly enough
   let settings = bot.modules.settings.get(settingsId)
@@ -162,11 +161,16 @@ function compareArrays(arr1, arr2) {
 function postEmbed(img, siteUrl, searchTime, message) {
 
   if (message.guild !== null && !message.channel.permissionsFor(message.client.user).hasPermission('EMBED_LINKS')) {
-    message.channel.send(
+    return message.channel.send(
     encodeURI(`https://${siteUrl}${booru.sites[siteUrl].postView}${img.common.id}`) + '\n' +
     encodeURI(img.common.file_url) + '\nBooruBot works better if it has the "embeds links" permission'
   ).catch(err => {setTimeout(() => {throw err})})
     return
+  }
+
+  let metadata = {
+    user: message.author.id,
+
   }
 
   let Discord = require('discord.js')
@@ -183,13 +187,26 @@ function postEmbed(img, siteUrl, searchTime, message) {
     }
   })
 
-  embed.setDescription(`**Score:** ${img.common.score} | **Rating:** ${img.common.rating.toUpperCase()}`)
+  embed.setDescription(`**Score:** ${img.common.score} | **Rating:** ${img.common.rating.toUpperCase()} | [Image](${encodeURI(img.common.file_url)}) [](${JSON.stringify(metadata)})`)
 
-  embed.setColor((message.guild !== null) ? message.guild.members.get(message.bot.user.id).highestRole.color : '#34363C')
+  embed.setColor((message.guild !== null) ? message.guild.members.get(message.client.user.id).highestRole.color : '#34363C')
 
   //console.log(require('util').inspect(embed, { depth: null }));
 
-  message.channel.sendEmbed(embed)
-  .then(msg => {message.channel.lastImagePosted = msg;message.channel.stopTyping()}) //Lazy way to easily delete the last image posted, see `delete.js`
+  message.channel.send({embed})
+  .then(msg => {
+    message.channel.lastImagePosted = msg //Lazy way to easily delete the last image posted, see `delete.js`
+
+    let customEmote = new Map([['264246678347972610', '272782646407593986'],['211956704798048256', '269682750682955777']]).get(message.guild.id)
+    //NSFW, squares
+    //test server, glaceWhoa
+
+    if (customEmote)
+      msg.react(message.client.emojis.get(customEmote))
+    else
+      msg.react('❌')
+
+    message.channel.stopTyping()
+  })
   .catch( err => {console.log(err); setTimeout(() => {throw err})} )
 }
