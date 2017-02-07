@@ -37,7 +37,7 @@ module.exports.events.message = (bot, message) => {
   // ['e6', 'cat', 'cute']
 
   if (!module.exports.config.invokers.filter(_=>_!=='').includes(args[0])) {
-    if (booru.resolveSite(args[0]) || ['rand', 'random', 'r'].includes(args[0])) {
+    if (booru.resolveSite(args[0]) || ['r', 'rand', 'random'].includes(args[0])) {
       args.unshift('')
     } else {
       return
@@ -62,7 +62,7 @@ module.exports.events.message = (bot, message) => {
     return message.channel.sendMessage(`The site \`${booru.resolveSite(args[1])}\` is blacklisted here.`)
 
   //Sure it looks simple and clean here, but don't scroll down
-  if (['rand', 'random'].includes(args[1])) {
+  if (['r', 'rand', 'random'].includes(args[1])) {
     message.channel.startTyping()
     message.botClient = bot
     randSearch([...args.slice(2), ...settings.tags.map(v=>{return `-${v}`})], message)
