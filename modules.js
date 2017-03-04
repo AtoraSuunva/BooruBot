@@ -165,12 +165,12 @@ function shlex(str, {lowercaseCommand = false, lowercaseAll = false} = {}) {
 		if (result === null) break
 		matches.push(result[1] || result[2] || result[3])
 	}
-
+  
   if (lowercaseCommand)
     matches[0] = matches[0].toLowerCase()
 
   if (lowercaseAll)
-    matches.map(v => v.toLowerCase())
+    matches = matches.map(v => v.toLowerCase())
 
 	return matches
 }
