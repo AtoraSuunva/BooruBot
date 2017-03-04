@@ -42,7 +42,7 @@ module.exports.events.message = (bot, message) => {
     case 'save':
       require('fs').writeFile('./config.json', JSON.stringify(config, null, 4), (err) => {
         if (err) throw err;
-        console.log('Updated Config.json!')
+        bot.modules.logger.log('Updated Config.json!')
         message.channel.sendMessage(`Saved config!`)
       })
       return

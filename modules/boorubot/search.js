@@ -125,22 +125,23 @@ function randSearch(tags, message) {
     let settingsId = (message.guild) ? message.guild.id : message.channel.id //DMs are a channel, interestingly enough
     let settings = message.botClient.modules.settings.get(settingsId) //yay settings
     let searchStart = process.hrtime()
+    let maxTime = 1 * 1000 //30 sec timeout
 
   	for (let site of randSites) {
-  		console.log(`Searching ${site}`)
+  		bot.modules.logger.log(`Searching ${site}`)
       if (settings.sites.includes(site)) {
-         console.log('Skipping blacklisted site')
+         bot.modules.logger.log('Skipping blacklisted site')
          continue
        }
 
-  		try {
-  			imgs = await booru.search(site, tags, 1).then(booru.commonfy).catch(console.log) //jshint ignore:line
-  			if (imgs[0] === undefined) throw new Error('aaa') //why does this work
-  			resolve([imgs[0], site, process.hrtime(searchStart), message])
-        return;
-  		} catch (e) {
-  			console.log(`No images found...`)
-  		}
+      let searchTimeout = setTimeout(()=>{bot.modules.logger.log(`Timed out ${site}`)}, maxTime);
+
+			imgs = await booru.search(site, tags, 1).then(booru.commonfy).catch(console.error) //jshint ignore:line
+
+      clearTimeout(searchTimeout)
+
+      if (imgs[0] === undefined) continue
+			return resolve([imgs[0], site, process.hrtime(searchStart), message])
   	}
   	reject(new Error('Found no images anywhere...'))
   }) //jshint ignore:line
@@ -186,11 +187,11 @@ function postEmbed(img, siteUrl, searchTime, message) {
     }
   })
 
-  embed.setDescription(`**Score:** ${img.common.score} | **Rating:** ${img.common.rating.toUpperCase()} | [Image](${encodeURI(img.common.file_url)}) [](${JSON.stringify(metadata)})`)
+  embed.setDescription(`**Score:** ${img.common.score} | **Rating:** ${img.common.rating.toUpperCase()} | [Image](${encodeURI(img.common.file_url).replace(/([()])/g, '\\$1')}) [](${JSON.stringify(metadata)})`)
 
   embed.setColor((message.guild) ? message.guild.members.get(message.client.user.id).highestRole.color : '#34363C')
 
-  //console.log(require('util').inspect(embed, { depth: null }));
+  //bot.modules.logger.log(require('util').inspect(embed, { depth: null }));
 
   message.channel.send({embed})
     .then(msg => {

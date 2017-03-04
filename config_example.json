@@ -7,5 +7,6 @@
         "booru!"
     ],
     "botbans": [],
-    "debug": false
+    "debug": false,
+    "selfbot": false
 }

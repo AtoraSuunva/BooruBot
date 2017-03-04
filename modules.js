@@ -6,12 +6,12 @@
 const Discord = require('discord.js')
 const fs = require('fs')
 const path = require('path')
+const Logger = require('./logger.js').Logger
 const recurReadSync = require('recursive-readdir-sync') //to read all files in a directory, including subdirectories
 //this allows you to sort modules into directories
 
 let config = require('./config.json') //Settings for the module system
-
-const bot = new Discord.Client()
+let logger = new Logger('err.log', reportError, config.debug)
 
 let modules = {}
 loadModules()
@@ -22,58 +22,79 @@ let events = getAllEvents()
 //Unfortunately, this prevents adding a module that listens to a new event/adding a new event without restarting the bot
 //one day I might find a fix for this
 
+let unusedEvents = getAllEvents({getUnused: true}) //Used right after to tell discord.js what events to not care about, so we can get a performance b o o s t
+
+//logger.log(unusedEvents)
+
+const bot = new Discord.Client()
+
 /**
  * Load the listeners for all the events
  * @return void
  */
 function startEvents() {
-  console.log('Loading events...')
+  logger.log('Loading events...')
   for (let event of events) {
+    logger.debug(`Loading ${event}`)
     bot.on(event, (...args) => {
+      //logger.debug(`Got ${event} event!`)
       for (let module in modules) {
         if (modules[module].events[event] !== undefined) {
           try {
             modules[module].events[event](bot, ...args)
           } catch (e) {
-            reportError(e, `Module Err: ${event}`)
+            logger.error(e, `Module Err: ${event}`)
           }
         }
       }
-      if (config.debug) console.log(`Got ${event} event!`)
     })
   }
 
   //message doesn't like being in the loop
   //Also I need to do some extra checks anyways
-  bot.on('message', (message) => {
-    if (message.author.equals(bot.user) || message.author.bot) return //Don't reply to itself or bots
+  bot.on('message', processMessage)
 
+  bot.on('messageUpdate', (oldmessage, message) => {
+  	if (oldmessage.content !== message.content)
+  		processMessage(message)
+  })
+
+  function processMessage(message) {
+
+    //yay things
     for (let module in modules) {
-      if (modules[module].events.message !== undefined && startsWithInvoker(message.content, modules[module].config.invokers)) {
-        if (config.botbans.some(b=>b.id === message.author.id)) return console.log(`Botbanned user: ${message.author.username}#${message.author.discriminator} (${message.author.id})`)
-        if (config.debug) console.log(`Running ${module}`)
-        try {
-          modules[module].events.message(bot, message)
-        } catch (e) {
-          let errId = reportError(e, 'Module Err: message')
-          message.channel.sendMessage(`Whoops, something went wrong!\nBug Atlas and tell him ErrID: \`${errId}\``)
-        }
-      }
-
-      //yay things
       if (modules[module].events.everyMessage !== undefined) {
-        if (config.debug) console.log(`Running ${module}`)
+        logger.debug(`Running ${module}`)
         try {
           modules[module].events.everyMessage(bot, message)
         } catch (e) {
-          reportError(e, 'Module Err: message')
+          logger.error(e, 'Module Err: message')
         }
       }
     }
-  })
-  console.log('Events Loaded! Finally Ready!')
-}
 
+    if (config.selfbot) {
+      if (message.author.id !== bot.user.id) return
+    } else {
+      if (message.author.id === bot.user.id || message.author.bot) return //Don't reply to itself or bots
+    }
+
+    for (let module in modules) {
+      if (modules[module].events.message !== undefined && startsWithInvoker(message.content, modules[module].config.invokers)) {
+        if (config.botbans.some(b=>b.id === message.author.id)) return logger.info(`Botbanned user: ${message.author.username}#${message.author.discriminator} (${message.author.id})`)
+        logger.debug(`Running ${module}`)
+        try {
+          modules[module].events.message(bot, message)
+        } catch (e) {
+          logger.error(e, 'Module Err: message')
+          message.channel.sendMessage(`Whoops, something went wrong!\nBug Atlas about it.`)
+        }
+      }
+    }
+  }
+
+  logger.log('Events Loaded! Finally Ready!')
+}
 //Some helper functions
 
 /**
@@ -84,20 +105,23 @@ function startEvents() {
  */
 function startsWithInvoker(msg, invokers) {
   if (invokers === null) return true
+  msg = msg.toLowerCase()
 
   let startsWith = false
 
   for (let invoker of config.invokers) { //Check for the global invoker(s)
+    invoker = invoker.toLowerCase()
     if (msg.startsWith(invoker)) {
       startsWith = true
       msg = msg.replace(invoker, '')
     }
   }
 
-  if (startsWith === false) return false
+  if (!startsWith) return false
   startsWith = false
 
   for (let invoker of invokers) { //Check for the module invoker(s)
+    invoker = invoker.toLowerCase()
     if (invoker === '') return true //Allow you to use '' as an invoker, meaning that it's called whenever the global invoker is used
     if (msg.startsWith(invoker)) {
       if (msg[msg.indexOf(invoker) + invoker.length] === undefined || msg[msg.indexOf(invoker) + invoker.length] === ' ') startsWith = true
@@ -125,9 +149,8 @@ function startsWithInvoker(msg, invokers) {
  * @param  {string}   str The string to shlex
  * @return {string[]}     The result of the shlexed string
  */
-function shlex(str) {
+function shlex(str, {lowercaseCommand = false, lowercaseAll = false} = {}) {
   for (let invoker of config.invokers) {
-    console.log(str)
     if (str.indexOf(invoker) === 0) {
       str = str.replace(invoker, '')
       break
@@ -142,27 +165,54 @@ function shlex(str) {
 		if (result === null) break
 		matches.push(result[1] || result[2] || result[3])
 	}
+
+  if (lowercaseCommand)
+    matches[0] = matches[0].toLowerCase()
+
+  if (lowercaseAll)
+    matches.map(v => v.toLowerCase())
+
 	return matches
 }
-
+module.exports.shlex = shlex
 /**
  * Gets all the events used by the modules
+ * @param  {Object}   fuckIDunnoWhatJSDocWantsHere Object with only one property: getUnused. If the function should return unused events instead of used events
  * @return {string[]} All the events used by the modules
  */
-function getAllEvents() {
+function getAllEvents({getUnused = false} = {}) {
   let events = []
+
   for (let module in modules) {
     if (modules[module].events !== undefined)
       events.push(...Object.keys(modules[module].events))
   }
 
-  array = Array.from(new Set(events)) //Ensure there's only unique events by using a set
+  events = Array.from(new Set(events)) //Ensure there's only unique events by using a set
 
-  if (array.indexOf('message') !== -1) { //Remove the message event since we always listen for it
-    array.splice(array.indexOf('message'), 1)
+  if (events.indexOf('message') !== -1) { //Remove the message event since we always listen for it
+    events.splice(events.indexOf('message'), 1)
   }
 
-  return array
+  let discordEvents = Object.keys(Discord.Constants.WSEvents)
+
+  //We're asked to return unused events, not used.
+  if (getUnused) {
+    for (let event of events.map(e => e.replace(/([A-Z])/g, '_$1').toUpperCase())) //SNAKE_CASE the events, so we can filter them correctly
+      discordEvents = discordEvents.filter(e => e !== event)
+
+    events = discordEvents.filter(e => e !== 'MESSAGE_CREATE')
+    //Manually remove, bots usually always use this + the listener is always created
+    //(also the event names mismatch ['message' !== 'MESSAGE_CREATE']
+  } else {
+    //Filter out events that aren't Discord events
+    let eventsC = events
+    events = []
+    for (let event of discordEvents.map(e => e.toLowerCase().replace(/(_\w)/g, m => m.replace('_','').toUpperCase())))  //camelCase the events, not sorry for this
+      eventsC.forEach(e => (e === event) ? events.push(e) : true)
+  }
+
+  return events
 }
 
 /**
@@ -178,7 +228,7 @@ function reloadConfig(newConfig) {
   }
   module.exports.config = config
 }
-
+module.exports.reloadConfig = reloadConfig
 /**
  * Saves the currently stored config
  * @return {Promise} A promise that resolves when settings are saved
@@ -186,7 +236,7 @@ function reloadConfig(newConfig) {
 function saveConfig() {
   return writeFile('./config.json', config)
 }
-
+module.exports.saveConfig = saveConfig
 //More helper functions, but this time for managing the module system
 
 /**
@@ -204,18 +254,18 @@ function loadModules() {
     purgeCache(`${file}`)
 
     if (require(`${file}`).config.autoLoad === false) {
-      if (config.debug) console.log(`Skipping ${file.replace(path.join(__dirname, 'modules/'), '')}: AutoLoad Disabled`)
+      logger.debug(`Skipping ${file.replace(path.join(__dirname, 'modules/'), '')}: AutoLoad Disabled`)
       continue;
     }
 
-    if (config.debug) console.log(`Loading ${file.replace(path.join(__dirname, 'modules/'), '')}`)
+    logger.debug(`Loading ${file.replace(path.join(__dirname, 'modules/'), '')}`)
     modules[require(`${file}`).config.name] = require(`${file}`)
   }
 
-  console.log(`Loaded: ${Object.keys(modules).join(', ')}`)
+  logger.log(`Loaded: ${Object.keys(modules).join(', ')}`)
   return `Loaded ${Object.keys(modules).length} module(s) sucessfully`
 }
-
+module.exports.loadModules = loadModules
 /**
  * (Re)load a single module
  * @param  {string} moduleName The name of the module to load
@@ -226,22 +276,22 @@ function loadModule(moduleName) {
     let moduleFiles = recurReadSync(path.join(__dirname, 'modules'))
 
     for (let file of moduleFiles) {
-      if (moduleName === require(`${file}`).config.name) {
-        if (config.debug) console.log(`Loading ${file.replace(path.join(__dirname, 'modules/'), '')}`)
-        purgeCache(`${file}`)
-        modules[moduleName] = require(`${file}`)
+      if (path.extname(file) !== '.js') continue
+      if (moduleName === require(file).config.name) {
+        logger.debug(`Loading ${file.replace(path.join(__dirname, 'modules/'), '')}`)
+        purgeCache(file)
+        modules[moduleName] = require(file)
         return `Loaded ${moduleName} sucessfully`
       }
     }
 
     return 'Could not find module'
   } catch (e) {
-    console.log(e)
-    reportError(e, 'moduleLoad')
+    logger.error(e)
     return 'Something went wrong!'
   }
 }
-
+module.exports.loadModule = loadModule
 /**
  * Unload a single module
  * @param  {string} moduleName The module to unload
@@ -252,8 +302,9 @@ function unloadModule(moduleName) {
     let moduleFiles = recurReadSync(path.join(__dirname, 'modules'))
 
     for (let file of moduleFiles) {
+      if (path.extname(file) !== '.js') continue
       if (moduleName === require(`${file}`).config.name) {
-        if (config.debug) console.log(`Unloading ${file.replace(path.join(__dirname, 'modules/'), '')}`)
+        logger.debug(`Unloading ${file.replace(path.join(__dirname, 'modules/'), '')}`)
         purgeCache(`${file}`)
         delete modules[moduleName]
         return `Sucessfully unloaded ${moduleName}`
@@ -262,12 +313,11 @@ function unloadModule(moduleName) {
 
     return 'Could not find module'
   } catch (e) {
-    console.log(e)
-    reportError(e, 'moduleUnload')
+    logger.error(e)
     return 'Something went wrong!'
   }
 }
-
+module.exports.unloadModule = unloadModule
 /*  SETTINGS HERE WE GOOO
  *
  * Settings are stored in separate files under `settings/`
@@ -326,7 +376,7 @@ class Settings {
       .then(() => {
         return;
       }).catch((e) => {
-        reportError(e, 'Save Settings (Create)') //fug
+        logger.error(e, 'Save Settings (Create)') //fug
         throw e
       })
     }
@@ -349,7 +399,7 @@ class Settings {
         .then(() => {
           resolve(that.cache)
         }).catch((e) => {
-          reportError(e, 'Save Settings (All)')
+          logger.error(e, 'Save Settings (All)')
           reject()
         })
 
@@ -370,18 +420,18 @@ class Settings {
 
       //So we don't have the settings cached, let's load em'!
       try {
-        this.cache.set(settingId, require(`./settings/${settingId}.json`))
+        this.cache.set(settingId, require(path.join(process.cwd(), `settings`, `${settingId}.json`)))
         return;
       } catch (e) {
         //Either it doesn't exist or it erroed, so we have to create new settings
-        if (config.debug) console.log(`Creating settings for: ${settingId}`)
+        logger.debug(`Creating settings for: ${settingId}`)
 
         try {
-          fs.writeFileSync(`./settings/${settingId}.json`, JSON.stringify(require('./defaultSettings.json'), null, 2))
-          this.cache.set(settingId, require(`./settings/${settingId}.json`))
+          fs.writeFileSync(path.join(process.cwd(), `settings`, `${settingId}.json`), JSON.stringify(require('./defaultSettings.json'), null, 2))
+          this.cache.set(settingId, require(path.join(process.cwd(), `settings`, `${settingId}.json`)))
           return;
         } catch(e) {
-          reportError(e, 'Save Settings (Create)') //fug
+          logger.error(e, 'Save Settings (Create)') //fug
           throw e
         }
       }
@@ -397,7 +447,7 @@ class Settings {
      */
     writeSettings(fileName, fileContent) {
       return new Promise(function(resolve, reject) {
-        fs.writeFile(`./settings/${fileName}.json`, JSON.stringify(fileContent, null, 2), (e) => {
+        fs.writeFile(path.join(process.cwd(), `settings`, `${fileName}.json`), JSON.stringify(fileContent, null, 2), (e) => {
           if (e) reject(e)
           resolve()
         })
@@ -405,7 +455,7 @@ class Settings {
     }
 }
 
-/*man*/let settings = new Settings()
+let settings = module.exports.settings = new Settings()
 
 //And God said,
 let there = 'light';
@@ -472,13 +522,11 @@ function reportError(err, errType) {
   let errID = Math.floor(Math.random() * 1000000).toString(16)
   let errMsg = `Error: ${errType}\nID: ${errID}\n\`\`\`js\n${err.toString()}\n\`\`\``
 
-  console.log(errMsg)
-  console.log(err)
-  bot.users.get(config.owner.id).sendMessage(errMsg, {split: {prepend: '```js\n', append: '\n```'}})
-
+  if (!config.selfbot)
+    bot.users.get(config.owner.id).sendMessage(errMsg, {split: {prepend: '```js\n', append: '\n```'}})
   return errID;
 }
-
+module.exports.reportError = reportError
 /**
  * Promisefied fs.writefile
  * @param  {String} fileName    The filename to write to
@@ -494,30 +542,32 @@ function writeFile(fileName, fileContent) {
   })
 }
 
-
 startEvents()
 
-console.log('Starting Login...')
+logger.info('Starting Login...')
 bot.login(config.token).then(token => {
-  console.log('Logged in!')
+  logger.info('Logged in!')
   if (config.owner === null) {
-    console.log('Fetching Owner info...')
+    logger.info('Fetching Owner info...')
     bot.fetchApplication().then(OAuth => {
       config.owner = OAuth.owner
       fs.writeFile('./config.json', JSON.stringify(config, null, 2), (err) => {
-        console.log((err) ? err : 'Saved Owner info!')
+        logger.info((err) ? err : 'Saved Owner info!')
       })
     })
   }
 })
 
-process.on('exit', (code) => {
+bot.on('disconnect', reason => {logger.log(reason)})
+
+process.on('exit', code => {
   bot.destroy()
-  console.log(`About to exit with code: ${code}`)
+  logger.error(`About to exit with code: ${code}`)
 })
 
-process.on('unhandledRejection', (err, p) => {
-  console.error(`Uncaught Promise Error: \n${err}\nPromise:\n{p}`)
+process.on('unhandledRejection', (reason, p) => {
+  logger.error(`Uncaught Promise Error: \n${reason}\nPromise:\n${require('util').inspect(p, { depth: 2 })}`)
+  fs.appendFile('err.log', p, err => {})
 })
 
 /**
@@ -525,23 +575,41 @@ process.on('unhandledRejection', (err, p) => {
  */
 function saveAndExit() {
   settings.saveAll().then(() => {
-    process.nextTick(process.exit(0)) //rippo
-  }).catch(console.log)
+    process.nextTick(process.exit()) //rippo
+  }).catch(logger.error)
 }
-
-
+module.exports.saveAndExit = saveAndExit
 //Export some stuff for utility purpose
 
-module.exports.shlex = shlex
-module.exports.loadModules = loadModules
-module.exports.loadModule = loadModule
-module.exports.unloadModule = unloadModule
-module.exports.modules = modules
-module.exports.config = config
-module.exports.reloadConfig = reloadConfig
-module.exports.saveConfig = saveConfig
-module.exports.reportError = reportError
-module.exports.settings = settings
-module.exports.saveAndExit = saveAndExit
+//module.exports.shlex = shlex
+//module.exports.loadModules = loadModules
+//module.exports.loadModule = loadModule
+// module.exports.unloadModule = unloadModule
+// module.exports.reloadConfig = reloadConfig
+// module.exports.saveConfig = saveConfig
+// module.exports.reportError = reportError
+// module.exports.settings = settings
+// module.exports.saveAndExit = saveAndExit
 
+/**
+ * An array of all the modules that are loaded
+ * @type {Object[]}
+ */
+module.exports.modules = modules
+
+/**
+ * Object with the current config being used
+ * @type {Object}
+ */
+module.exports.config = config
+
+/**
+ * The Logger being used
+ * @type {Logger}
+ */
+module.exports.logger = logger
+
+bot.logger = logger
 bot.modules = module.exports
+
+//*cries in js*

@@ -14,7 +14,7 @@ module.exports.events = {}
 module.exports.events.message = (bot, message) => {
   let settingsId = (message.guild !== null) ? message.guild.id : message.channel.id //DMs are a channel, interestingly enough
   let settings = bot.modules.settings.get(settingsId)
-  let args = bot.modules.shlex(message.content)
+  let args = bot.modules.shlex(message.content, {lowercaseAll: true})
 
   let canEditBlacklist = (message.guild !== null) ? message.member.hasPermission('MANAGE_MESSAGES') || message.author.id === bot.modules.config.owner.id : true //true if it's a dm
   //also true if it's me ;^)
@@ -26,7 +26,7 @@ module.exports.events.message = (bot, message) => {
   if (args[1] !== undefined && !args[1].endsWith('s')) args[1] += 's'
 
   if (args[1] !== undefined && (args[1] !== 'tags' && args[1] !== 'sites')) {
-    console.log(args)
+    bot.modules.logger.log(args)
     message.channel.sendMessage('That\'s not something you can blacklist!')
     return;
   }
@@ -68,7 +68,7 @@ module.exports.events.message = (bot, message) => {
         return;
       }
       if (typeof args[2] === 'string')  args[2] = [args[2]]
-      console.log(args[2])
+      bot.modules.logger.log(args[2])
       settings[args[1]].push(...args[2])
       settings[args[1]] = ensureUnique(settings[args[1]])
 

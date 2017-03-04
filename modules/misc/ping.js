@@ -14,7 +14,7 @@ module.exports.events.message = (bot, message) => {
 
   message.channel.sendMessage(dedent`
     \`\`\`
-    ─────┬─────
+    ─────┬───── atlas sucks
     |   ${score[0]}░${score[1]}
     ·    ░   |
     ─────┴─────

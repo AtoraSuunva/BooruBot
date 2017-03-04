@@ -21,19 +21,19 @@ module.exports.events.message = (bot, message) => {
   let evalMsg = message.content.substring(message.content.indexOf(args[0]) + args[0].length)
 
 
-  console.log(evalMsg)
+  bot.modules.logger.log(evalMsg)
 
   try {
     let msg = eval(evalMsg)
-    if (args[0] !== 'eval?') console.log(msg)
+    if (args[0] !== 'eval?') bot.modules.logger.log(msg)
     let length = require('util').inspect(msg, { depth: null }).length
     if (length > 2000 && args[0] !== 'eval!') return message.channel.send(`Result over 2k characters (${length} chars), use \`eval!\` to dump everything.`)
-    message.channel.sendMessage('```js\n' + require('util').inspect(msg, { depth: null }) + '\n```', {split: {prepend: '```js\n', append: '\n```'}}).catch(console.log)
+    message.channel.sendMessage('```js\n' + require('util').inspect(msg, { depth: null }) + '\n```', {split: {prepend: '```js\n', append: '\n```'}}).catch(bot.logger.error)
   } catch (e) {
-    console.log(e)
+    bot.modules.logger.log(e)
     let length = e.message.length
     if (length > 2000 && args[0] !== 'eval!') return message.channel.send(`Result over 2k characters (congrats on ${length} chars), use \`eval!\` to dump everything.`)
-    message.channel.sendMessage('```js\n' +  e  + '\n```', {split: {prepend: '```js\n', append: '\n```'}}).catch(console.log)
+    message.channel.sendMessage('```js\n' +  e  + '\n```', {split: {prepend: '```js\n', append: '\n```'}}).catch(bot.logger.error)
   }
 
 }

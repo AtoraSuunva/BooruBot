@@ -40,7 +40,7 @@ module.exports.events.message = (bot, message) => {
     bot.modules.saveConfig()
       .then(message.channel.send(msg))
   }).catch(e => {
-    console.log(e)
+    bot.modules.logger.log(e)
     message.channel.send('Something went wrong...')
   })
 }

@@ -58,9 +58,9 @@ module.exports.events.message = (bot, message) => {
 
     for (let p of prompts) {
       if (p.need !== false) {
-        console.log('ASKING: ' + p.ask)
+        bot.modules.logger.log('ASKING: ' + p.ask)
         let messages = await prompt(message, p.ask, p.waitFor) //jshint ignore:line
-        console.log('RECEIVED: ' + messages[1])
+        bot.modules.logger.log('RECEIVED: ' + messages[1])
         tutMessages.push(...messages)
         if (tutMessages[tutMessages.length - 1].content.startsWith('b!exit')) {
           exit(message.channel)
@@ -69,7 +69,7 @@ module.exports.events.message = (bot, message) => {
       }
     }
 
-    console.log('asfasf' + tutMessages[tutMessages.length - 1].content.startsWith('b!clean') + ' aaa' + bbCanManageMessages)
+    bot.modules.logger.log('asfasf' + tutMessages[tutMessages.length - 1].content.startsWith('b!clean') + ' aaa' + bbCanManageMessages)
     if (tutMessages[tutMessages.length - 1].content.startsWith('b!clean') && bbCanManageMessages)
       message.channel.bulkDelete(tutMessages).catch(console.log) //jshint ignore:line
 
@@ -90,7 +90,7 @@ function prompt(message, ask, waitfor) {
             }
             resolve([msg, ...msgs.array()])
           })
-          .catch(e => {console.log(e); exit(message.channel)})
+          .catch(e => {bot.modules.logger.log(e); exit(message.channel)})
       })
   })
 }
@@ -99,7 +99,7 @@ function prompt(message, ask, waitfor) {
 
 function checkSearch(bot, message) {
   let settingsId = (message.guild !== null) ? message.guild.id : message.channel.id
-  console.log(bot.modules.settings)
+  bot.modules.logger.log(bot.modules.settings)
   let settings = bot.modules.settings.get(settingsId)
 
   if (message.guild === null) { //It's a DM, time to check `disableDMs`

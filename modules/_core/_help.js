@@ -7,15 +7,20 @@ module.exports.config = {
   expandedHelp: 'This command doesn\'t do much else. But at least you know how to get more help!'
 }
 
+const Discord = require('discord.js')
+
 module.exports.events = {}
 module.exports.events.message = (bot, message) => {
-  let shlex = bot.modules.shlex
   let modules = bot.modules.modules
   let config = bot.modules.config
+  let args = bot.modules.shlex(message.content, {lowercaseAll: true})
 
-  let args = shlex(message.content)
+  let embed = new Discord.RichEmbed()
 
+  mod = 'Commands: '
   msg = ''
+  invokers = null
+  aliases = null
 
   if (args[1] === undefined) {
     for (let module in modules) {
@@ -23,14 +28,27 @@ module.exports.events.message = (bot, message) => {
         msg += `\`${modules[module].config.name}\`: ${modules[module].config.help}\n`
       }
     }
+    invokers = `\`${config.invokers.join('`, `').replace('\`<', '<').replace('>\`', '>')}\``
   } else {
+    mod = ''
     msg = `Could not find help for ${args[1]}`
     for (let module in modules) {
       if (modules[module].config.name === args[1] && modules[module].config.expandedHelp !== undefined) {
-        msg = modules[module].config.expandedHelp + '\n\n' + `Invoked with: \`${modules[module].config.invokers.join('`, `')}\`\nDon't forget to also use \`${config.invokers.join('\`, or \`')}\``
+        mod = module
+        msg = modules[module].config.expandedHelp
+        aliases = `\`${modules[module].config.invokers.join('`, `')}\``
       }
     }
   }
 
-  message.channel.sendMessage(msg)
+  embed
+    .setAuthor(mod)
+    .setDescription(msg)
+
+    if (invokers)
+      embed.addField('Invokers:', invokers)
+    if (aliases)
+      embed.addField('Aliases:', aliases)
+
+  message.channel.send({embed})
 }

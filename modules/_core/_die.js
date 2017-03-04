@@ -14,7 +14,7 @@ module.exports.events.message = (bot, message) => {
   let modules = bot.modules
 
   if (message.author.id === config.owner.id) {
-    if (message.channel.permissionsFor(bot.user).hasPermission('SEND_MESSAGES')) {
+    if (message.guild && message.channel.permissionsFor(bot.user).hasPermission('SEND_MESSAGES')) {
       message.channel.send('no u')
         .then(msg => modules.saveAndExit())
         .catch(err => {

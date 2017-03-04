@@ -47,7 +47,7 @@ module.exports.events = {}
 //eventArgs     => The args sent by the event
 
 module.exports.events.message = (bot, message) => {
-  console.log(message.content)
+  bot.modules.logger.log(message.content)
 
   message.channel.sendMessage(`Congrats! You found the test command!`)
 }
@@ -59,6 +59,6 @@ module.exports.events.channelUpdate = (bot, oldChannel, newChannel) => {
 }
 
 //Finally, show off ready
-module.exports.events.ready = () => {
-  console.log('I\'m ready!')
+module.exports.events.ready = (bot) => {
+  bot.logger.info('I\'m ready!')
 }
