@@ -92,7 +92,7 @@ function search(site, tags, message) {
 
     let searchStart = process.hrtime()
 
-    booru.search(site, tags, 1) //TODO: Check if site supports `order:random`
+    booru.search(site, tags, {limit: 1, random: true})
     .then(booru.commonfy)
     .then((imgs) => {
       if (imgs[0] !== undefined) {
@@ -128,19 +128,19 @@ function randSearch(tags, message) {
     let maxTime = 1 * 1000 //30 sec timeout
 
   	for (let site of randSites) {
-  		bot.modules.logger.log(`Searching ${site}`)
+  		message.botClient.modules.logger.log(`Searching ${site}`)
       if (settings.sites.includes(site)) {
-         bot.modules.logger.log('Skipping blacklisted site')
+         message.botClient.modules.logger.log('Skipping blacklisted site')
          continue
        }
 
-      let searchTimeout = setTimeout(()=>{bot.modules.logger.log(`Timed out ${site}`)}, maxTime);
+      let searchTimeout = setTimeout(()=>{message.botClient.modules.logger.log(`Timed out ${site}`)}, maxTime);
 
-			imgs = await booru.search(site, tags, 1).then(booru.commonfy).catch(console.error) //jshint ignore:line
+			imgs = await booru.search(site, tags, {limit: 1, random: true}).then(booru.commonfy).catch(console.error) //jshint ignore:line
 
       clearTimeout(searchTimeout)
 
-      if (imgs[0] === undefined) continue
+      if (imgs === undefined || imgs[0] === undefined) continue
 			return resolve([imgs[0], site, process.hrtime(searchStart), message])
   	}
   	reject(new Error('Found no images anywhere...'))
@@ -208,5 +208,5 @@ function postEmbed(img, siteUrl, searchTime, message) {
 
       message.channel.stopTyping()
     })
-    .catch(err => bot.modules.reportError(err, 'Search Send'))
+    .catch(err => message.botClient.modules.logger.error(err, 'Search Send'))
 }

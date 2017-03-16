@@ -17,10 +17,10 @@ module.exports.events.message = (bot, message) => {
 
   let embed = new Discord.RichEmbed()
 
-  mod = 'Commands: '
-  msg = ''
-  invokers = null
-  aliases = null
+  let mod = 'Commands: '
+  let msg = ''
+  let invokers = null
+  let aliases = null
 
   if (args[1] === undefined) {
     for (let module in modules) {
@@ -28,7 +28,7 @@ module.exports.events.message = (bot, message) => {
         msg += `\`${modules[module].config.name}\`: ${modules[module].config.help}\n`
       }
     }
-    invokers = `\`${config.invokers.join('`, `').replace('\`<', '<').replace('>\`', '>')}\``
+    invokers = config.invokers.slice(0).map(v => `\`${v}\``).join(', ').replace(/\`\s*(<@.?\d+>)\s*\`/g, '$1')
   } else {
     mod = ''
     msg = `Could not find help for ${args[1]}`

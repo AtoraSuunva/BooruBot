@@ -81,7 +81,9 @@ function startEvents() {
 
     for (let module in modules) {
       if (modules[module].events.message !== undefined && startsWithInvoker(message.content, modules[module].config.invokers)) {
-        if (config.botbans.some(b=>b.id === message.author.id)) return logger.info(`Botbanned user: ${message.author.username}#${message.author.discriminator} (${message.author.id})`)
+        if (config.botbans.some(b=>b.id === message.author.id))
+          return logger.info(`Botbanned user: ${message.author.username}#${message.author.discriminator} (${message.author.id})`)
+
         logger.debug(`Running ${module}`)
         try {
           modules[module].events.message(bot, message)
@@ -165,7 +167,7 @@ function shlex(str, {lowercaseCommand = false, lowercaseAll = false} = {}) {
 		if (result === null) break
 		matches.push(result[1] || result[2] || result[3])
 	}
-  
+
   if (lowercaseCommand)
     matches[0] = matches[0].toLowerCase()
 
