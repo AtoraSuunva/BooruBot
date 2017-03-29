@@ -9,7 +9,7 @@ module.exports.config = {
 }
 
 module.exports.events = {}
-module.exports.events.message = (bot, message) => { //TODO: Check for "MANAGE_MESSAGES" perm on the bot and use the bulk delete endpoint if available
+module.exports.events.message = (bot, message) => {
   let args = bot.modules.shlex(message.content)
   let msgsToDelete = parseInt(args[1])
 
@@ -49,6 +49,7 @@ module.exports.events.message = (bot, message) => { //TODO: Check for "MANAGE_ME
 module.exports.events.messageReactionAdd = (bot, react, user) => {
   let customEmote = (react.message.guild) ? new Map([['264246678347972610', '272782646407593986'],['211956704798048256', '269682750682955777']]).get(react.message.guild.id) || '0' : '0'
 
+  //❌
 
   if ((react.emoji.name === '❌' && react.count >= 2 && react.me) || (react.emoji.id === customEmote && react.count >= 2 && react.me)) {
     let Discord = require('discord.js')
@@ -56,6 +57,6 @@ module.exports.events.messageReactionAdd = (bot, react, user) => {
       .setAuthor(`Message deleted by ${user.username}#${user.discriminator} (Click for image)`, react.message.embeds[0].url, react.message.embeds[0].url)
       .setDescription('Use `b!del` to remove this completely.')
 
-      react.message.edit('', {embed})
+      react.message.edit({embed})
   }
 }

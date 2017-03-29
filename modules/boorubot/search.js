@@ -44,7 +44,7 @@ module.exports.events.message = (bot, message) => {
     }
   }
 
-  if (settings.options.topicEnable && !message.channel.topic.includes('bb=true'))
+  if (settings.options.topicEnable && message.channel.topic !== null && !message.channel.topic.includes('bb=true'))
     return message.channel.sendMessage('You need to enable searching in this channel by putting `bb=true` in the topic first (Set `topicEnable` to false to disable this).')
 
   if (args[1] === undefined)
@@ -187,8 +187,10 @@ function postEmbed(img, siteUrl, searchTime, message) {
     }
   })
 
-  embed.setDescription(`**Score:** ${img.common.score} | **Rating:** ${img.common.rating.toUpperCase()} | [Image](${encodeURI(img.common.file_url).replace(/([()])/g, '\\$1')}) [](${JSON.stringify(metadata)})`)
 
+  let tags = (img.common.tags.join(', ').length < 50) ? img.common.tags.join(', ') : img.common.tags.join(', ').substr(0,50) + `... [See All](http://All.The.Tags/${img.common.tags.join(',').replace(/([()])/g, '\\$1').replace(/(%20)/g, '_')})`
+
+  embed.setDescription(`**Score:** ${img.common.score} | **Rating:** ${img.common.rating.toUpperCase()} | [Image](${encodeURI(img.common.file_url).replace(/([()])/g, '\\$1')}) \n **Tags:** ${tags} [](${JSON.stringify(metadata)})`)
   embed.setColor((message.guild) ? message.guild.members.get(message.client.user.id).highestRole.color : '#34363C')
 
   //bot.modules.logger.log(require('util').inspect(embed, { depth: null }));
