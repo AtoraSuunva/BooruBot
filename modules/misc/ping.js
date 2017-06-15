@@ -9,23 +9,21 @@ module.exports.config = {
 module.exports.events = {}
 module.exports.events.message = (bot, message) => {
   let score = [randInt(0,8), randInt(0,8)]
-  let reverseChar = '‮'
-  //left-to-right override char, for (detide)
 
   message.channel.sendMessage(dedent`
-    \`\`\`
+    \`\`\`xl
     ─────┬───── atlas sucks
     |   ${score[0]}░${score[1]}
     ·    ░   |
     ─────┴─────
     \`\`\``).then(newMsg => {
       newMsg.edit(dedent`
-        \`\`\`
+        \`\`\`xl
         ─────┬───── Pong! ${newMsg.createdTimestamp - message.createdTimestamp}ms
         |   ${score[0]}░${score[1]+1}
         .    ░   |
-        ─────┴─────
-        \`\`\`${reverseChar}`)
+        ─────┴───── Heartbeat: ${bot.pings} => ${bot.ping.toFixed(2)}ms
+        \`\`\``)
     })
 }
 

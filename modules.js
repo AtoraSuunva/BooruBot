@@ -3,10 +3,10 @@
  * No actual bot commands are run here, all this does is load the modules in the module folder and pass events
  */
 
-const Discord = require('discord.js')
-const fs = require('fs')
-const path = require('path')
-const Logger = require('./logger.js').Logger
+const Discord       = require('discord.js')
+const fs            = require('fs')
+const path          = require('path')
+const Logger        = require('./logger.js').Logger
 const recurReadSync = require('recursive-readdir-sync') //to read all files in a directory, including subdirectories
 //this allows you to sort modules into directories
 
@@ -26,7 +26,10 @@ let unusedEvents = getAllEvents({getUnused: true}) //Used right after to tell di
 
 //logger.log(unusedEvents)
 
-const bot = new Discord.Client()
+const bot = new Discord.Client({
+  disableEveryone: true,
+  disabledEvents: ['TYPING_START']
+})
 
 /**
  * Load the listeners for all the events
@@ -81,11 +84,12 @@ function startEvents() {
 
     for (let module in modules) {
       if (modules[module].events.message !== undefined && startsWithInvoker(message.content, modules[module].config.invokers)) {
-        if (config.botbans.some(b=>b.id === message.author.id))
-          return logger.info(`Botbanned user: ${message.author.username}#${message.author.discriminator} (${message.author.id})`)
 
-        logger.debug(`Running ${module}`)
+        if (config.botbans.some(b => b.id === message.author.id)) return
+        if (modules[module].config.invokers !== null) logger.debug(`Running ${module}`)
+
         try {
+          message.botClient = bot
           modules[module].events.message(bot, message)
         } catch (e) {
           logger.error(e, 'Module Err: message')
@@ -152,9 +156,10 @@ function startsWithInvoker(msg, invokers) {
  * @return {string[]}     The result of the shlexed string
  */
 function shlex(str, {lowercaseCommand = false, lowercaseAll = false} = {}) {
+  if (str.content) str = str.content
   for (let invoker of config.invokers) {
-    if (str.indexOf(invoker) === 0) {
-      str = str.replace(invoker, '')
+    if (str.toLowerCase().indexOf(invoker.toLowerCase()) === 0) {
+      str = replaceAll(str, invoker, '')
       break
     }
   }
@@ -177,6 +182,13 @@ function shlex(str, {lowercaseCommand = false, lowercaseAll = false} = {}) {
 	return matches
 }
 module.exports.shlex = shlex
+
+function replaceAll(str, find, rep) {
+    const esc = find.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')
+    const reg = new RegExp(esc, 'ig')
+    return str.replace(reg, rep)
+};
+
 /**
  * Gets all the events used by the modules
  * @param  {Object}   fuckIDunnoWhatJSDocWantsHere Object with only one property: getUnused. If the function should return unused events instead of used events
@@ -250,22 +262,32 @@ function loadModules() {
   //You might ask "why sync?", that's because there's no use in logging in if all modules aren't loaded yet
   let moduleFiles = recurReadSync(path.join(__dirname, 'modules'))
 
-  moduleFiles = moduleFiles.filter((file) => {return path.extname(file) === '.js'}) //only load js files
+  moduleFiles = moduleFiles.filter(file => path.extname(file) === '.js') //only load js files
+
+  let succ = []
+  let fails = []
 
   for (let file of moduleFiles) {
     purgeCache(`${file}`)
 
     if (require(`${file}`).config.autoLoad === false) {
       logger.debug(`Skipping ${file.replace(path.join(__dirname, 'modules/'), '')}: AutoLoad Disabled`)
-      continue;
+      continue
     }
 
     logger.debug(`Loading ${file.replace(path.join(__dirname, 'modules/'), '')}`)
-    modules[require(`${file}`).config.name] = require(`${file}`)
+    try {
+      modules[require(`${file}`).config.name] = require(`${file}`)
+      succ.push(require(`${file}`).config.name)
+    } catch (e) {
+      logger.warn(`Failed to load ${file.replace(path.join(__dirname, 'modules/'), '')}: \n${e}`)
+      fails.push(file.replace(path.join(__dirname, 'modules/')))
+    }
   }
 
-  logger.log(`Loaded: ${Object.keys(modules).join(', ')}`)
-  return `Loaded ${Object.keys(modules).length} module(s) sucessfully`
+  logger.log(`Loaded: ${succ.join(', ')}`)
+  if (fails.length > 0) logger.warn(`Failed: ${fails.join(', ')}`)
+  return `Loaded ${succ.length} module(s) sucessfully; ${fails.length} failed.`
 }
 module.exports.loadModules = loadModules
 /**
@@ -285,6 +307,7 @@ function loadModule(moduleName) {
         modules[moduleName] = require(file)
         return `Loaded ${moduleName} sucessfully`
       }
+
     }
 
     return 'Could not find module'
@@ -320,6 +343,35 @@ function unloadModule(moduleName) {
   }
 }
 module.exports.unloadModule = unloadModule
+
+/**
+ * (Gets info for a single module
+ * @param  {string} moduleName The name of the module
+ * @return {Object}            The config, path and dir of the module (Or a string if something went wrong)
+ */
+function getModuleInfo(moduleName) {
+  try {
+    let moduleFiles = recurReadSync(path.join(__dirname, 'modules'))
+
+    for (let file of moduleFiles) {
+      if (path.extname(file) !== '.js') continue
+
+      let config = require(file).config
+      if (moduleName === config.name) {
+        let p = file
+        let dir = path.parse(file).dir.split(path.sep).pop() //returns the folder it's in
+        return {config, path: p, dir}
+      }
+    }
+
+    return 'Could not find module'
+  } catch (e) {
+    logger.error(e)
+    return 'Something went wrong!'
+  }
+}
+module.exports.getModuleInfo = getModuleInfo
+
 /*  SETTINGS HERE WE GOOO
  *
  * Settings are stored in separate files under `settings/`

@@ -18,17 +18,28 @@ module.exports.events.message = (bot, message) => {
   let embed = new Discord.RichEmbed()
 
   let mod = 'Commands: '
-  let msg = ''
+  let msg = null
+  let cmds = null
   let invokers = null
   let aliases = null
 
   if (args[1] === undefined) {
+
+    cmds = new Map()  //map of [dir: [commands]]
+
     for (let module in modules) {
       if (modules[module].config.invisible !== true) {
-        msg += `\`${modules[module].config.name}\`: ${modules[module].config.help}\n`
+        let info = bot.modules.getModuleInfo(module)
+        if (typeof info === 'string') continue
+
+        if (!cmds.has(info.dir))
+          cmds.set(info.dir, [])
+
+        cmds.get(info.dir).push(`[${modules[module].config.name}](): ${modules[module].config.help}`)
       }
+
     }
-    invokers = config.invokers.slice(0).map(v => `\`${v}\``).join(', ').replace(/\`\s*(<@.?\d+>)\s*\`/g, '$1')
+    invokers = `\`${config.invokers.join('\` | \`')}\``
   } else {
     mod = ''
     msg = `Could not find help for ${args[1]}`
@@ -36,19 +47,30 @@ module.exports.events.message = (bot, message) => {
       if (modules[module].config.name === args[1] && modules[module].config.expandedHelp !== undefined) {
         mod = module
         msg = modules[module].config.expandedHelp
-        aliases = `\`${modules[module].config.invokers.join('`, `')}\``
+        if (modules[module].config.invokers) aliases = `\`${modules[module].config.invokers.join('\` | \`')}\``
       }
     }
   }
 
-  embed
-    .setAuthor(mod)
-    .setDescription(msg)
+  embed.setAuthor(mod)
 
-    if (invokers)
-      embed.addField('Invokers:', invokers)
-    if (aliases)
-      embed.addField('Aliases:', aliases)
+  if (cmds) {
+    for (let [name, value] of cmds)
+      embed.addField(capitalize(name), value.join('\n'), true)
+  }
+
+  if (msg)
+    embed.setDescription(msg)
+
+  if (invokers)
+    embed.addField('Invokers:', invokers)
+
+  if (aliases)
+    embed.addField('Aliases:', aliases)
 
   message.channel.send({embed})
+}
+
+function capitalize(string) {
+    return string.charAt(0).toUpperCase() + string.slice(1)
 }

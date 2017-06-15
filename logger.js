@@ -78,7 +78,7 @@ class Logger {
    */
   error(...message) {
     this._reportError(require('util').format(...message), 'Logger Caught')
-    this.logStream.write(`${this._log(new Date(), 'error', ...message)}\n\r`)
+    this.logStream.write(`${this._log(new Date(), 'error', require('util').inspect(message[0], { depth: null }), ...message.slice(1))}\n\r`)
   }
 
   /**

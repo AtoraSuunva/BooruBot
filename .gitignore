@@ -1,0 +1,25 @@
+# Basic stuff
+.git/
+node_modules/
+
+# Don't commit the token me
+config.json
+
+# Probably best not to
+err.log
+
+# Yarn
+yarn.lock
+.yarnclean
+
+# Keep the folder, get rid of everything else
+settings/*
+
+# Don't commit certain subsections
+modules/extra/
+modules/mod/
+modules/music/
+modules/secret/
+
+modules/misc/hello.js
+modules/misc/test.js

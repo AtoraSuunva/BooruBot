@@ -4,7 +4,8 @@ module.exports.config = {
   name: 'tutorial',
   invokers: ['tutorial', 'toriel', 'continue', 'clean', 'keep'],
   help: 'Teaches you how to use BooruBot!',
-  expandedHelp: `In case you have no idea what you're doing, you can use this to figure out how this bot works. \nNote: if the bot has "Manage Messages" perms it'll delete the tutorial when it's done.`
+  expandedHelp: `In case you have no idea what you're doing, you can use this to figure out how this bot works. \nNote: if the bot has "Manage Messages" perms it'll delete the tutorial when it's done.`,
+  autoLoad: false
 }
 
 let tutMessages = []

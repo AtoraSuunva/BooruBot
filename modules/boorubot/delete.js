@@ -8,6 +8,8 @@ module.exports.config = {
   expandedHelp: 'Deletes the last X images that the bot posted.\n\n**Usage:**:\n`delete` => Deletes last image\n`delete 4` => Deletes last 4 images\n\nUsers without "Manage Messages" perm can only delete 5 images at a time'
 }
 
+const Discord = require('discord.js')
+
 module.exports.events = {}
 module.exports.events.message = (bot, message) => {
   let args = bot.modules.shlex(message.content)
@@ -47,15 +49,14 @@ module.exports.events.message = (bot, message) => {
 }
 
 module.exports.events.messageReactionAdd = (bot, react, user) => {
-  let customEmote = (react.message.guild) ? new Map([['264246678347972610', '272782646407593986'],['211956704798048256', '269682750682955777']]).get(react.message.guild.id) || '0' : '0'
+  if (react.users.size < 2 || !react.message.embeds[0] || react.message.author.id !== bot.user.id) return
 
-  //❌
+  //react.message.channel.send(`**count**: ${react.count}\n**users**: ${[...react.users.keys()].join(', ')}\n**users.size**: ${react.users.size}`)
 
-  if ((react.emoji.name === '❌' && react.count >= 2 && react.me) || (react.emoji.id === customEmote && react.count >= 2 && react.me)) {
-    let Discord = require('discord.js')
+  if (react.me && react.users.size >= 2 && !react.message.embeds[0].description.endsWith('[](META-DELETED)')) {
     let embed = new Discord.RichEmbed()
       .setAuthor(`Message deleted by ${user.username}#${user.discriminator} (Click for image)`, react.message.embeds[0].url, react.message.embeds[0].url)
-      .setDescription('Use `b!del` to remove this completely.')
+      .setDescription('Use `b!del` to remove this completely. [](META-DELETED)')
 
       react.message.edit({embed})
   }

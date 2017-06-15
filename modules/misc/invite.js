@@ -4,7 +4,8 @@ module.exports.config = {
   name: 'invite',
   invokers: ['invite'],
   help: 'Get an invite for the bot/the help server!',
-  expandedHelp: 'Use `b!invite` to invite the bot, `b!invite server` for an invite to the help server (DMed to you) so you can yell at me.'
+  expandedHelp: 'Use `b!invite` to invite the bot, `b!invite server` for an invite to the help server (DMed to you) so you can yell at me.',
+  autoload: false
 }
 
 module.exports.events = {}
@@ -26,7 +27,8 @@ module.exports.events.message = (bot, message) => {
 
   bot.generateInvite(['MANAGE_MESSAGES', 'EMBED_LINKS'])
     .then(link => {
-      message.channel.send(`Invite me! (You can avoid giving me "Manage Messages" perms, but \`b!delete\` works better with it)\n~~${link}~~\nI'm private for now, sorry!\nUse \`b!invite server\` for the help server!`);
+      //message.channel.send(`Invite me! (You can avoid giving me "Manage Messages" perms, but \`b!delete\` works better with it)\n~~${link}~~\nI'm private for now, sorry!\nUse \`b!invite server\` for the help server!`);
+      message.channel.send(`Nah, how about I don't join.`)
     })
 }
 

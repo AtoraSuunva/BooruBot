@@ -26,7 +26,3 @@ module.exports.events.message = (bot, message) => {
 
   message.channel.send(`Hi ${message.author.username}!`)
 }
-
-module.exports.events.ready = (bot) => {
-  bot.user.setGame('with boorus! | b!help')
-}
