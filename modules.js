@@ -111,7 +111,7 @@ function startEvents() {
  */
 function startsWithInvoker(msg, invokers) {
   if (invokers === null) return true
-  msg = msg.toLowerCase()
+  msg = msg.toLowerCase().replace(/^(\/\/|\\\\\/\/\\\\)/, '').trim()
 
   let startsWith = false
 
@@ -120,6 +120,7 @@ function startsWithInvoker(msg, invokers) {
     if (msg.startsWith(invoker)) {
       startsWith = true
       msg = msg.replace(invoker, '')
+      break
     }
   }
 
@@ -185,7 +186,7 @@ module.exports.shlex = shlex
 
 function replaceAll(str, find, rep) {
     const esc = find.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')
-    const reg = new RegExp(esc, 'ig')
+    const reg = new RegExp(esc, 'i')
     return str.replace(reg, rep)
 };
 

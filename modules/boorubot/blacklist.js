@@ -63,10 +63,9 @@ module.exports.events.message = (bot, message) => {
         }
       }
 
-      if (args[1] === 'tags' && args[2] === 'all') {
-        message.channel.sendMessage('I can\'t know all tags...')
-        return;
-      }
+      if (args[1] === 'tags' && args[2] === 'all')
+        return message.channel.send('I can\'t know all tags...')
+
       if (typeof args[2] === 'string')  args[2] = [args[2]]
       bot.modules.logger.log(args[2])
       settings[args[1]].push(...args[2])
