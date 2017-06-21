@@ -4,13 +4,15 @@ A complete rewrite of BooruBot because the old code sucked.
 
 Does the same things as the old BooruBot, but better.
 
+Detailed changelog [here](https://github.com/AtlasTheBot/Booru-Discord/issues/14)
+
 #### Features:
 * Tag/Site blacklist
 * Can be restricted to only search in certain channels
-* Support for 16 sites
+* NSFW in nsfw channels only (Unless you mark the entire server as nsfw with `b!set nsfwServer true`)
+* Support for [16 sites](./sites.md)
 * Ability to randomly search all sites
 * Command to delete images the bot posted to shield your eyes
-* A tutorial thing
 * Uses fancy embeds! (With fallbacks in case embeds are disabled)
 * Some other stuff I forgot
 
@@ -27,9 +29,9 @@ Also don't include `[]` and `<>` in the commands themselves.
 | ------- | ----------- | ------- |
 | `b!help <command>` | Get a list of commands or display help for a specific command | None
 | `b!search [site] <tag1> <tag2> <tagn>` | Search some boorus! Add as many (or as little) tags as you want, seperated by spaces | `s`, The name of the booru (`b!sb cat`)
+| `b!link [url]` | Takes a url to a post on a booru and creates an embed from it | `ln`
 | `b!sites` | Posts a link to all supported sites | None
 | `b!delete <x>` | Deletes the last image, or the last x images | `del`, `delet this`
-| `b!tutorial` | Put you through a little tutorial about the bot | `toriel`
 | `b!invite <"server">` | Posts an invite link for BooruBot in chat, or the link to the support server in DMs | None
 | `b!ping` | Pong! Displays BooruBot's ping | None
 | `b!stats` | Some stats about the bot | None
@@ -37,7 +39,7 @@ Also don't include `[]` and `<>` in the commands themselves.
 | `b!settings <setting>` | View the current settings for this server or info about a setting | `set`, `setting`, `seting`
 | `b!blacklist` | View the current blacklist | `bl`
 
-`b!sites` supports `rand` or `random` as a site! It will keep searching through sites until it finds an image or runs out of sites!
+`b!sites` supports `r`, `rand` or `random` as a site! It will keep searching through sites until it finds an image or runs out of sites!
 
 #### Mod Commands
 
@@ -52,7 +54,7 @@ These commands require special perms and are not usable by all server members.
 Note about the blacklist:
 * Applies per server
 * Users cannot search using blacklisted tags or sites
-* `rand` and `random` won't use blacklisted sites
+* `r`, `rand` and `random` won't use blacklisted sites
 * You can use `all` to blacklist all sites or whitelist all sites/tags (`b!bl sites all`, `b!wl tags all`)
 * You can replace `all` with `nsfw` or `sfw` to blacklist/whitelist all nsfw/sfw sites too
 
