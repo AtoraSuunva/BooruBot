@@ -14,14 +14,16 @@ function SearchError(message) {
 }
 SearchError.prototype = Error.prototype
 
+const request = require('request-promise-native')
 const booru = require('booru')
 const Discord = require('discord.js')
+const path = require('path')
 
 module.exports.events = {}
 module.exports.events.message = (bot, message) => {
   let settingsId = (message.guild) ? message.guild.id : message.channel.id //DMs are a channel, interestingly enough
   let settings = bot.modules.settings.get(settingsId)
-  let args = bot.modules.shlex(message.content)
+  let args = bot.modules.shlex(message.content).map(_ => _.toLowerCase())
 
   if (message.guild === null) { //It's a DM, time to check `disableDMs`
     let sharedGuilds = bot.guilds.filter(g => g.member(message.author))
@@ -51,7 +53,7 @@ module.exports.events.message = (bot, message) => {
 
   let tags = args.slice(2)
 
-  if (settings.options.topicEnable && message.channel.topic !== null && !message.channel.topic.includes('bb=true') && !message.isMentioned(bot.user))
+  if (settings.options.topicEnable && message.channel.topic !== null && !message.channel.topic.includes('bb=true') && !message.isMentioned(bot.user) && !message.isLink)
     return message.channel.send('You need to enable searching in this channel by putting `bb=true` in the topic first (Set `topicEnable` to false to disable this).')
 
   if (message.guild &&
@@ -99,6 +101,7 @@ module.exports.events.message = (bot, message) => {
           message.channel.send(e.message)
         } else {
           message.channel.send('Got an error: \n```js\n' + JSON.stringify(e.message, null, 2) + '\n```')
+          bot.logger.error(e)
         }
       })
   }
@@ -184,7 +187,7 @@ function compareArrays(arr1, arr2) {
 }
 
 //Format the embed so I don't have to copy paste
-function postEmbed(img, siteUrl, searchTime, message) {
+async function postEmbed(img, siteUrl, searchTime, message) {
 
   if (message.guild && !message.channel.permissionsFor(message.client.user).hasPermission('EMBED_LINKS')) {
     return message.channel.send(
@@ -215,28 +218,44 @@ function postEmbed(img, siteUrl, searchTime, message) {
              : Discord.util.escapeMarkdown(img.common.tags.join(', ').substr(0,50)) +
              `... [See All](http:\/\/All.Tags/${Discord.util.escapeMarkdown(img.common.tags.join(',').replace(/(%20)/g, '_')).replace(/([()])/g, '\\$1').substring(0,1700)})`
 
-  embed.setDescription(`**Score:** ${img.common.score} | **Rating:** ${img.common.rating.toUpperCase()} | [Image](${encodeURI(img.common.file_url.replace(/([()])/g, '\\$1'))}) \n **Tags:** ${tags} [](${JSON.stringify(metadata)})`)
+  let header, tooBig = false, imgError = false
+
+  try {
+    header = await request.head(encodeURI(img.common.file_url))
+  } catch (e) { imgError = true /* who needs to catch shit */}
+
+  if (header)
+    toobig = (header['content-length'] / 1000000) > 10
+
+  embed.setDescription(`**Score:** ${img.common.score} | ` +
+                       `**Rating:** ${img.common.rating.toUpperCase()} | ` +
+                       `[Image](${encodeURI(img.common.file_url.replace(/([()])/g, '\\$1'))}) | ` +
+                       `${path.extname(img.common.file_url).toLowerCase()}\n` +
+                       `**Tags:** ${tags} [](${JSON.stringify(metadata)})` +
+                       ((!['.jpg', '.jpeg', '.png', '.gif'].includes(path.extname(img.common.file_url).toLowerCase())) ? '\n\n`The file will probably not embed.`' : '' ) +
+                       ((tooBig) ? '\n`The image is over 10MB and will not embed.`' : '') + ((imgError) ? '\n`I got an error while trying to get the image.`' : '') )
+
   embed.setColor((message.guild) ? message.guild.members.get(message.client.user.id).highestRole.color : '#34363C')
 
   //bot.modules.logger.log(require('util').inspect(embed, { depth: null }));
 
 
-  message.channel.send({embed})
+  message.channel.send(`${message.author.username}, result for \`${message.content}\``, {embed})
     .then(msg => {
       message.channel.stopTyping()
       message.channel.lastImagePosted = msg //Lazy way to easily delete the last image posted, see `delete.js`
 
-      if (!message.guild || message.guild.me.permissions.has('ADD_REACTIONS')) {
+      if (!message.guild || message.channel.permissionsFor(message.guild.me).has('ADD_REACTIONS')) {
         let customEmote = (message.guild) ? new Map([['264246678347972610', '272782646407593986'],['211956704798048256', '269682750682955777']]).get(message.guild.id) : null
         //NSFW, squares
         //test server, glaceWhoa
 
         if (customEmote)
-          msg.react(message.client.emojis.get(customEmote))
+          msg.react(message.client.emojis.get(customEmote)).catch(() => {})
         else if (!message.guild || message.guild.me.permissions.has('USE_EXTERNAL_EMOJIS'))
-          msg.react(message.client.emojis.get('318296455280459777')).catch(e => msg.react('❌'))
+          msg.react(message.client.emojis.get('318296455280459777')).catch(e => msg.react('❌').catch(() => {}))
         else
-          msg.react('❌')
+          msg.react('❌').catch(() => {})
       }
     })
 }

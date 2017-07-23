@@ -2,7 +2,7 @@
 
 module.exports.config = {
   name: 'blacklist',
-  invokers: ['blacklist', 'bl', 'whitelist', 'wl'],
+  invokers: ['blacklist', 'bl', 'whitelist', 'wl', 'unblacklist'],
   help: 'Blacklists/Whitelists tags/sites',
   expandedHelp: 'Allows you to blacklist tags/sites\n\n**Usage:**\n`blacklist tag cat` => Blacklists the tag "cat"\n`blacklist site sb` => Blacklists safebooru\n`whitelist tag cat` => Removes "cat" from the blacklist\n\nYou can also use "all" to blacklist all sites or to clear the blacklist.\nView the blacklist with `blacklist [tags|site]`'
 }

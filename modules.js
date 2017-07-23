@@ -27,8 +27,7 @@ let unusedEvents = getAllEvents({getUnused: true}) //Used right after to tell di
 //logger.log(unusedEvents)
 
 const bot = new Discord.Client({
-  disableEveryone: true,
-  disabledEvents: ['TYPING_START']
+  disableEveryone: true
 })
 
 /**

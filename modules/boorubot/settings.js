@@ -46,6 +46,8 @@ const setTemplate = {
   }
 }
 
+const space = '\u00b7' //MIDDLE DOT
+
 module.exports.events = {}
 module.exports.events.message = (bot, message) => {
   let settingsId = (message.guild !== null) ? message.guild.id : message.channel.id //DMs are a channel, interestingly enough
@@ -66,11 +68,11 @@ module.exports.events.message = (bot, message) => {
       if (option.length > longest) longest = option.length
     }
 
-    message.channel.send(`Current settings\n${'='.repeat(longest + 3)}\n${options.map(v => v[0] + ' '.repeat(longest - v[0].length + 1) + ':: ' + v[1]).join('\n')}\n\nUse 'b!setting [setting]' for more info.`, {code: 'asciidoc'})
+    message.channel.send(`Current settings\n${'='.repeat(longest + 3)}\n${options.map(v => v[0] + space.repeat(longest - v[0].length + 1) + ':: ' + v[1]).join('\n')}\n\nUse 'b!setting [setting]' for more info.`, {code: 'asciidoc'})
 
   } else if (value === '') { //List one setting + info
     if (setTemplate[setting])
-      message.channel.send(`${setting}\n${'='.repeat(setting.length)}\nType    :: ${setTemplate[setting].type}\nDefault :: ${setTemplate[setting].default}\n\n${setTemplate[setting].help}`, {code: 'asciidoc'})
+      message.channel.send(`${setting}\n${'='.repeat(setting.length)}\nType${space.repeat(4)}:: ${setTemplate[setting].type}\nDefault${space}:: ${setTemplate[setting].default}\nCurrent${space}:: ${settings.options[setting]}\n\n${setTemplate[setting].help}`, {code: 'asciidoc'})
     else
       message.channel.send('That is probably not a valid setting.')
   } else { //Set a setting

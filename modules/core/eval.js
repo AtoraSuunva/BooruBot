@@ -11,6 +11,9 @@ module.exports.config = {
 module.exports.events = {}
 module.exports.events.message = async (bot, message) => {
   const config = bot.modules.config
+
+  if (message.author.id !== config.owner.id) return
+
   const shlex = bot.modules.shlex
   const modules = bot.modules
   const Discord = require('discord.js')
