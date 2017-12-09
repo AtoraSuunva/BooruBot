@@ -23,13 +23,13 @@ module.exports.events.message = (bot, message) => {
   //['bl', 'tag', 'cat']
   // 0     1      2
 
+  if (args[1] !== undefined && args[2] === undefined)
+    args.splice(1, 0, 'tags')
+
   if (args[1] !== undefined && !args[1].endsWith('s')) args[1] += 's'
 
-  if (args[1] !== undefined && (args[1] !== 'tags' && args[1] !== 'sites')) {
-    bot.modules.logger.log(args)
-    message.channel.sendMessage('That\'s not something you can blacklist!')
-    return;
-  }
+  if (args[1] && (args[1] !== 'tags' && args[1] !== 'sites'))
+    return message.channel.sendMessage('That\'s not something you can blacklist!')
 
   //I'm sorry for how messy this following code is
   //i coded this at like at like 3am kek
@@ -118,7 +118,6 @@ module.exports.events.message = (bot, message) => {
 
   bot.modules.settings.set(settingsId, settings)
 }
-
 
 function ensureUnique(arr) { //do some set magic
   return [...new Set(arr)]
