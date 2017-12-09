@@ -4,7 +4,8 @@ module.exports.config = {
   name: 'help',
   invokers: ['help'],
   help: 'Helps you! (Use "help [command]" for more help!)',
-  expandedHelp: 'This command doesn\'t do much else. But at least you know how to get more help!'
+  expandedHelp: 'This command doesn\'t do much else. But at least you know how to get more help!',
+  usage: ['Well, you already did it', 'help help', 'but here\'s more help', 'help someCommand']
 }
 
 const Discord = require('discord.js')
@@ -13,17 +14,13 @@ module.exports.events = {}
 module.exports.events.message = (bot, message) => {
   let modules = bot.modules.modules
   let config = bot.modules.config
-  let args = bot.modules.shlex(message.content, {lowercaseAll: true})
+  let [cmd, ...helpFor] = bot.modules.shlex(message.content, {lowercaseAll: true})
+  helpFor = helpFor.join(' ')
 
   let embed = new Discord.RichEmbed()
+  let mod = 'Commands: ', msg, cmds, invokers, usage, aliases
 
-  let mod = 'Commands: '
-  let msg = null
-  let cmds = null
-  let invokers = null
-  let aliases = null
-
-  if (args[1] === undefined) {
+  if (helpFor === '') {
 
     cmds = new Map()  //map of [dir: [commands]]
 
@@ -42,12 +39,19 @@ module.exports.events.message = (bot, message) => {
     invokers = `\`${config.invokers.join('\` | \`')}\``
   } else {
     mod = ''
-    msg = `Could not find help for ${args[1]}`
+    msg = `Could not find help for '${helpFor}'`
     for (let module in modules) {
-      if (modules[module].config.name === args[1] && modules[module].config.expandedHelp !== undefined) {
+      if (modules[module].config.name === helpFor && modules[module].config.expandedHelp !== undefined) {
         mod = module
         msg = modules[module].config.expandedHelp
         if (modules[module].config.invokers) aliases = `\`${modules[module].config.invokers.join('\` | \`')}\``
+        if (modules[module].config.usage) {
+          const mUsage = modules[module].config.usage
+          const inv = config.invokers[0]
+          usage = ''
+          for (let i = 0; i < mUsage.length; i += 2)
+            usage += `${mUsage[i]}: \`${inv}${mUsage[i+1]}\`\n`
+        }
       }
     }
   }
@@ -64,6 +68,9 @@ module.exports.events.message = (bot, message) => {
 
   if (invokers)
     embed.addField('Invokers:', invokers)
+
+  if (usage)
+    embed.addField('Usage:', usage)
 
   if (aliases)
     embed.addField('Aliases:', aliases)
