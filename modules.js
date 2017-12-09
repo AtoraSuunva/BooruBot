@@ -501,7 +501,8 @@ function writeFile(fileName, fileContent) {
 function createGist(files, description = '') {
   const o = {
     method: 'POST',
-    uri: 'https://api.github.com' + '/gist',
+    uri: 'https://api.github.com' + '/gists',
+    headers: { 'User-Agent': `${bot.user.username} Bot by ${config.owner.username} on Discord` },
     json: true,
     body: { description, files }
   }
