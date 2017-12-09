@@ -27,9 +27,6 @@ let events = getAllEvents()
 //Unfortunately, this prevents adding a module that listens to a new event/adding a new event without restarting the bot
 //one day I might find a fix for this
 
-//let unusedEvents = getAllEvents({getUnused: true}) //Used right after to tell discord.js what events to not care about, so we can get a performance b o o s t
-//logger.log(unusedEvents)
-
 const bot = new Discord.Client()
 
 /**
@@ -232,7 +229,7 @@ function startsWithInvoker(msg, invokers) {
  * @param  {Object}   options Shlex options
  * @return {string[]}         The result of the shlexed string
  */
-module.exports.shlex = function shlex(str, { lowercaseCommand = false, lowercaseAll = false, stripOnlyCommand = false } = {}) {
+function shlex(str, { lowercaseCommand = false, lowercaseAll = false, stripOnlyCommand = false } = {}) {
   if (str.content) str = str.content
 
   for (let invoker of config.invokers) {
@@ -266,6 +263,7 @@ module.exports.shlex = function shlex(str, { lowercaseCommand = false, lowercase
 
   return matches.map(v => v.replace(/\\(")|\\(')/g, '$1'))
 }
+module.exports.shlex = shlex
 
 /**
  * Gets all the events used by the modules
@@ -311,7 +309,7 @@ function getAllEvents({ getUnused = false } = {}) {
  * Reload the config with from either the file or an object passed to it
  * @param  {Object} newConfig The new config to use
  */
-module.exports.reloadConfig = function reloadConfig(newConfig) {
+function reloadConfig(newConfig) {
   purgeCache('./config.json')
   if (newConfig !== undefined) {
     config = newConfig
@@ -320,14 +318,16 @@ module.exports.reloadConfig = function reloadConfig(newConfig) {
   }
   module.exports.config = config
 }
+module.exports.reloadConfig = reloadConfig
 
 /**
  * Saves the currently stored config
  * @return {Promise} A promise that resolves when settings are saved
  */
-module.exports.saveConfig = function saveConfig() {
+function saveConfig() {
   return writeFile('./config.json', config)
 }
+module.exports.saveConfig = saveConfig
 
 //More helper functions, but this time for managing the module system
 
@@ -335,7 +335,7 @@ module.exports.saveConfig = function saveConfig() {
  * (Re)loads ALL modules
  * @return {string} The result of loading the modules
  */
-module.exports.loadModules = function loadModules() {
+function loadModules() {
   modules = {}
   //You might ask "why sync?", that's because there's no use in logging in if all modules aren't loaded yet
   let moduleFiles = recurReadSync(path.join(__dirname, 'modules'))
@@ -367,13 +367,14 @@ module.exports.loadModules = function loadModules() {
   if (fails.length > 0) logger.warn(`Failed: ${fails.join(', ')}`)
   return `Loaded ${succ.length} module(s) sucessfully; ${fails.length} failed.`
 }
+module.exports.loadModules = loadModules
 
 /**
  * (Re)load a single module
  * @param  {string} moduleName The name of the module to load
  * @return {string}            The result of loading the module
  */
-module.exports.loadModule = function loadModule(moduleName) {
+function loadModule(moduleName) {
   try {
     let moduleFiles = recurReadSync(path.join(__dirname, 'modules'))
 
@@ -393,13 +394,14 @@ module.exports.loadModule = function loadModule(moduleName) {
     return 'Something went wrong!'
   }
 }
+module.exports.loadModule = loadModule
 
 /**
  * Unload a single module
  * @param  {string} moduleName The module to unload
  * @return {string}            The result of unloading the module
  */
-module.exports.unloadModule = function unloadModule(moduleName) {
+function unloadModule(moduleName) {
   try {
     let moduleFiles = recurReadSync(path.join(__dirname, 'modules'))
 
@@ -419,13 +421,14 @@ module.exports.unloadModule = function unloadModule(moduleName) {
     return 'Something went wrong!'
   }
 }
+module.exports.unloadModule = unloadModule
 
 /**
  * Gets info for a single module
  * @param  {string} moduleName The name of the module
  * @return {Object}            The config, path and dir of the module (Or a string if something went wrong)
  */
-module.exports.getModuleInfo = function getModuleInfo(moduleName) {
+function getModuleInfo(moduleName) {
   try {
     let moduleFiles = recurReadSync(path.join(__dirname, 'modules'))
 
@@ -446,6 +449,7 @@ module.exports.getModuleInfo = function getModuleInfo(moduleName) {
     return 'Something went wrong!'
   }
 }
+module.exports.getModuleInfo = getModuleInfo
 
 /**
  * Removes a module from the cache
@@ -463,7 +467,7 @@ function purgeCache(moduleName) {
  * @param  {string} errType What kind of error happened
  * @return {number}         The error ID
  */
-module.exports.reportError = function reportError(err, errType) {
+function reportError(err, errType) {
   let errID = Math.floor(Math.random() * 1000000).toString(16)
   let errMsg = `Error: ${errType}\nID: ${errID}\n\`\`\`js\n${err.toString()}\n\`\`\``
 
@@ -471,6 +475,7 @@ module.exports.reportError = function reportError(err, errType) {
     bot.users.get(config.owner.id).sendMessage(errMsg, { split: { prepend: '```js\n', append: '\n```' } })
   return errID
 }
+module.exports.reportError = reportError
 
 /**
  * Promisefied fs.writefile
@@ -493,7 +498,7 @@ function writeFile(fileName, fileContent) {
  * @param  {String=''} description An optional description for the gist
  * @return {Promise} GitHub's response
  */
-module.exports.createGist = function createGist(files, description = '') {
+function createGist(files, description = '') {
   const o = {
     method: 'POST',
     uri: 'https://api.github.com' + '/gist',
@@ -503,10 +508,11 @@ module.exports.createGist = function createGist(files, description = '') {
 
   return request(o)
 }
+module.exports.createGist = createGist
 
 startEvents()
 
-  ; (async () => {
+;(async () => {
     logger.info('Starting Login...')
     await bot.login(config.token)
 
