@@ -9,8 +9,8 @@ module.exports.config = {
 }
 
 function SearchError(message) {
-    this.name = 'SearchError'
-    this.message = (message || 'Wow gg Atlas for forgetting to add a message')
+  this.name = 'SearchError'
+  this.message = (message || 'Wow gg Atlas for forgetting to add a message')
 }
 SearchError.prototype = Error.prototype
 
@@ -18,6 +18,10 @@ const request = require('request-promise-native')
 const booru = require('booru')
 const Discord = require('discord.js')
 const path = require('path')
+
+const prevImgs = new Map()
+const nextImgTimeout = (5 * 60) * 1000 //5 mins
+const nextImgEmoji = '\u{25B6}' // BLACK RIGHT-POINTING TRIANGLE
 
 module.exports.events = {}
 module.exports.events.message = (bot, message) => {
@@ -33,7 +37,7 @@ module.exports.events.message = (bot, message) => {
       if (bot.modules.settings.get(g.id).options.disableDMs) guildsDMsDisabled++
     })
 
-    if (guildsDMsDisabled === sharedGuilds.size) return message.channel.send(`All of your servers have \`disableDMs\` enabled!`)
+    if (guildsDMsDisabled === sharedGuilds.size) return message.channel.send('All of your servers have `disableDMs` enabled!')
   }
 
   // b!s sb cat cute
@@ -44,12 +48,10 @@ module.exports.events.message = (bot, message) => {
   // b!e6 cat cute
   // ['e6', 'cat', 'cute']
 
-  if (!module.exports.config.invokers.filter(_=>_!=='').includes(args[0])) {
-    if (booru.resolveSite(args[0]) || ['r', 'rand', 'random'].includes(args[0]))
-      args.unshift('')
-    else
-      return
-  }
+  if (booru.resolveSite(args[0]) || ['r', 'rand', 'random'].includes(args[0]))
+    args.unshift('')
+  else
+    return
 
   let tags = args.slice(2)
 
@@ -68,7 +70,7 @@ module.exports.events.message = (bot, message) => {
   let blacklistedTags = compareArrays(tags, settings.tags)
 
   if (blacklistedTags)
-    return message.channel.send(`Search contains blacklisted tag${(blacklistedTags.length === 0) ? '' : 's'}: \`${blacklistedTags.join('\`, \`')}\``)
+    return message.channel.send(`Search contains blacklisted tag${(blacklistedTags.length === 0) ? '' : 's'}: \`${blacklistedTags.join('`, `')}\``)
 
   if (settings.sites.length === Object.keys(booru.sites).length)
     return message.channel.send('All sites are blacklisted...')
@@ -76,7 +78,7 @@ module.exports.events.message = (bot, message) => {
   if (settings.sites.includes(booru.resolveSite(args[1])))
     return message.channel.send(`The site \`${booru.resolveSite(args[1])}\` is blacklisted here.`)
 
-  if (!['r', 'rand', 'random'].includes(args[1]) && booru.resolveSite(args[1]) === false)
+  if (!['r', 'rand', 'random'].includes(args[1]) && !booru.resolveSite(args[1]))
     return message.channel.send('That is not a supported site. Use `b!sites` to see them all.')
 
   //Sure it looks simple and clean here, but don't scroll down
@@ -85,7 +87,7 @@ module.exports.events.message = (bot, message) => {
     message.botClient = bot
     randSearch([...args.slice(2)], settings, message)
       .then(r => postEmbed(...r)) //promises can only return one value, so I return an array then spread it
-      .catch(e => {
+      .catch(() => {
         message.channel.stopTyping()
         message.channel.send('Found no images anywhere...')
       })
@@ -113,6 +115,7 @@ function search(site, tags, settings, message) {
 
     let searchStart = process.hrtime()
     let nsfw = true
+    let validImgs = []
 
     if (message.guild &&
         !message.channel.nsfw &&
@@ -120,30 +123,35 @@ function search(site, tags, settings, message) {
       nsfw = false
 
     booru.search(site, tags, {limit: 100, random: true})
-    .then(booru.commonfy)
-    .then((imgs) => {
-      if (imgs[0] !== undefined) {
+      .then(booru.commonfy)
+      .then((imgs) => {
+        if (imgs[0] !== undefined) {
 
-        for (let img of imgs) {
-          if (compareArrays(img.common.tags, settings.tags) === null &&
-              (nsfw || !['e', 'q', 'u'].includes(img.rating.toLowerCase())) &&
-              ([null, undefined].includes(settings.options.minScore) || img.common.score > settings.options.minScore) )
-            resolve([img, booru.resolveSite(site), process.hrtime(searchStart), message]) //can't resolve multiple values
+          for (let img of imgs) {
+            if (compareArrays(img.common.tags, settings.tags) === null &&
+               !hasBlacklistedType(img.common.file_url, settings.tags) &&
+               (nsfw || !['e', 'q', 'u'].includes(img.rating.toLowerCase())) &&
+               ([null, undefined].includes(settings.options.minScore) || img.common.score > settings.options.minScore))
+
+              validImgs.push(img)
+          }
+
+          if (validImgs[0] !== undefined)
+            resolve([validImgs, booru.resolveSite(site), process.hrtime(searchStart), message]) //can't resolve multiple values
+          else
+            reject(new SearchError('All found images are blacklisted.'))
+
+        } else {
+          reject(new SearchError('No images found.'))
         }
-        reject (new SearchError('All found images are blacklisted.'))
+      })
+      .catch(err => {
+        if (err.name === 'booruError')
+          return reject(err)
 
-      } else {
-        reject(new SearchError('No images found.'))
-      }
-    })
-    .catch((err) => {
-      if (err.name === 'booruError')
-        return reject(err)
-
-      err.message = err.message += `\nError while searching in: ${(message.guild) ? message.guild.name : message.author.username} (${(message.guild) ? message.guild.id : 'DM'})\nInput: ${message.content}`
-      let errID = message.botClient.modules.reportError(err, 'Search fail')
-      reject(new Error(`Something went wrong while searching. Go yell at Atlas#2564 and tell him \`errID: ${errID}\``))
-    })
+        console.error(err)
+        reject(new Error('Something went wrong while searching. Go yell at Atlas#2564.'))
+      })
   })
 }
 
@@ -152,26 +160,24 @@ function randSearch(tags, settings, message) {
   //oh god what am i doing
   return new Promise(async (resolve, reject) => {
 
-  	let imgs
-    let randSites = Object.keys(booru.sites).sort(_=>Math.random()-0.5)
-    let searchStart = process.hrtime()
-    let maxTime = 1 * 1000 //30 sec timeout
+    let imgs
+    let randSites = Object.keys(booru.sites).sort(() => Math.random() - 0.5)
 
-  	for (let site of randSites) {
+    for (let site of randSites) {
       if (settings.sites.includes(site)) continue
 
-      let searchTimeout = setTimeout(()=>{message.botClient.modules.logger.log(`Timed out ${site}`)}, maxTime)
+      //let searchTimeout = setTimeout(()=>{message.botClient.modules.logger.log(`Timed out ${site}`)}, maxTime)
 
       try {
         imgs = await search(site, tags, settings, message)
       } catch (e) { imgs = undefined; continue }
 
-      clearTimeout(searchTimeout)
+      //clearTimeout(searchTimeout)
 
       if (imgs === undefined || imgs[0] === undefined) continue
       return resolve(imgs)
-  	}
-  	reject(new Error('Found no images anywhere...'))
+    }
+    reject(new Error('Found no images anywhere...'))
   })
 }
 //the future is async
@@ -186,15 +192,26 @@ function compareArrays(arr1, arr2) {
   return (matches[0] === undefined) ? null : matches
 }
 
-//Format the embed so I don't have to copy paste
-async function postEmbed(img, siteUrl, searchTime, message) {
+function hasBlacklistedType(imgUrl, tags) {
+  let types = tags.filter(t => t.startsWith('type:')).map(t => '.' + t.substring(5))
+  let fileType = path.extname(imgUrl).toLowerCase()
 
-  if (message.guild && !message.channel.permissionsFor(message.client.user).hasPermission('EMBED_LINKS')) {
+  return types.includes(fileType)
+}
+
+//Format the embed so I don't have to copy paste
+async function postEmbed(imgs, siteUrl, searchTime, message, imageNumber, numImages, oldMessage) {
+  const img = imgs.shift()
+  imageNumber = (imageNumber || 0) + 1
+  numImages   = numImages || (imgs.length + 1)
+
+  if (img === undefined) return
+
+  if (message.guild && !message.channel.permissionsFor(message.client.user).has('EMBED_LINKS')) {
     return message.channel.send(
-    encodeURI(`https:\/\/${siteUrl}${booru.sites[siteUrl].postView}${img.common.id}`) + '\n' +
-    encodeURI(img.common.file_url) + '\nBooruBot works better if it has the "embeds links" permission'
-  ).catch(err => {setTimeout(() => {throw err})})
-    return
+      encodeURI(`https://${siteUrl}${booru.sites[siteUrl].postView}${img.common.id}`) + '\n' +
+      encodeURI(img.common.file_url) + '\nBooruBot works better if it has the "embeds links" permission'
+    )
   }
 
   let metadata = {
@@ -204,58 +221,107 @@ async function postEmbed(img, siteUrl, searchTime, message) {
   let embed = new Discord.RichEmbed({
     author: {
       name: `Post ${img.common.id}`,
-      url: encodeURI(`https:\/\/${siteUrl}${booru.sites[siteUrl].postView}${img.common.id}`) //link directly to the post
+      url: encodeURI(`https://${siteUrl}${booru.sites[siteUrl].postView}${img.common.id}`) //link directly to the post
     },
     image: {url: encodeURI(img.common.file_url)},
     url: encodeURI(img.common.file_url),
     footer: {
-      text: `${siteUrl} - ${((searchTime[0] * 1e9 + searchTime[1])/1000000).toFixed(3)}ms`,
-      icon_url: `https:\/\/www.${siteUrl}/favicon.ico` //pray they have their favicon here like a regular site
+      text: `${siteUrl} - ${imageNumber}/${numImages} - ${((searchTime[0] * 1e9 + searchTime[1])/1000000).toFixed(2)}ms`,
+      icon_url: `https://www.${siteUrl}/favicon.ico` //pray they have their favicon here like a regular site
     }
   })
 
   let tags = (img.common.tags.join(', ').length < 50) ? Discord.util.escapeMarkdown(img.common.tags.join(', '))
-             : Discord.util.escapeMarkdown(img.common.tags.join(', ').substr(0,50)) +
-             `... [See All](http:\/\/All.Tags/${Discord.util.escapeMarkdown(img.common.tags.join(',').replace(/(%20)/g, '_')).replace(/([()])/g, '\\$1').substring(0,1700)})`
+    : Discord.util.escapeMarkdown(img.common.tags.join(', ').substr(0,50)) +
+             `... [See All](http://All.Tags/${Discord.util.escapeMarkdown(img.common.tags.join(',').replace(/(%20)/g, '_')).replace(/([()])/g, '\\$1').substring(0,1700)})`
 
-  let header, tooBig = false, imgError = false
+  let header
+  let tooBig = false
+  let imgError = false
 
   try {
     header = await request.head(encodeURI(img.common.file_url))
   } catch (e) { imgError = true /* who needs to catch shit */}
 
   if (header)
-    toobig = (header['content-length'] / 1000000) > 10
+    tooBig = (header['content-length'] / 1000000) > 10
 
   embed.setDescription(`**Score:** ${img.common.score} | ` +
                        `**Rating:** ${img.common.rating.toUpperCase()} | ` +
                        `[Image](${encodeURI(img.common.file_url.replace(/([()])/g, '\\$1'))}) | ` +
-                       `${path.extname(img.common.file_url).toLowerCase()}\n` +
+                       `${path.extname(img.common.file_url).toLowerCase()}, ${header ? fileSizeSI(header['content-length']) : '? kB'}\n` +
                        `**Tags:** ${tags} [](${JSON.stringify(metadata)})` +
                        ((!['.jpg', '.jpeg', '.png', '.gif'].includes(path.extname(img.common.file_url).toLowerCase())) ? '\n\n`The file will probably not embed.`' : '' ) +
                        ((tooBig) ? '\n`The image is over 10MB and will not embed.`' : '') + ((imgError) ? '\n`I got an error while trying to get the image.`' : '') )
 
   embed.setColor((message.guild) ? message.guild.members.get(message.client.user.id).highestRole.color : '#34363C')
 
-  //bot.modules.logger.log(require('util').inspect(embed, { depth: null }));
+  const afterPost = async msg => {
+    message.channel.stopTyping()
+    message.channel.lastImagePosted = msg //Lazy way to easily delete the last image posted, see `delete.js`
 
+    if (!message.guild || message.channel.permissionsFor(message.guild.me).has('ADD_REACTIONS')) {
+      let customEmote = (message.guild) ? new Map([['264246678347972610', '272782646407593986'],['211956704798048256', '269682750682955777']]).get(message.guild.id) : null
+      //NSFW, squares
+      //test server, glaceWhoa
 
-  message.channel.send(`${message.author.username}, result for \`${message.content}\``, {embed})
-    .then(msg => {
-      message.channel.stopTyping()
-      message.channel.lastImagePosted = msg //Lazy way to easily delete the last image posted, see `delete.js`
+      try {
+        if (msg.reacts === undefined) {
+          if (customEmote)
+            await msg.react(message.client.emojis.get(customEmote))
+          else if ((!message.guild || message.guild.me.permissions.has('USE_EXTERNAL_EMOJIS')) && message.client.emojis.get('318296455280459777'))
+            await msg.react(message.client.emojis.get('318296455280459777'))
+          else if (message.guild && message.channel.permissionsFor(message.client.user).has('ADD_REACTIONS'))
+            await msg.react('')
+        }
 
-      if (!message.guild || message.channel.permissionsFor(message.guild.me).has('ADD_REACTIONS')) {
-        let customEmote = (message.guild) ? new Map([['264246678347972610', '272782646407593986'],['211956704798048256', '269682750682955777']]).get(message.guild.id) : null
-        //NSFW, squares
-        //test server, glaceWhoa
-
-        if (customEmote)
-          msg.react(message.client.emojis.get(customEmote)).catch(() => {})
-        else if (!message.guild || message.guild.me.permissions.has('USE_EXTERNAL_EMOJIS'))
-          msg.react(message.client.emojis.get('318296455280459777')).catch(e => msg.react('❌').catch(() => {}))
-        else
-          msg.react('❌').catch(() => {})
+        if (imageNumber !== numImages) {
+          await msg.react(nextImgEmoji).then(r => {
+            // I tied to use awaitReactions or createReactionCollector instead, but they both acted buggy and often wouldn't catch new > reacts
+            // And in the end they stopped added > reacts completely
+            let timeout = setTimeout(() => prevImgs.has(msg.id) && prevImgs.delete(msg.message.id) && r.remove(), nextImgTimeout)
+            prevImgs.set(msg.id, {imgs, siteUrl, searchTime, message, imageNumber, numImages, timeout})
+          })
+        }
+      } catch (e) {
+        'do nothing'
       }
-    })
+    }
+  }
+
+  if (oldMessage === undefined)
+    return message.channel.send(`${message.author.username}, result for \`${message.content}\`\nhttps://${siteUrl}${booru.sites[siteUrl].postView}${img.common.id}`, {embed}).then(afterPost)
+  else
+    return oldMessage.edit(`${message.author.username}, result for \`${message.content}\`\nhttps://${siteUrl}${booru.sites[siteUrl].postView}${img.common.id}`, {embed}).then(afterPost)
 }
+
+module.exports.events.messageReactionAdd = async (bot, react, user) => {
+  if (react.users.size < 2 || react.message.author.id !== bot.user.id || react.emoji.name !== nextImgEmoji) return
+  if (!prevImgs.has(react.message.id)) return
+
+  let {imgs, siteUrl, searchTime, message, imageNumber, numImages, timeout} = prevImgs.get(react.message.id)
+
+  if (user.id !== message.author.id) return
+
+  postEmbed(imgs, siteUrl, searchTime, message, imageNumber, numImages, react.message)
+
+  if (react.message.channel.type !== 'dm' && react.message.channel.permissionsFor(bot.user).has('MANAGE_MESSAGES'))
+    react.remove(user)
+
+  // If there's no more images
+  if (imageNumber + 1 === numImages)
+    return react.remove(bot.user)
+
+  clearTimeout(timeout)
+  timeout = setTimeout(() => prevImgs.has(react.message.id) && prevImgs.delete(react.message.id) && react.remove(), nextImgTimeout)
+
+  prevImgs.set(react.message.id, {imgs, siteUrl, searchTime, message, imageNumber, numImages, timeout})
+}
+
+// from https://stackoverflow.com/a/20463021
+// slightly edited
+function fileSizeSI(a,b,c,d,e){
+  return (b=Math,c=b.log,d=1e3,e=c(a)/c(d)|0,a/b.pow(d,e)).toFixed(0)
+ +(e?'kMGTPEZY'[--e]+'B':' Bytes')
+}
+
