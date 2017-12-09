@@ -21,11 +21,11 @@ module.exports.events.message = (bot, message) => {
 
   if (cmd !== 'unload') {
     if (module !== 'all') {
-      message.channel.sendMessage(loadModule(module))
+      message.channel.send(loadModule(module))
     } else {
-      message.channel.sendMessage(loadModules())
+      message.channel.send(loadModules())
     }
   } else {
-    message.channel.sendMessage(unloadModule(module))
+    message.channel.send(unloadModule(module))
   }
 }
