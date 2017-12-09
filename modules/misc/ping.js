@@ -1,13 +1,14 @@
 //wew
 module.exports.config = {
   name: 'ping',
-  invokers: ['ping'],
+  invokers: ['ping', 'table'],
   help: 'pong',
   expandedHelp: 'Tests the bot\'s ping\n\n**Usage:** `ping`',
 }
 
 module.exports.events = {}
 module.exports.events.message = (bot, message) => {
+  const [cmd] = bot.modules.shlex(message)
   let score = [randInt(0,8), randInt(0,8)]
 
   message.channel.sendMessage(dedent`
@@ -19,7 +20,7 @@ module.exports.events.message = (bot, message) => {
     \`\`\``).then(newMsg => {
       newMsg.edit(dedent`
         \`\`\`xl
-        ─────┬───── Pong! ${newMsg.createdTimestamp - message.createdTimestamp}ms
+        ─────┬───── ${cmd.toLowerCase() == 'ping' ? 'Pong' : 'Tennis'}! ${newMsg.createdTimestamp - message.createdTimestamp}ms
         |   ${score[0]}░${score[1]+1}
         .    ░   |
         ─────┴───── Heartbeat: ${bot.pings} => ${bot.ping.toFixed(2)}ms
