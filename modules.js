@@ -15,7 +15,7 @@ const Settings = require('./settings.js')
 
 let config = module.exports.config = require('./config.json') //Settings for the module system
 const logger = module.exports.logger = new Logger('err.log', reportError, config.debug)
-const settings = module.exports.settings = new Settings()
+const settings = module.exports.settings = new Settings(logger)
 const sentMessages = new Discord.Collection(), maxSentMessagesCache = 100
 
 let modules = {}

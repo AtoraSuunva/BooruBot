@@ -1,3 +1,5 @@
+const fs = require('fs')
+const path = require('path')
 /* Settings are stored in separate files under `settings/`
  * And are loaded only when needed
  * `settings` includes a bunch of functions to get/set/save settings
@@ -10,9 +12,10 @@ module.exports = class Settings {
   /**
    * Create the cache for settings
    */
-  constructor() {
+  constructor(logger) {
     this.cache = new Map() //Internal cache to store settings
     //You shouldn't ever need to use it
+    this.logger = logger
   }
 
   /**
@@ -54,7 +57,7 @@ module.exports = class Settings {
       .then(() => {
         return
       }).catch((e) => {
-        logger.error(e, 'Save Settings (Create)') //fug
+        this.logger.error(e, 'Save Settings (Create)') //fug
         throw e
       })
   }
@@ -77,7 +80,7 @@ module.exports = class Settings {
         .then(() => {
           resolve(that.cache)
         }).catch((e) => {
-          logger.error(e, 'Save Settings (All)')
+          this.logger.error(e, 'Save Settings (All)')
           reject()
         })
 
@@ -102,14 +105,14 @@ module.exports = class Settings {
       return
     } catch (e) {
       //Either it doesn't exist or it erroed, so we have to create new settings
-      logger.debug(`Creating settings for: ${settingId}`)
+      this.logger.debug(`Creating settings for: ${settingId}`)
 
       try {
         fs.writeFileSync(path.join(process.cwd(), 'settings', `${settingId}.json`), JSON.stringify(require('./defaultSettings.json'), null, 2))
         this.cache.set(settingId, require(path.join(process.cwd(), 'settings', `${settingId}.json`)))
         return
       } catch (e) {
-        logger.error(e, 'Save Settings (Create)') //fug
+        this.logger.error(e, 'Save Settings (Create)') //fug
         throw e
       }
     }
