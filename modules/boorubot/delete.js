@@ -31,25 +31,26 @@ module.exports.events.message = (bot, message) => {
 
   } else {
     message.channel.fetchMessages({limit: 50})
-    .then(msgs => {
-      let delMsgs = msgs.filter(msg => {return msg.author.equals(bot.user) && msg.embeds[0] !== undefined}).array().slice(0, msgsToDelete)
+      .then(msgs => {
+        let delMsgs = msgs.filter(msg => {return msg.author.equals(bot.user) && msg.embeds[0] !== undefined}).array().slice(0, msgsToDelete)
 
-      if (delMsgs.length === 0)
-        return message.channel.send(`There's nothing for me to delete.`)
+        if (delMsgs.length === 0)
+          return message.channel.send('There\'s nothing for me to delete.')
 
-      if (delMsgs.length < 2 || !message.channel.permissionsFor(bot.user).hasPermission('MANAGE_MESSAGES')) {
-        for (let msg of delMsgs) msg.delete()
-        message.channel.send(`Deleted ${delMsgs.length} message${(delMsgs.length === 1) ? '' : 's'} manually...`)
-      } else {
-        message.channel.bulkDelete(delMsgs)
-          .then(msgs => message.channel.send(`Deleted ${msgs.size} message${(msgs.size === 1) ? '' : 's'}...`)).catch(console.log)
-      }
-    })
+        if (delMsgs.length < 2 || !message.channel.permissionsFor(bot.user).hasPermission('MANAGE_MESSAGES')) {
+          for (let msg of delMsgs) msg.delete()
+          message.channel.send(`Deleted ${delMsgs.length} message${(delMsgs.length === 1) ? '' : 's'} manually...`)
+        } else {
+          message.channel.bulkDelete(delMsgs)
+            .then(msgs => message.channel.send(`Deleted ${msgs.size} message${(msgs.size === 1) ? '' : 's'}...`)).catch(console.log)
+        }
+      })
   }
 }
 
 module.exports.events.messageReactionAdd = (bot, react, user) => {
   if (react.users.size < 2 || !react.message.embeds[0] || react.message.author.id !== bot.user.id) return
+  if (react.emoji.name !== react.message.reactions.first().emoji.name) return
 
   //react.message.channel.send(`**count**: ${react.count}\n**users**: ${[...react.users.keys()].join(', ')}\n**users.size**: ${react.users.size}`)
 
@@ -58,6 +59,6 @@ module.exports.events.messageReactionAdd = (bot, react, user) => {
       .setAuthor(`Message deleted by ${user.username}#${user.discriminator} (Click for image)`, react.message.embeds[0].url, react.message.embeds[0].url)
       .setDescription('Use `b!del` to remove this completely. [](META-DELETED)')
 
-      react.message.edit({embed})
+    react.message.edit({embed})
   }
 }
