@@ -2,17 +2,21 @@
  * No actual bot commands are run here, all this does is load the modules in the module folder and pass events
  */
 
+// Load modules
 const Discord = require('discord.js')
 const fs = require('fs')
 const path = require('path')
 const request = require('request-promise-native')
-const Logger = require('./logger.js').Logger
-const recurReadSync = require('recursive-readdir-sync') //to read all files in a directory, including subdirectories
-//this allows you to sort modules into directories
+const recurReadSync = require('recursive-readdir-sync')
 
-let config = require('./config.json') //Settings for the module system
-let logger = new Logger('err.log', reportError, config.debug)
-let sentMessages = new Discord.Collection(), maxSentMessagesCache = 100
+// Load custom classes
+const Logger = require('./logger.js')
+const Settings = require('./settings.js')
+
+let config = module.exports.config = require('./config.json') //Settings for the module system
+const logger = module.exports.logger = new Logger('err.log', reportError, config.debug)
+const settings = module.exports.settings = new Settings()
+const sentMessages = new Discord.Collection(), maxSentMessagesCache = 100
 
 let modules = {}
 loadModules()
@@ -88,7 +92,7 @@ function startEvents() {
 
     for (let module in modules) {
       if (modules[module].events.message !== undefined && startsWithInvoker(message.content, modules[module].config.invokers)) {
-        if (config.botbans.some(b=>b.id === message.author.id))
+        if (config.botbans.some(b => b.id === message.author.id))
           return logger.info(`Botbanned user: ${message.author.username}#${message.author.discriminator} (${message.author.id})`)
 
         if (modules[module].config.invokers !== null && modules[module].config.invokers !== undefined)
@@ -140,7 +144,8 @@ let handler = {
   apply(target, thisArg, args) {
     let promise, [content, options] = args, callMsg = thisArg._message
 
-    //TODO: Support codeblocks in embeds for selfbots
+    // old to-do: Support codeblocks in embeds for selfbots
+    // adendum: since discord's tos forbids selfbots, support has been dropped
 
     if (config.selfbot && callMsg && callMsg.author.id === bot.user.id) {
       if (options)
@@ -148,7 +153,7 @@ let handler = {
       else if (typeof content === 'object')
         promise = callMsg.edit(callMsg.content, content)
       else
-        promise = callMsg.edit(callMsg.content, {embed: {description: content}})
+        promise = callMsg.edit(callMsg.content, { embed: { description: content } })
 
     } else if (!callMsg || !sentMessages.has(callMsg.id)) {
       promise = target.call(thisArg, content, options)
@@ -172,7 +177,6 @@ let handler = {
 
 send.value = new Proxy(send.value, handler)
 Object.defineProperty(Discord.TextChannel.prototype, 'send', send)
-
 
 /**
  * Checks if a message starts with both a global invoker and an invoker in `invokers`
@@ -203,15 +207,15 @@ function startsWithInvoker(msg, invokers) {
     if (invoker === '') return true //Allow you to use '' as an invoker, meaning that it's called whenever the global invoker is used
     if (msg.startsWith(invoker)) {
       if (msg[msg.indexOf(invoker) + invoker.length] === undefined || msg[msg.indexOf(invoker) + invoker.length] === ' ') startsWith = true
-       //You might be wondering why there's this long line here
-       //It's not that I'm crazy, this is in fact to allow you to have 'h' and 'help' as invoker for two different commands
-       //We check the character after the invoker to be sure we are matching the full thing and not just part of it
+      //You might be wondering why there's this long line here
+      //It's not that I'm crazy, this is in fact to allow you to have 'h' and 'help' as invoker for two different commands
+      //We check the character after the invoker to be sure we are matching the full thing and not just part of it
 
-       //m!help ('help' and 'h' are both invokers, but for different commands)
-       //help   (Strip the global invoker)
-       //help   (Both 'help' and 'h' match, since 'help' starts with both)
-       // ^  ^  (So we check the character after. It doesn't match 'h' since after it's 'e', not undefined or a space.)
-       //In this case only 'help' runs. As it's meant to do
+      //m!help ('help' and 'h' are both invokers, but for different commands)
+      //help   (Strip the global invoker)
+      //help   (Both 'help' and 'h' match, since 'help' starts with both)
+      // ^  ^  (So we check the character after. It doesn't match 'h' since after it's 'e', not undefined or a space.)
+      //In this case only 'help' runs. As it's meant to do
     }
   }
 
@@ -228,11 +232,11 @@ function startsWithInvoker(msg, invokers) {
  * @param  {Object}   options Shlex options
  * @return {string[]}         The result of the shlexed string
  */
-function shlex(str, {lowercaseCommand = false, lowercaseAll = false, stripOnlyCommand = false} = {}) {
+module.exports.shlex = function shlex(str, { lowercaseCommand = false, lowercaseAll = false, stripOnlyCommand = false } = {}) {
   if (str.content) str = str.content
 
   for (let invoker of config.invokers) {
-    let repInvoker = (invoker+'').replace(/([\\\.\+\*\?\[\^\]\$\(\)\{\}\=\!\<\>\|\:])/g, "\\$1")
+    let repInvoker = (invoker + '').replace(/([\\\.\+\*\?\[\^\]\$\(\)\{\}\=\!\<\>\|\:])/g, "\\$1")
     if (str.toLowerCase().startsWith(invoker.toLowerCase())) { //I'm so sorry
       str = str.replace(new RegExp(repInvoker, 'i'), '')
       break
@@ -248,7 +252,7 @@ function shlex(str, {lowercaseCommand = false, lowercaseAll = false, stripOnlyCo
   let regex = /"([\s\S]+?[^\\])"|'([\s\S]+?[^\\])'|([^\s]+)/gm //yay regex
   let result
 
-  for (;;) {
+  for (; ;) {
     result = regex.exec(str)
     if (result === null) break
     matches.push(result[1] || result[2] || result[3])
@@ -262,13 +266,13 @@ function shlex(str, {lowercaseCommand = false, lowercaseAll = false, stripOnlyCo
 
   return matches.map(v => v.replace(/\\(")|\\(')/g, '$1'))
 }
-module.exports.shlex = shlex
+
 /**
  * Gets all the events used by the modules
- * @param  {Object}   fuckIDunnoWhatJSDocWantsHere Object with only one property: getUnused. If the function should return unused events instead of used events
+ * @param  {Object}   Options Object with only one property: getUnused. If the function should return unused events instead of used events
  * @return {string[]} All the events used by the modules
  */
-function getAllEvents({getUnused = false} = {}) {
+function getAllEvents({ getUnused = false } = {}) {
   let events = []
 
   for (let module in modules) {
@@ -296,7 +300,7 @@ function getAllEvents({getUnused = false} = {}) {
     //Filter out events that aren't Discord events
     let eventsC = events
     events = []
-    for (let event of discordEvents.map(e => e.toLowerCase().replace(/(_\w)/g, m => m.replace('_','').toUpperCase())))  //camelCase the events, not sorry for this
+    for (let event of discordEvents.map(e => e.toLowerCase().replace(/(_\w)/g, m => m.replace('_', '').toUpperCase())))  //camelCase the events, not sorry for this
       eventsC.forEach(e => (e === event) ? events.push(e) : null)
   }
 
@@ -307,7 +311,7 @@ function getAllEvents({getUnused = false} = {}) {
  * Reload the config with from either the file or an object passed to it
  * @param  {Object} newConfig The new config to use
  */
-function reloadConfig(newConfig) {
+module.exports.reloadConfig = function reloadConfig(newConfig) {
   purgeCache('./config.json')
   if (newConfig !== undefined) {
     config = newConfig
@@ -316,22 +320,22 @@ function reloadConfig(newConfig) {
   }
   module.exports.config = config
 }
-module.exports.reloadConfig = reloadConfig
+
 /**
  * Saves the currently stored config
  * @return {Promise} A promise that resolves when settings are saved
  */
-function saveConfig() {
+module.exports.saveConfig = function saveConfig() {
   return writeFile('./config.json', config)
 }
-module.exports.saveConfig = saveConfig
+
 //More helper functions, but this time for managing the module system
 
 /**
  * (Re)loads ALL modules
  * @return {string} The result of loading the modules
  */
-function loadModules() {
+module.exports.loadModules = function loadModules() {
   modules = {}
   //You might ask "why sync?", that's because there's no use in logging in if all modules aren't loaded yet
   let moduleFiles = recurReadSync(path.join(__dirname, 'modules'))
@@ -363,13 +367,13 @@ function loadModules() {
   if (fails.length > 0) logger.warn(`Failed: ${fails.join(', ')}`)
   return `Loaded ${succ.length} module(s) sucessfully; ${fails.length} failed.`
 }
-module.exports.loadModules = loadModules
+
 /**
  * (Re)load a single module
  * @param  {string} moduleName The name of the module to load
  * @return {string}            The result of loading the module
  */
-function loadModule(moduleName) {
+module.exports.loadModule = function loadModule(moduleName) {
   try {
     let moduleFiles = recurReadSync(path.join(__dirname, 'modules'))
 
@@ -389,13 +393,13 @@ function loadModule(moduleName) {
     return 'Something went wrong!'
   }
 }
-module.exports.loadModule = loadModule
+
 /**
  * Unload a single module
  * @param  {string} moduleName The module to unload
  * @return {string}            The result of unloading the module
  */
-function unloadModule(moduleName) {
+module.exports.unloadModule = function unloadModule(moduleName) {
   try {
     let moduleFiles = recurReadSync(path.join(__dirname, 'modules'))
 
@@ -415,14 +419,13 @@ function unloadModule(moduleName) {
     return 'Something went wrong!'
   }
 }
-module.exports.unloadModule = unloadModule
 
 /**
  * Gets info for a single module
  * @param  {string} moduleName The name of the module
  * @return {Object}            The config, path and dir of the module (Or a string if something went wrong)
  */
-function getModuleInfo(moduleName) {
+module.exports.getModuleInfo = function getModuleInfo(moduleName) {
   try {
     let moduleFiles = recurReadSync(path.join(__dirname, 'modules'))
 
@@ -433,7 +436,7 @@ function getModuleInfo(moduleName) {
       if (moduleName === config.name) {
         let p = file
         let dir = path.parse(file).dir.split(path.sep).pop() //returns the folder it's in
-        return {config, path: p, dir}
+        return { config, path: p, dir }
       }
     }
 
@@ -443,152 +446,7 @@ function getModuleInfo(moduleName) {
     return 'Something went wrong!'
   }
 }
-module.exports.getModuleInfo = getModuleInfo
 
-/*  SETTINGS HERE WE GOOO
- *
- * Settings are stored in separate files under `settings/`
- * And are loaded only when needed
- * `settings` includes a bunch of functions to get/set/save settings
- * These funcs let me not need to mess with fs later on, along by letting me cache them instead of loading the files each time
- * Essentially this is just a wrapper around a map object that does some file loading/creating if the setting isn't cached
- */
-
-/** A settings class to offer a few helper methods for settings */
-class Settings {
-  /**
-   * Create the cache for settings
-   */
-  constructor() {
-    this.cache = new Map() //Internal cache to store settings
-      //You shouldn't ever need to use it
-  }
-
-    /**
-     * Get all the settings
-     * @return {Map} All the settings
-     */
-  get all() {
-    return this.cache //I still let you get it because why not?
-  }
-
-    /**
-     * Grabs settings for a guild/user
-     * @param  {string} settingId The ID of the guild/user
-     * @return {Object}           The settings for the guild/user
-     */
-  get(settingId) {
-    this.verifyCacheFor(settingId)
-    return this.cache.get(settingId)
-  }
-
-    /**
-     * Sets settings for a guild/user
-     * @param  {string} settingId The Id of the guild/user
-     * @param  {Object} newVal    New settings to set
-     * @return {Object}           The new settings
-     */
-  set(settingId, newVal) {
-    this.verifyCacheFor(settingId)
-    return this.cache.set(settingId, newVal).get(settingId)
-  }
-
-    /**
-     * Saves settings for a guild/user
-     * @param {string} settingId The ID of the guild/user
-     */
-  save(settingId) {
-    this.verifyCacheFor(settingId)
-    this.writeSettings(settingId, this.get(settingId))
-      .then(() => {
-        return
-      }).catch((e) => {
-        logger.error(e, 'Save Settings (Create)') //fug
-        throw e
-      })
-  }
-
-    /**
-     * Saves ALL the settings
-     * Used to save before an exit/autosave
-     *
-     * @return {Promise} A Map containing all settings saved
-     */
-  saveAll() {
-    let that = this
-    return new Promise(function(resolve, reject) {
-      let promises = []
-      for (let setting of that.cache) { //[0] = settingId, [1] = settings
-        promises.push(that.writeSettings(setting[0], setting[1]))
-      }
-
-      Promise.all(promises)
-        .then(() => {
-          resolve(that.cache)
-        }).catch((e) => {
-          logger.error(e, 'Save Settings (All)')
-          reject()
-        })
-
-    })
-  }
-
-    /**
-     * Checks the cache the the settings for settingId, then if it
-     *
-     * Exists and  Cached: Do nothing
-     * Exists and !Cached: Load it
-     * Doesn't Exist     : Create new settings for that settingId
-     *
-     * @param {string} settingId The id for the guild/user
-     */
-  verifyCacheFor(settingId) {
-    if (this.cache.get(settingId) !== undefined) return //It exists! We don't need to do anything
-
-      //So we don't have the settings cached, let's load em'!
-    try {
-      this.cache.set(settingId, require(path.join(process.cwd(), 'settings', `${settingId}.json`)))
-      return
-    } catch (e) {
-        //Either it doesn't exist or it erroed, so we have to create new settings
-      logger.debug(`Creating settings for: ${settingId}`)
-
-      try {
-        fs.writeFileSync(path.join(process.cwd(), 'settings', `${settingId}.json`), JSON.stringify(require('./defaultSettings.json'), null, 2))
-        this.cache.set(settingId, require(path.join(process.cwd(), 'settings', `${settingId}.json`)))
-        return
-      } catch(e) {
-        logger.error(e, 'Save Settings (Create)') //fug
-        throw e
-      }
-    }
-  }
-
-    /**
-     *  A little wrapper thingy to promisefy node's writeFile funct. Also stringyfies for me
-     *
-     * @param {string} fileName    String, fileName to write
-     * @param {Object} fileContent fileContent to write
-     *
-     * @return {Promise}           Used to tell when saving is finished
-     */
-  writeSettings(fileName, fileContent) {
-    return new Promise(function(resolve, reject) {
-      fs.writeFile(path.join(process.cwd(), 'settings', `${fileName}.json`), JSON.stringify(fileContent, null, 2), (e) => {
-        if (e) reject(e)
-        resolve()
-      })
-    })
-  }
-}
-
-let settings = module.exports.settings = new Settings()
-
-//And God said,
-//let there = 'light'
-//and there was light.
-
-//Code I took from SO to clear the module cache
 /**
  * Removes a module from the cache
  *
@@ -605,15 +463,15 @@ function purgeCache(moduleName) {
  * @param  {string} errType What kind of error happened
  * @return {number}         The error ID
  */
-function reportError(err, errType) {
+module.exports.reportError = function reportError(err, errType) {
   let errID = Math.floor(Math.random() * 1000000).toString(16)
   let errMsg = `Error: ${errType}\nID: ${errID}\n\`\`\`js\n${err.toString()}\n\`\`\``
 
   if (!config.selfbot)
-    bot.users.get(config.owner.id).sendMessage(errMsg, {split: {prepend: '```js\n', append: '\n```'}})
+    bot.users.get(config.owner.id).sendMessage(errMsg, { split: { prepend: '```js\n', append: '\n```' } })
   return errID
 }
-module.exports.reportError = reportError
+
 /**
  * Promisefied fs.writefile
  * @param  {String} fileName    The filename to write to
@@ -623,8 +481,8 @@ module.exports.reportError = reportError
 function writeFile(fileName, fileContent) {
   return new Promise((resolve, reject) => {
     fs.writeFile(fileName, JSON.stringify(fileContent, null, 2), (e) => {
-      if(e) reject(e)
-      else  resolve()
+      if (e) reject(e)
+      else resolve()
     })
   })
 }
@@ -635,12 +493,12 @@ function writeFile(fileName, fileContent) {
  * @param  {String=''} description An optional description for the gist
  * @return {Promise} GitHub's response
  */
-function createGist(files, description = '') {
+module.exports.createGist = function createGist(files, description = '') {
   const o = {
     method: 'POST',
     uri: 'https://api.github.com' + '/gist',
     json: true,
-    body: {description, files}
+    body: { description, files }
   }
 
   return request(o)
@@ -648,19 +506,22 @@ function createGist(files, description = '') {
 
 startEvents()
 
-logger.info('Starting Login...')
-bot.login(config.token).then(() => {
-  logger.info('Logged in!')
-  if (config.owner === null) {
-    logger.info('Fetching Owner info...')
-    bot.fetchApplication().then(OAuth => {
+  ; (async () => {
+    logger.info('Starting Login...')
+    await bot.login(config.token)
+
+    logger.info('Logged in!')
+
+    if (config.owner === null) {
+      logger.info('Fetching Owner info...')
+
+      const OAuth = await bot.fetchApplication()
       config.owner = OAuth.owner
       fs.writeFile('./config.json', JSON.stringify(config, null, 2), (err) => {
-        logger.info((err) ? err : 'Saved Owner info!')
+        logger.info(err ? err : 'Saved Owner info!')
       })
-    })
-  }
-})
+    }
+  })()
 
 bot.on('disconnect', reason => {
   logger.log(reason)
@@ -680,23 +541,11 @@ process.on('unhandledRejection', (reason, p) => {
 /**
  * Saves then exits
  */
-function saveAndExit() {
+module.exports.saveAndExit = function saveAndExit() {
   settings.saveAll().then(() => {
     process.nextTick(process.exit()) //rippo
   }).catch(logger.error)
 }
-module.exports.saveAndExit = saveAndExit
-//Export some stuff for utility purpose
-
-//module.exports.shlex = shlex
-//module.exports.loadModules = loadModules
-//module.exports.loadModule = loadModule
-// module.exports.unloadModule = unloadModule
-// module.exports.reloadConfig = reloadConfig
-// module.exports.saveConfig = saveConfig
-// module.exports.reportError = reportError
-// module.exports.settings = settings
-// module.exports.saveAndExit = saveAndExit
 
 /**
  * An array of all the modules that are loaded
@@ -704,20 +553,7 @@ module.exports.saveAndExit = saveAndExit
  */
 module.exports.modules = modules
 
-/**
- * Object with the current config being used
- * @type {Object}
- */
-module.exports.config = config
-
-/**
- * The Logger being used
- * @type {Logger}
- */
-module.exports.logger = logger
-
 bot.logger = logger
 bot.modules = module.exports
 
-//*cries in js*
-
+// meme

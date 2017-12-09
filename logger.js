@@ -11,7 +11,7 @@ const fs = require('fs')
 /**
  * Yay logging!
  */
-class Logger {
+module.exports = class Logger {
   /**
    * Constructor for Logger
    * @param {String}   [logFile='log.txt'] The file to log to
@@ -167,11 +167,3 @@ class Logger {
     return padded.substring(0, padded.length - msg.length) + msg
   }
 }
-
-/**
- * A fancy-ish logger
- * Same stuff as console, but prepends date + type and colors output
- *
- * @type {Logger} logger The Logger
- */
-module.exports.Logger = Logger
