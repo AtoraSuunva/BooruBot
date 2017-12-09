@@ -1,17 +1,18 @@
 /* The main file for the bot
- *
  * No actual bot commands are run here, all this does is load the modules in the module folder and pass events
  */
 
-const Discord       = require('discord.js')
-const fs            = require('fs')
-const path          = require('path')
-const Logger        = require('./logger.js').Logger
+const Discord = require('discord.js')
+const fs = require('fs')
+const path = require('path')
+const request = require('request-promise-native')
+const Logger = require('./logger.js').Logger
 const recurReadSync = require('recursive-readdir-sync') //to read all files in a directory, including subdirectories
 //this allows you to sort modules into directories
 
 let config = require('./config.json') //Settings for the module system
 let logger = new Logger('err.log', reportError, config.debug)
+let sentMessages = new Discord.Collection(), maxSentMessagesCache = 100
 
 let modules = {}
 loadModules()
@@ -22,30 +23,27 @@ let events = getAllEvents()
 //Unfortunately, this prevents adding a module that listens to a new event/adding a new event without restarting the bot
 //one day I might find a fix for this
 
-let unusedEvents = getAllEvents({getUnused: true}) //Used right after to tell discord.js what events to not care about, so we can get a performance b o o s t
-
+//let unusedEvents = getAllEvents({getUnused: true}) //Used right after to tell discord.js what events to not care about, so we can get a performance b o o s t
 //logger.log(unusedEvents)
 
-const bot = new Discord.Client({
-  disableEveryone: true
-})
+const bot = new Discord.Client()
 
 /**
  * Load the listeners for all the events
- * @return void
  */
 function startEvents() {
   logger.log('Loading events...')
   for (let event of events) {
     logger.debug(`Loading ${event}`)
     bot.on(event, (...args) => {
-      //logger.debug(`Got ${event} event!`)
+      logger.debug(`Got ${event} event!`)
       for (let module in modules) {
         if (modules[module].events[event] !== undefined) {
           try {
+            logger.debug(`Running: ${module}`)
             modules[module].events[event](bot, ...args)
           } catch (e) {
-            logger.error(e, `Module Err: ${event}`)
+            logger.error(e.stack + `\nModule Err: ${event}`)
           }
         }
       }
@@ -57,20 +55,27 @@ function startEvents() {
   bot.on('message', processMessage)
 
   bot.on('messageUpdate', (oldmessage, message) => {
-  	if (oldmessage.content !== message.content)
-  		processMessage(message)
+    if (oldmessage.content !== message.content)
+      processMessage(message)
   })
 
   function processMessage(message) {
-
+    message.channel._message = message //for the fancy message update thingy
     //yay things
     for (let module in modules) {
       if (modules[module].events.everyMessage !== undefined) {
-        logger.debug(`Running ${module}`)
+        //logger.debug(`Running ${module}`)
         try {
           modules[module].events.everyMessage(bot, message)
         } catch (e) {
-          logger.error(e, 'Module Err: message')
+          ctx = {
+            guild: message.channel.guild ? message.channel.guild.id : null,
+            type: message.channel.type,
+            channel: message.channel.id,
+            messageId: message.id,
+            messageContent: message.content
+          }
+          logger.error(e.stack + '\n' + JSON.stringify(ctx, null, 2))
         }
       }
     }
@@ -83,24 +88,91 @@ function startEvents() {
 
     for (let module in modules) {
       if (modules[module].events.message !== undefined && startsWithInvoker(message.content, modules[module].config.invokers)) {
+        if (config.botbans.some(b=>b.id === message.author.id))
+          return logger.info(`Botbanned user: ${message.author.username}#${message.author.discriminator} (${message.author.id})`)
 
-        if (config.botbans.some(b => b.id === message.author.id)) return
-        if (modules[module].config.invokers !== null) logger.debug(`Running ${module}`)
+        if (modules[module].config.invokers !== null && modules[module].config.invokers !== undefined)
+          logger.debug(`Running ${module}`)
 
         try {
-          message.botClient = bot
           modules[module].events.message(bot, message)
         } catch (e) {
-          logger.error(e, 'Module Err: message')
-          message.channel.sendMessage(`Whoops, something went wrong!\nBug Atlas about it.`)
+          ctx = {
+            guild: message.channel.guild ? message.channel.guild.id : null,
+            type: message.channel.type,
+            channel: message.channel.id,
+            messageId: message.id,
+            messageContent: message.content
+          }
+          logger.error(e.stack + '\n' + JSON.stringify(ctx, null, 4))
+          message.channel.send(`Whoops, something went wrong!\nI sent ${config.owner.username} some debug info.`)
         }
       }
+    }
+  }
+
+  // delte a response if the call is deleted
+  bot.on('messageDelete', deleteMessage)
+
+  bot.on('messageDeleteBulk', messages => {
+    messages.forEach(deleteMessage)
+  })
+
+  function deleteMessage(message) {
+    for (let [key, val] of sentMessages) {
+      if (val.id === message.id)
+        return sentMessages.delete(key)
+    }
+
+    if (sentMessages.has(message.id)) {
+      sentMessages.get(message.id).delete()
+      return sentMessages.delete(message.id)
     }
   }
 
   logger.log('Events Loaded! Finally Ready!')
 }
 //Some helper functions
+
+let send = Object.getOwnPropertyDescriptor(Discord.TextChannel.prototype, 'send')
+
+let handler = {
+  apply(target, thisArg, args) {
+    let promise, [content, options] = args, callMsg = thisArg._message
+
+    //TODO: Support codeblocks in embeds for selfbots
+
+    if (config.selfbot && callMsg && callMsg.author.id === bot.user.id) {
+      if (options)
+        promise = callMsg.edit(callMsg.content + '\n' + content, options)
+      else if (typeof content === 'object')
+        promise = callMsg.edit(callMsg.content, content)
+      else
+        promise = callMsg.edit(callMsg.content, {embed: {description: content}})
+
+    } else if (!callMsg || !sentMessages.has(callMsg.id)) {
+      promise = target.call(thisArg, content, options)
+      logger.info('Sent new')
+
+    } else {
+      promise = sentMessages.get(callMsg.id).edit(content, options)
+      logger.info('Edited old')
+    }
+
+    if (!config.selfbot && callMsg && callMsg.author.id !== bot.user.id)
+      promise.then(m => {
+        sentMessages.set(callMsg.id, m)
+        if (sentMessages.size > maxSentMessagesCache)
+          sentMessages.delete(sentMessages.firstKey())
+      })
+
+    return promise
+  }
+}
+
+send.value = new Proxy(send.value, handler)
+Object.defineProperty(Discord.TextChannel.prototype, 'send', send)
+
 
 /**
  * Checks if a message starts with both a global invoker and an invoker in `invokers`
@@ -118,7 +190,7 @@ function startsWithInvoker(msg, invokers) {
     invoker = invoker.toLowerCase()
     if (msg.startsWith(invoker)) {
       startsWith = true
-      msg = msg.replace(invoker, '')
+      msg = msg.replace(invoker, '').trim()
       break
     }
   }
@@ -131,15 +203,15 @@ function startsWithInvoker(msg, invokers) {
     if (invoker === '') return true //Allow you to use '' as an invoker, meaning that it's called whenever the global invoker is used
     if (msg.startsWith(invoker)) {
       if (msg[msg.indexOf(invoker) + invoker.length] === undefined || msg[msg.indexOf(invoker) + invoker.length] === ' ') startsWith = true
-      //You might be wondering why there's this long line here
-      //It's not that I'm crazy, this is in fact to allow you to have 'h' and 'help' as invoker for two different commands
-      //We check the character after the invoker to be sure we are matching the full thing and not just part of it
+       //You might be wondering why there's this long line here
+       //It's not that I'm crazy, this is in fact to allow you to have 'h' and 'help' as invoker for two different commands
+       //We check the character after the invoker to be sure we are matching the full thing and not just part of it
 
-      //m!help ('help' and 'h' are both invokers, but for different commands)
-      //help   (Strip the global invoker)
-      //help   (Both 'help' and 'h' match, since 'help' starts with both)
-      // ^  ^  (So we check the character after. It doesn't match 'h' since after it's 'e', not undefined or a space.)
-      //In this case only 'help' runs. As it's meant to do
+       //m!help ('help' and 'h' are both invokers, but for different commands)
+       //help   (Strip the global invoker)
+       //help   (Both 'help' and 'h' match, since 'help' starts with both)
+       // ^  ^  (So we check the character after. It doesn't match 'h' since after it's 'e', not undefined or a space.)
+       //In this case only 'help' runs. As it's meant to do
     }
   }
 
@@ -152,26 +224,35 @@ function startsWithInvoker(msg, invokers) {
  * m!test hello "there world!" aa
  * ['test', 'hello', 'there world', 'aa']
  *
- * @param  {string}   str The string to shlex
- * @return {string[]}     The result of the shlexed string
+ * @param  {string}   str     The string to shlex
+ * @param  {Object}   options Shlex options
+ * @return {string[]}         The result of the shlexed string
  */
-function shlex(str, {lowercaseCommand = false, lowercaseAll = false} = {}) {
+function shlex(str, {lowercaseCommand = false, lowercaseAll = false, stripOnlyCommand = false} = {}) {
   if (str.content) str = str.content
+
   for (let invoker of config.invokers) {
-    if (str.toLowerCase().indexOf(invoker.toLowerCase()) === 0) {
-      str = replaceAll(str, invoker, '')
+    let repInvoker = (invoker+'').replace(/([\\\.\+\*\?\[\^\]\$\(\)\{\}\=\!\<\>\|\:])/g, "\\$1")
+    if (str.toLowerCase().startsWith(invoker.toLowerCase())) { //I'm so sorry
+      str = str.replace(new RegExp(repInvoker, 'i'), '')
       break
     }
   }
-	let matches = []
-	let regex = /"(.+?)"|'(.+?)'|([^\s]+)/g
-	let result
 
-	while (true) {
-		result = regex.exec(str)
-		if (result === null) break
-		matches.push(result[1] || result[2] || result[3])
-	}
+  if (stripOnlyCommand) {
+    console.log('fuck')
+    return str
+  }
+
+  let matches = []
+  let regex = /"([\s\S]+?[^\\])"|'([\s\S]+?[^\\])'|([^\s]+)/gm //yay regex
+  let result
+
+  for (;;) {
+    result = regex.exec(str)
+    if (result === null) break
+    matches.push(result[1] || result[2] || result[3])
+  }
 
   if (lowercaseCommand)
     matches[0] = matches[0].toLowerCase()
@@ -179,16 +260,9 @@ function shlex(str, {lowercaseCommand = false, lowercaseAll = false} = {}) {
   if (lowercaseAll)
     matches = matches.map(v => v.toLowerCase())
 
-	return matches
+  return matches.map(v => v.replace(/\\(")|\\(')/g, '$1'))
 }
 module.exports.shlex = shlex
-
-function replaceAll(str, find, rep) {
-    const esc = find.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')
-    const reg = new RegExp(esc, 'i')
-    return str.replace(reg, rep)
-};
-
 /**
  * Gets all the events used by the modules
  * @param  {Object}   fuckIDunnoWhatJSDocWantsHere Object with only one property: getUnused. If the function should return unused events instead of used events
@@ -198,8 +272,8 @@ function getAllEvents({getUnused = false} = {}) {
   let events = []
 
   for (let module in modules) {
-    if (modules[module].events !== undefined)
-      events.push(...Object.keys(modules[module].events))
+    if (modules[module].events == undefined) return
+    events.push(...Object.keys(modules[module].events))
   }
 
   events = Array.from(new Set(events)) //Ensure there's only unique events by using a set
@@ -223,7 +297,7 @@ function getAllEvents({getUnused = false} = {}) {
     let eventsC = events
     events = []
     for (let event of discordEvents.map(e => e.toLowerCase().replace(/(_\w)/g, m => m.replace('_','').toUpperCase())))  //camelCase the events, not sorry for this
-      eventsC.forEach(e => (e === event) ? events.push(e) : true)
+      eventsC.forEach(e => (e === event) ? events.push(e) : null)
   }
 
   return events
@@ -305,9 +379,8 @@ function loadModule(moduleName) {
         logger.debug(`Loading ${file.replace(path.join(__dirname, 'modules/'), '')}`)
         purgeCache(file)
         modules[moduleName] = require(file)
-        return `Loaded ${moduleName} sucessfully`
+        return `Loaded ${moduleName} successfully`
       }
-
     }
 
     return 'Could not find module'
@@ -332,7 +405,7 @@ function unloadModule(moduleName) {
         logger.debug(`Unloading ${file.replace(path.join(__dirname, 'modules/'), '')}`)
         purgeCache(`${file}`)
         delete modules[moduleName]
-        return `Sucessfully unloaded ${moduleName}`
+        return `Successfully unloaded ${moduleName}`
       }
     }
 
@@ -345,7 +418,7 @@ function unloadModule(moduleName) {
 module.exports.unloadModule = unloadModule
 
 /**
- * (Gets info for a single module
+ * Gets info for a single module
  * @param  {string} moduleName The name of the module
  * @return {Object}            The config, path and dir of the module (Or a string if something went wrong)
  */
@@ -386,28 +459,28 @@ class Settings {
   /**
    * Create the cache for settings
    */
-    constructor() {
-      this.cache = new Map() //Internal cache to store settings
+  constructor() {
+    this.cache = new Map() //Internal cache to store settings
       //You shouldn't ever need to use it
-    }
+  }
 
     /**
      * Get all the settings
      * @return {Map} All the settings
      */
-    get all() {
-      return this.cache //I still let you get it because why not?
-    }
+  get all() {
+    return this.cache //I still let you get it because why not?
+  }
 
     /**
      * Grabs settings for a guild/user
      * @param  {string} settingId The ID of the guild/user
      * @return {Object}           The settings for the guild/user
      */
-    get(settingId) {
-      this.verifyCacheFor(settingId)
-      return this.cache.get(settingId)
-    }
+  get(settingId) {
+    this.verifyCacheFor(settingId)
+    return this.cache.get(settingId)
+  }
 
     /**
      * Sets settings for a guild/user
@@ -415,25 +488,25 @@ class Settings {
      * @param  {Object} newVal    New settings to set
      * @return {Object}           The new settings
      */
-    set(settingId, newVal) {
-      this.verifyCacheFor(settingId)
-      return this.cache.set(settingId, newVal).get(settingId)
-    }
+  set(settingId, newVal) {
+    this.verifyCacheFor(settingId)
+    return this.cache.set(settingId, newVal).get(settingId)
+  }
 
     /**
      * Saves settings for a guild/user
      * @param {string} settingId The ID of the guild/user
      */
-    save(settingId) {
-      this.verifyCacheFor(settingId)
-      this.writeSettings(settingId, this.get(settingId))
+  save(settingId) {
+    this.verifyCacheFor(settingId)
+    this.writeSettings(settingId, this.get(settingId))
       .then(() => {
-        return;
+        return
       }).catch((e) => {
         logger.error(e, 'Save Settings (Create)') //fug
         throw e
       })
-    }
+  }
 
     /**
      * Saves ALL the settings
@@ -441,15 +514,15 @@ class Settings {
      *
      * @return {Promise} A Map containing all settings saved
      */
-    saveAll() {
-      let that = this
-      return new Promise(function(resolve, reject) {
-        let promises = []
-        for (let setting of that.cache) { //[0] = settingId, [1] = settings
-          promises.push(that.writeSettings(setting[0], setting[1]))
-        }
+  saveAll() {
+    let that = this
+    return new Promise(function(resolve, reject) {
+      let promises = []
+      for (let setting of that.cache) { //[0] = settingId, [1] = settings
+        promises.push(that.writeSettings(setting[0], setting[1]))
+      }
 
-        Promise.all(promises)
+      Promise.all(promises)
         .then(() => {
           resolve(that.cache)
         }).catch((e) => {
@@ -457,8 +530,8 @@ class Settings {
           reject()
         })
 
-      })
-    }
+    })
+  }
 
     /**
      * Checks the cache the the settings for settingId, then if it
@@ -469,27 +542,27 @@ class Settings {
      *
      * @param {string} settingId The id for the guild/user
      */
-    verifyCacheFor(settingId) {
-      if (this.cache.get(settingId) !== undefined) return; //It exists! We don't need to do anything
+  verifyCacheFor(settingId) {
+    if (this.cache.get(settingId) !== undefined) return //It exists! We don't need to do anything
 
       //So we don't have the settings cached, let's load em'!
-      try {
-        this.cache.set(settingId, require(path.join(process.cwd(), `settings`, `${settingId}.json`)))
-        return;
-      } catch (e) {
+    try {
+      this.cache.set(settingId, require(path.join(process.cwd(), 'settings', `${settingId}.json`)))
+      return
+    } catch (e) {
         //Either it doesn't exist or it erroed, so we have to create new settings
-        logger.debug(`Creating settings for: ${settingId}`)
+      logger.debug(`Creating settings for: ${settingId}`)
 
-        try {
-          fs.writeFileSync(path.join(process.cwd(), `settings`, `${settingId}.json`), JSON.stringify(require('./defaultSettings.json'), null, 2))
-          this.cache.set(settingId, require(path.join(process.cwd(), `settings`, `${settingId}.json`)))
-          return;
-        } catch(e) {
-          logger.error(e, 'Save Settings (Create)') //fug
-          throw e
-        }
+      try {
+        fs.writeFileSync(path.join(process.cwd(), 'settings', `${settingId}.json`), JSON.stringify(require('./defaultSettings.json'), null, 2))
+        this.cache.set(settingId, require(path.join(process.cwd(), 'settings', `${settingId}.json`)))
+        return
+      } catch(e) {
+        logger.error(e, 'Save Settings (Create)') //fug
+        throw e
       }
     }
+  }
 
     /**
      *  A little wrapper thingy to promisefy node's writeFile funct. Also stringyfies for me
@@ -499,20 +572,20 @@ class Settings {
      *
      * @return {Promise}           Used to tell when saving is finished
      */
-    writeSettings(fileName, fileContent) {
-      return new Promise(function(resolve, reject) {
-        fs.writeFile(path.join(process.cwd(), `settings`, `${fileName}.json`), JSON.stringify(fileContent, null, 2), (e) => {
-          if (e) reject(e)
-          resolve()
-        })
+  writeSettings(fileName, fileContent) {
+    return new Promise(function(resolve, reject) {
+      fs.writeFile(path.join(process.cwd(), 'settings', `${fileName}.json`), JSON.stringify(fileContent, null, 2), (e) => {
+        if (e) reject(e)
+        resolve()
       })
-    }
+    })
+  }
 }
 
 let settings = module.exports.settings = new Settings()
 
 //And God said,
-let there = 'light';
+//let there = 'light'
 //and there was light.
 
 //Code I took from SO to clear the module cache
@@ -521,49 +594,9 @@ let there = 'light';
  *
  * @param {string} moduleName The module to purge the cache for
  */
- function purgeCache(moduleName) {
-    // Traverse the cache looking for the files
-    // loaded by the specified module name
-    searchCache(moduleName, function (mod) {
-        delete require.cache[mod.id]
-    })
-
-    // Remove cached paths to the module.
-    // Thanks to @bentael for pointing this out.
-    Object.keys(module.constructor._pathCache).forEach(function(cacheKey) {
-        if (cacheKey.indexOf(moduleName)>0) {
-            delete module.constructor._pathCache[cacheKey]
-        }
-    })
-}
-
-/**
- * Traverses the cache to search for all the cached
- * files of the specified module name
- *
- * @param {string} moduleName The name of the module to search the cache for
- * @param {Function} callback The callback to call
- */
-function searchCache(moduleName, callback) {
-  // Resolve the module identified by the specified name
-  var mod = require.resolve(moduleName)
-
-  // Check if the module has been resolved and found within
-  // the cache
-  if (mod && ((mod = require.cache[mod]) !== undefined)) {
-    // Recursively go over the results
-    (function traverse(mod) {
-      // Go over each of the module's children and
-      // traverse them
-      mod.children.forEach(function (child) {
-        traverse(child)
-      })
-
-      // Call the specified callback providing the
-      // found cached module
-      callback(mod)
-    }(mod))
-  }
+function purgeCache(moduleName) {
+  const mod = require.resolve(moduleName)
+  Object.keys(require.cache).forEach(key => key === mod && delete require.cache[key])
 }
 
 /**
@@ -578,7 +611,7 @@ function reportError(err, errType) {
 
   if (!config.selfbot)
     bot.users.get(config.owner.id).sendMessage(errMsg, {split: {prepend: '```js\n', append: '\n```'}})
-  return errID;
+  return errID
 }
 module.exports.reportError = reportError
 /**
@@ -588,18 +621,35 @@ module.exports.reportError = reportError
  * @return {Promise}            Promise that resolves with nothing on save
  */
 function writeFile(fileName, fileContent) {
-  return new Promise(function(resolve, reject) {
+  return new Promise((resolve, reject) => {
     fs.writeFile(fileName, JSON.stringify(fileContent, null, 2), (e) => {
-      if (e) reject(e)
-      resolve()
+      if(e) reject(e)
+      else  resolve()
     })
   })
+}
+
+/**
+ * Create a gist
+ * @param  {Object}    files       The files to add, in format of {"filename.txt": {content: "words"}}
+ * @param  {String=''} description An optional description for the gist
+ * @return {Promise} GitHub's response
+ */
+function createGist(files, description = '') {
+  const o = {
+    method: 'POST',
+    uri: 'https://api.github.com' + '/gist',
+    json: true,
+    body: {description, files}
+  }
+
+  return request(o)
 }
 
 startEvents()
 
 logger.info('Starting Login...')
-bot.login(config.token).then(token => {
+bot.login(config.token).then(() => {
   logger.info('Logged in!')
   if (config.owner === null) {
     logger.info('Fetching Owner info...')
@@ -612,7 +662,10 @@ bot.login(config.token).then(token => {
   }
 })
 
-bot.on('disconnect', reason => {logger.log(reason)})
+bot.on('disconnect', reason => {
+  logger.log(reason)
+  saveAndExit()
+})
 
 process.on('exit', code => {
   bot.destroy()
@@ -621,7 +674,7 @@ process.on('exit', code => {
 
 process.on('unhandledRejection', (reason, p) => {
   logger.error(`Uncaught Promise Error: \n${reason}\nPromise:\n${require('util').inspect(p, { depth: 2 })}`)
-  fs.appendFile('err.log', p, err => {})
+  fs.appendFile('err.log', p, console.err)
 })
 
 /**
@@ -667,3 +720,4 @@ bot.logger = logger
 bot.modules = module.exports
 
 //*cries in js*
+
