@@ -1,4 +1,4 @@
-# BooruBot v3 (Beta!)
+# BooruBot v3
 
 A complete rewrite of BooruBot because the old code sucked.
 
