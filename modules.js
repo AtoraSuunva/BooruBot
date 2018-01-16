@@ -2,21 +2,19 @@
  * No actual bot commands are run here, all this does is load the modules in the module folder and pass events
  */
 
-// Load modules
 const Discord = require('discord.js')
 const fs = require('fs')
 const path = require('path')
-const request = require('request-promise-native')
-const recurReadSync = require('recursive-readdir-sync')
-
-// Load custom classes
 const Logger = require('./logger.js')
 const Settings = require('./settings.js')
+const request = require('request-promise-native')
+const recurReadSync = require('recursive-readdir-sync') //to read all files in a directory, including subdirectories
+//this allows you to sort modules into directories
 
 let config = module.exports.config = require('./config.json') //Settings for the module system
-const logger = module.exports.logger = new Logger('err.log', reportError, config.debug)
-const settings = module.exports.settings = new Settings(logger)
-const sentMessages = new Discord.Collection(), maxSentMessagesCache = 100
+let logger = module.exports.logger = new Logger('err.log', reportError, config.debug)
+let settings = module.exports.settings = new Settings(logger)
+let sentMessages = new Discord.Collection(), maxSentMessagesCache = 100
 
 let modules = {}
 loadModules()
@@ -26,6 +24,10 @@ let events = getAllEvents()
 //We do this to avoid listening to events that no modules use
 //Unfortunately, this prevents adding a module that listens to a new event/adding a new event without restarting the bot
 //one day I might find a fix for this
+
+//let unusedEvents = getAllEvents({getUnused: true}) //Used right after to tell discord.js what events to not care about, so we can get a performance b o o s t
+
+//logger.log(unusedEvents)
 
 const bot = new Discord.Client()
 
@@ -37,14 +39,13 @@ function startEvents() {
   for (let event of events) {
     logger.debug(`Loading ${event}`)
     bot.on(event, (...args) => {
-      logger.debug(`Got ${event} event!`)
+      //logger.debug(`Got ${event} event!`)
       for (let module in modules) {
         if (modules[module].events[event] !== undefined) {
           try {
-            logger.debug(`Running: ${module}`)
             modules[module].events[event](bot, ...args)
           } catch (e) {
-            logger.error(e.stack + `\nModule Err: ${event}`)
+            logger.error(e, `Module Err: ${event}`)
           }
         }
       }
@@ -76,7 +77,7 @@ function startEvents() {
             messageId: message.id,
             messageContent: message.content
           }
-          logger.error(e.stack + '\n' + JSON.stringify(ctx, null, 2))
+          logger.error(e.stack + '\n' + JSON.stringify(ctx, null, 4))
         }
       }
     }
@@ -141,8 +142,11 @@ let handler = {
   apply(target, thisArg, args) {
     let promise, [content, options] = args, callMsg = thisArg._message
 
-    // old to-do: Support codeblocks in embeds for selfbots
-    // adendum: since discord's tos forbids selfbots, support has been dropped
+    if ((content+'').trim() === '') {
+      content = 'Empty Message.\n' +
+                (new Error()).stack.split('\n')[1].match(/(\/modules\/.+?)\)/)[1]
+      // lol stacktraces
+    }
 
     if (config.selfbot && callMsg && callMsg.author.id === bot.user.id) {
       if (options)
@@ -150,7 +154,7 @@ let handler = {
       else if (typeof content === 'object')
         promise = callMsg.edit(callMsg.content, content)
       else
-        promise = callMsg.edit(callMsg.content, { embed: { description: content } })
+        promise = callMsg.edit(callMsg.content, {embed: {description: content}})
 
     } else if (!callMsg || !sentMessages.has(callMsg.id)) {
       promise = target.call(thisArg, content, options)
@@ -174,6 +178,7 @@ let handler = {
 
 send.value = new Proxy(send.value, handler)
 Object.defineProperty(Discord.TextChannel.prototype, 'send', send)
+
 
 /**
  * Checks if a message starts with both a global invoker and an invoker in `invokers`
@@ -204,15 +209,15 @@ function startsWithInvoker(msg, invokers) {
     if (invoker === '') return true //Allow you to use '' as an invoker, meaning that it's called whenever the global invoker is used
     if (msg.startsWith(invoker)) {
       if (msg[msg.indexOf(invoker) + invoker.length] === undefined || msg[msg.indexOf(invoker) + invoker.length] === ' ') startsWith = true
-      //You might be wondering why there's this long line here
-      //It's not that I'm crazy, this is in fact to allow you to have 'h' and 'help' as invoker for two different commands
-      //We check the character after the invoker to be sure we are matching the full thing and not just part of it
+       //You might be wondering why there's this long line here
+       //It's not that I'm crazy, this is in fact to allow you to have 'h' and 'help' as invoker for two different commands
+       //We check the character after the invoker to be sure we are matching the full thing and not just part of it
 
-      //m!help ('help' and 'h' are both invokers, but for different commands)
-      //help   (Strip the global invoker)
-      //help   (Both 'help' and 'h' match, since 'help' starts with both)
-      // ^  ^  (So we check the character after. It doesn't match 'h' since after it's 'e', not undefined or a space.)
-      //In this case only 'help' runs. As it's meant to do
+       //m!help ('help' and 'h' are both invokers, but for different commands)
+       //help   (Strip the global invoker)
+       //help   (Both 'help' and 'h' match, since 'help' starts with both)
+       // ^  ^  (So we check the character after. It doesn't match 'h' since after it's 'e', not undefined or a space.)
+       //In this case only 'help' runs. As it's meant to do
     }
   }
 
@@ -229,27 +234,36 @@ function startsWithInvoker(msg, invokers) {
  * @param  {Object}   options Shlex options
  * @return {string[]}         The result of the shlexed string
  */
-function shlex(str, { lowercaseCommand = false, lowercaseAll = false, stripOnlyCommand = false } = {}) {
+function shlex(str, {
+  lowercaseCommand = false,
+  lowercaseAll = false,
+  stripOnlyCommand = false,
+  invokers = []
+} = {}) {
   if (str.content) str = str.content
 
+  const regex = /"([\s\S]+?[^\\])"|'([\s\S]+?[^\\])'|([^\s]+)/gm //yay regex
+  let matches = []
+  let result
+
   for (let invoker of config.invokers) {
-    let repInvoker = (invoker + '').replace(/([\\\.\+\*\?\[\^\]\$\(\)\{\}\=\!\<\>\|\:])/g, "\\$1")
-    if (str.toLowerCase().startsWith(invoker.toLowerCase())) { //I'm so sorry
-      str = str.replace(new RegExp(repInvoker, 'i'), '')
+    if (str.toLowerCase().startsWith(invoker.toLowerCase())) {
+      str = str.substring(invoker.length)
       break
     }
   }
 
-  if (stripOnlyCommand) {
-    console.log('fuck')
-    return str
+  for (let invoker of invokers) {
+    if (str.toLowerCase().startsWith(invoker.toLowerCase())) {
+      matches.push(str.substring(0, invoker.length))
+      str = str.substring(invoker.length)
+      break
+    }
   }
 
-  let matches = []
-  let regex = /"([\s\S]+?[^\\])"|'([\s\S]+?[^\\])'|([^\s]+)/gm //yay regex
-  let result
+  if (stripOnlyCommand) return str
 
-  for (; ;) {
+  for (;;) {
     result = regex.exec(str)
     if (result === null) break
     matches.push(result[1] || result[2] || result[3])
@@ -264,18 +278,17 @@ function shlex(str, { lowercaseCommand = false, lowercaseAll = false, stripOnlyC
   return matches.map(v => v.replace(/\\(")|\\(')/g, '$1'))
 }
 module.exports.shlex = shlex
-
 /**
  * Gets all the events used by the modules
- * @param  {Object}   Options Object with only one property: getUnused. If the function should return unused events instead of used events
+ * @param  {Object}   fuckIDunnoWhatJSDocWantsHere Object with only one property: getUnused. If the function should return unused events instead of used events
  * @return {string[]} All the events used by the modules
  */
-function getAllEvents({ getUnused = false } = {}) {
+function getAllEvents({getUnused = false} = {}) {
   let events = []
 
   for (let module in modules) {
-    if (modules[module].events == undefined) return
-    events.push(...Object.keys(modules[module].events))
+    if (modules[module].events !== undefined)
+      events.push(...Object.keys(modules[module].events))
   }
 
   events = Array.from(new Set(events)) //Ensure there's only unique events by using a set
@@ -298,8 +311,8 @@ function getAllEvents({ getUnused = false } = {}) {
     //Filter out events that aren't Discord events
     let eventsC = events
     events = []
-    for (let event of discordEvents.map(e => e.toLowerCase().replace(/(_\w)/g, m => m.replace('_', '').toUpperCase())))  //camelCase the events, not sorry for this
-      eventsC.forEach(e => (e === event) ? events.push(e) : null)
+    for (let event of discordEvents.map(e => e.toLowerCase().replace(/(_\w)/g, m => m.replace('_','').toUpperCase())))  //camelCase the events, not sorry for this
+      eventsC.forEach(e => (e === event) ? events.push(e) : true)
   }
 
   return events
@@ -319,7 +332,6 @@ function reloadConfig(newConfig) {
   module.exports.config = config
 }
 module.exports.reloadConfig = reloadConfig
-
 /**
  * Saves the currently stored config
  * @return {Promise} A promise that resolves when settings are saved
@@ -328,7 +340,6 @@ function saveConfig() {
   return writeFile('./config.json', config)
 }
 module.exports.saveConfig = saveConfig
-
 //More helper functions, but this time for managing the module system
 
 /**
@@ -368,7 +379,6 @@ function loadModules() {
   return `Loaded ${succ.length} module(s) sucessfully; ${fails.length} failed.`
 }
 module.exports.loadModules = loadModules
-
 /**
  * (Re)load a single module
  * @param  {string} moduleName The name of the module to load
@@ -395,7 +405,6 @@ function loadModule(moduleName) {
   }
 }
 module.exports.loadModule = loadModule
-
 /**
  * Unload a single module
  * @param  {string} moduleName The module to unload
@@ -439,7 +448,7 @@ function getModuleInfo(moduleName) {
       if (moduleName === config.name) {
         let p = file
         let dir = path.parse(file).dir.split(path.sep).pop() //returns the folder it's in
-        return { config, path: p, dir }
+        return {config, path: p, dir}
       }
     }
 
@@ -451,6 +460,7 @@ function getModuleInfo(moduleName) {
 }
 module.exports.getModuleInfo = getModuleInfo
 
+//Code I took from SO to clear the module cache
 /**
  * Removes a module from the cache
  *
@@ -469,14 +479,14 @@ function purgeCache(moduleName) {
  */
 function reportError(err, errType) {
   let errID = Math.floor(Math.random() * 1000000).toString(16)
-  let errMsg = `Error: ${errType}\nID: ${errID}\n\`\`\`js\n${err.toString()}\n\`\`\``
+  let errMsg = `Error: ${errType}\nID: ${errID}\n\`\`\`js\n${err.toString()}` + '\n```'
+             + '\nStack Trace:\n```javascript\n' + new Error().stack + '\n```'
 
   if (!config.selfbot)
-    bot.users.get(config.owner.id).sendMessage(errMsg, { split: { prepend: '```js\n', append: '\n```' } })
+    bot.users.get(config.owner.id).send(errMsg, {split: {prepend: '```js\n', append: '\n```'}})
   return errID
 }
 module.exports.reportError = reportError
-
 /**
  * Promisefied fs.writefile
  * @param  {String} fileName    The filename to write to
@@ -486,8 +496,8 @@ module.exports.reportError = reportError
 function writeFile(fileName, fileContent) {
   return new Promise((resolve, reject) => {
     fs.writeFile(fileName, JSON.stringify(fileContent, null, 2), (e) => {
-      if (e) reject(e)
-      else resolve()
+      if(e) reject(e)
+      else  resolve()
     })
   })
 }
@@ -513,22 +523,19 @@ module.exports.createGist = createGist
 
 startEvents()
 
-;(async () => {
-    logger.info('Starting Login...')
-    await bot.login(config.token)
-
-    logger.info('Logged in!')
-
-    if (config.owner === null) {
-      logger.info('Fetching Owner info...')
-
-      const OAuth = await bot.fetchApplication()
+logger.info('Starting Login...')
+bot.login(config.token).then(() => {
+  logger.info('Logged in!')
+  if (config.owner === null) {
+    logger.info('Fetching Owner info...')
+    bot.fetchApplication().then(OAuth => {
       config.owner = OAuth.owner
       fs.writeFile('./config.json', JSON.stringify(config, null, 2), (err) => {
-        logger.info(err ? err : 'Saved Owner info!')
+        logger.info((err) ? err : 'Saved Owner info!')
       })
-    }
-  })()
+    })
+  }
+})
 
 bot.on('disconnect', reason => {
   logger.log(reason)
@@ -541,18 +548,19 @@ process.on('exit', code => {
 })
 
 process.on('unhandledRejection', (reason, p) => {
-  logger.error(`Uncaught Promise Error: \n${reason}\nPromise:\n${require('util').inspect(p, { depth: 2 })}`)
+  logger.error(`Uncaught Promise Error: \n${reason}\nStack:\n${reason.stack}\nPromise:\n${require('util').inspect(p, { depth: 2 })}`)
   fs.appendFile('err.log', p, console.err)
 })
 
 /**
  * Saves then exits
  */
-module.exports.saveAndExit = function saveAndExit() {
+function saveAndExit() {
   settings.saveAll().then(() => {
     process.nextTick(process.exit()) //rippo
   }).catch(logger.error)
 }
+module.exports.saveAndExit = saveAndExit
 
 /**
  * An array of all the modules that are loaded
@@ -563,4 +571,5 @@ module.exports.modules = modules
 bot.logger = logger
 bot.modules = module.exports
 
-// meme
+// *cries in js*
+
