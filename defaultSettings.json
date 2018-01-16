@@ -2,9 +2,9 @@
   "tags": [],
   "sites": [],
   "options": {
-    "disableDMs": false,
+    "nsfwServer": false,
+    "minScore": null,
     "topicEnable": false,
-    "deprecationWarning": true,
-    "showUpdates": true
+    "deprecationWarning": false
   }
 }

@@ -15,22 +15,10 @@ const setTemplate = {
     help: 'Only allow BooruBot to search in channels with `bb=true` in the topic (Other commands will still work, except no invite link for BB will be posted).'
   },
 
-  disableDMs: {
-    type: 'boolean',
-    default: 'false',
-    help: 'Disables users from DMing BooruBot if all shared servers have this set to true.'
-  },
-
   nsfwServer: {
     type: 'boolean',
     default: 'false',
     help: 'Makes the bot treat every channel on the server as nsfw. By default only sfw images are posted out of nsfw channels.'
-  },
-
-  showUpdates: {
-    type: 'boolean',
-    default: 'false',
-    help: 'Show an update message on the first bot command after every update.'
   },
 
   minScore: {

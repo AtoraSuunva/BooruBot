@@ -31,17 +31,6 @@ module.exports.events.message = (bot, message) => {
   let settings = bot.modules.settings.get(settingsId)
   let args = bot.modules.shlex(message.content).map(_ => _.toLowerCase())
 
-  if (message.guild === null) { //It's a DM, time to check `disableDMs`
-    let sharedGuilds = bot.guilds.filter(g => g.member(message.author))
-    let guildsDMsDisabled = 0
-
-    sharedGuilds.forEach(g => {
-      if (bot.modules.settings.get(g.id).options.disableDMs) guildsDMsDisabled++
-    })
-
-    if (guildsDMsDisabled === sharedGuilds.size) return message.channel.send('All of your servers have `disableDMs` enabled!')
-  }
-
   // b!s sb cat cute
   // ['s', 'sb', 'cat', 'cute']
   //  0    1     2      3

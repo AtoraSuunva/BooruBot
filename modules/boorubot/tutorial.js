@@ -28,7 +28,7 @@ module.exports.events.message = (bot, message) => {
     let prompts = [
       {ask: "*Tutorial started.*\nThe tutorial will continue automatically once you type in commands. When examples are given with words wrapped in `[]`, don't actually include them.\nTo continue, type `b!continue`\nTo exit anytime, just let the bot time out or type `b!exit`", waitFor: ['b!continue']},
       //Search
-      {ask: "You can't search because of either all your shared servers having `disableDMs` enabled or `bb=true` isn't in the topic. Skipping Search tutorial.\nType `b!continue` to continue.", waitFor: ['b!continue'], need: !canSearch},
+      {ask: "You can't search because `bb=true` isn't in the topic. Skipping Search tutorial.\nType `b!continue` to continue.", waitFor: ['b!continue'], need: !canSearch},
       {ask: "To search, use `b!search [site] [tag1] [tag2...]`.\nTry out `b!search safebooru cat`", waitFor: ['b!search safebooru cat'], need: canSearch},
       {ask: "You can also use the shorter version: `b!s [site] [tag]` and site aliases (replace `safebooru` with `sb`).\nSearch safebooru for cat again, but with the shorter command.", waitFor: ['b!s sb cat', 'b!s safebooru cat'], need: canSearch},
       {ask: "The bot can also keep searching random boorus until it finds an image (or runs out of boorus).\nTry `b!s rand cat dog`", waitFor: ['b!s rand cat dog'], need: canSearch},
@@ -99,21 +99,6 @@ function prompt(message, ask, waitfor) {
 //Perm checking
 
 function checkSearch(bot, message) {
-  let settingsId = (message.guild !== null) ? message.guild.id : message.channel.id
-  bot.modules.logger.log(bot.modules.settings)
-  let settings = bot.modules.settings.get(settingsId)
-
-  if (message.guild === null) { //It's a DM, time to check `disableDMs`
-    let sharedGuilds = bot.guilds.filter(g => {return g.member(message.author)})
-    let guildsDMsDisabled = 0
-
-    sharedGuilds.forEach(g => {
-      if (settings.get(g.id).options.disableDMs) guildsDMsDisabled++
-    })
-
-    if (guildsDMsDisabled === sharedGuilds.size) return false
-  }
-
   if (settings.options.topicEnable && !message.channel.topic.includes('bb=true')) return false
   return true
 }
