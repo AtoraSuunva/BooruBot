@@ -11,14 +11,14 @@ module.exports.config = {
 let tutMessages = []
 let options = {max: 2, time: 60000, errors: ['time']}
 let filter  = (m, args) => {for(let arg of args) {if (m.content.startsWith(arg)) return true} if (message.author.equals(bot.user)) return true; return false}
-let exit    = (chn) => {chn.sendMessage(`Tutorial exited. Cleaning up messages if possible...`); if (tutMessages.length > 0) chn.bulkDelete(tutMessages).catch(console.log)}
+let exit    = (chn) => {chn.send(`Tutorial exited. Cleaning up messages if possible...`); if (tutMessages.length > 0) chn.bulkDelete(tutMessages).catch(console.log)}
 let sleep   = (time) => {return new Promise(function(resolve, reject) {setTimeout(()=>{resolve()}, time)})}
 
 module.exports.events = {}
 module.exports.events.message = (bot, message) => {
   (async function a() { //jshint ignore:line
     let args = bot.modules.shlex(message.content)
-    if (['continue', 'clean', 'keep'].includes(args[0])) return message.channel.sendMessage('👌')
+    if (['continue', 'clean', 'keep'].includes(args[0])) return message.channel.send('👌')
 
     let canSearch = checkSearch(bot, message)
     let canEditBlacklist = message.member.hasPermission('MANAGE_MESSAGES')
@@ -80,7 +80,7 @@ module.exports.events.message = (bot, message) => {
 function prompt(message, ask, waitfor) {
   return new Promise(function(resolve, reject) {
 
-    message.channel.sendMessage(ask)
+    message.channel.send(ask)
       .then(msg => {
         message.channel.awaitMessages(m => filter(m, [waitfor, 'b!exit']), options)
           .then(msgs => {
