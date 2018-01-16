@@ -49,13 +49,13 @@ module.exports.events = {}
 module.exports.events.message = (bot, message) => {
   bot.modules.logger.log(message.content)
 
-  message.channel.sendMessage(`Congrats! You found the test command!`)
+  message.channel.send(`Congrats! You found the test command!`)
 }
 
 //Here's an example with channelUpdate
 //The args for the function are pretty much the same, just with "bot" added
 module.exports.events.channelUpdate = (bot, oldChannel, newChannel) => {
-  //newChannel.sendMessage('There\'s been an update here!')
+  //newChannel.send('There\'s been an update here!')
 }
 
 //Finally, show off ready

@@ -77,10 +77,10 @@ module.exports.events.message = (bot, message) => {
       message.channel.send('That is probably not a valid setting.')
   } else { //Set a setting
     if (message.guild && !message.member.hasPermission('MANAGE_GUILD') && message.author.id !== bot.modules.config.owner.id)
-      return message.channel.sendMessage('You don\'t have "Manage Server" perms.')
+      return message.channel.send('You don\'t have "Manage Server" perms.')
 
     if (setTemplate[setting] === undefined)
-      return message.channel.sendMessage('That\'s not a valid setting! Use `b!setting` to view them all')
+      return message.channel.send('That\'s not a valid setting! Use `b!setting` to view them all')
 
     let newVal
 
@@ -91,10 +91,10 @@ module.exports.events.message = (bot, message) => {
     }
 
     if (typeof newVal !== setTemplate[setting].type && newVal !== null)
-      return message.channel.sendMessage(`The types don't match! You need a ${setTemplate[setting].type}!`)
+      return message.channel.send(`The types don't match! You need a ${setTemplate[setting].type}!`)
 
     settings.options[setting] = newVal
-    message.channel.sendMessage(`Setting changed!\n\`${setting}\` = \`${settings.options[setting]}\``)
+    message.channel.send(`Setting changed!\n\`${setting}\` = \`${settings.options[setting]}\``)
   }
 
   bot.modules.settings.set(settingsId, settings)

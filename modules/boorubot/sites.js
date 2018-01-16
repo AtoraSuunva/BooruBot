@@ -8,5 +8,5 @@ module.exports.config = {
 
 module.exports.events = {}
 module.exports.events.message = (bot, message) => {
-  message.channel.sendMessage(`All supported sites: <https://github.com/AtlasTheBot/Booru-Discord/blob/master/sites.md>`)
+  message.channel.send(`All supported sites: <https://github.com/AtlasTheBot/Booru-Discord/blob/master/sites.md>`)
 }

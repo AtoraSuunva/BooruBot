@@ -18,7 +18,7 @@ module.exports.events.message = (bot, message) => {
     return message.channel.send('Sorry, all your DMs have `disableDMs` enabled, so I can\'t send an invite...')
 
   if (settings.options.topicEnable && !message.channel.topic.includes('bb=true'))
-    return message.channel.sendMessage('I can\'t send an invite in channels without `bb=true` in the topic (Set `topicEnable` to false to disable this).')
+    return message.channel.send('I can\'t send an invite in channels without `bb=true` in the topic (Set `topicEnable` to false to disable this).')
 
   if (args[1] === 'server' || args[1] === 'guild') {
     message.author.send('https://discord.gg/0w6AYrrMIUfO71oV')

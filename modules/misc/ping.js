@@ -11,7 +11,7 @@ module.exports.events.message = (bot, message) => {
   const [cmd] = bot.modules.shlex(message)
   let score = [randInt(0,8), randInt(0,8)]
 
-  message.channel.sendMessage(dedent`
+  message.channel.send(dedent`
     \`\`\`xl
     ─────┬───── atlas sucks
     |   ${score[0]}░${score[1]}
