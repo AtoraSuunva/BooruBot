@@ -32,7 +32,7 @@ module.exports.events.message = (bot, message) => {
         if (!cmds.has(info.dir))
           cmds.set(info.dir, [])
 
-        cmds.get(info.dir).push(`[${modules[module].config.name}](): ${modules[module].config.help}`)
+        cmds.get(info.dir).push(`[\`${modules[module].config.name}\`](http://): ${modules[module].config.help}`)
       }
 
     }
