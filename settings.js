@@ -108,7 +108,7 @@ module.exports = class Settings {
       this.logger.debug(`Creating settings for: ${settingId}`)
 
       try {
-        fs.writeFileSync(path.join(process.cwd(), 'settings', `${settingId}.json`), JSON.stringify(require('./defaultSettings.json'), null, 2))
+        fs.writeFileSync(path.join(process.cwd(), 'settings', `${settingId}.json`), JSON.stringify(require('./defaultSettings.json')))
         this.cache.set(settingId, require(path.join(process.cwd(), 'settings', `${settingId}.json`)))
         return
       } catch (e) {
@@ -128,7 +128,7 @@ module.exports = class Settings {
    */
   writeSettings(fileName, fileContent) {
     return new Promise(function (resolve, reject) {
-      fs.writeFile(path.join(process.cwd(), 'settings', `${fileName}.json`), JSON.stringify(fileContent, null, 2), (e) => {
+      fs.writeFile(path.join(process.cwd(), 'settings', `${fileName}.json`), JSON.stringify(fileContent), (e) => {
         if (e) reject(e)
         resolve()
       })
