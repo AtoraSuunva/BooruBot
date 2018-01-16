@@ -5,7 +5,8 @@ module.exports.config = {
   name: 'search',
   invokers: ['search', 's', ''],
   help: 'Searches boorus',
-  expandedHelp: 'Allows you to search various boorus\n\n**Usage:**\n`search [booru] [tags1] [tag2...]`\n`search sb cat`\n\nYou can use aliases for boorus (like `sb` for `safebooru`)'
+  expandedHelp: 'Allows you to search various boorus\n`search [booru] [tag1] [tag2...]`\n\nYou can use aliases for boorus (like `sb` for `safebooru`)\nUse `b!sites` to see them',
+  usage: ['Search a booru', 'search e921.net', 'Search a booru with tags', 's e9 cat dog cute', 'Shorthand version', 'e9']
 }
 
 function SearchError(message) {
@@ -22,6 +23,7 @@ const path = require('path')
 const prevImgs = new Map()
 const nextImgTimeout = (5 * 60) * 1000 //5 mins
 const nextImgEmoji = '\u{25B6}' // BLACK RIGHT-POINTING TRIANGLE
+const deleteImgEmoji = '\u{274c}' // CROSS MARK
 
 module.exports.events = {}
 module.exports.events.message = (bot, message) => {
@@ -130,6 +132,7 @@ function search(site, tags, settings, message) {
           for (let img of imgs) {
             if (compareArrays(img.common.tags, settings.tags) === null &&
                !hasBlacklistedType(img.common.file_url, settings.tags) &&
+               !hasBlacklistedRating(img.rating, settings.tags) &&
                (nsfw || !['e', 'q', 'u'].includes(img.rating.toLowerCase())) &&
                ([null, undefined].includes(settings.options.minScore) || img.common.score > settings.options.minScore))
 
@@ -199,6 +202,12 @@ function hasBlacklistedType(imgUrl, tags) {
   return types.includes(fileType)
 }
 
+function hasBlacklistedRating(rating, tags) {
+  let ratings = tags.filter(t => t.startsWith('rating:')).map(t => t.substring(7))
+
+  return ratings.includes(rating)
+}
+
 //Format the embed so I don't have to copy paste
 async function postEmbed(imgs, siteUrl, searchTime, message, imageNumber, numImages, oldMessage) {
   const img = imgs.shift()
@@ -210,7 +219,7 @@ async function postEmbed(imgs, siteUrl, searchTime, message, imageNumber, numIma
   if (message.guild && !message.channel.permissionsFor(message.client.user).has('EMBED_LINKS')) {
     return message.channel.send(
       encodeURI(`https://${siteUrl}${booru.sites[siteUrl].postView}${img.common.id}`) + '\n' +
-      encodeURI(img.common.file_url) + '\nBooruBot works better if it has the "embeds links" permission'
+      encodeURI(img.common.file_url)
     )
   }
 
@@ -233,7 +242,7 @@ async function postEmbed(imgs, siteUrl, searchTime, message, imageNumber, numIma
 
   let tags = (img.common.tags.join(', ').length < 50) ? Discord.util.escapeMarkdown(img.common.tags.join(', '))
     : Discord.util.escapeMarkdown(img.common.tags.join(', ').substr(0,50)) +
-             `... [See All](http://All.Tags/${Discord.util.escapeMarkdown(img.common.tags.join(',').replace(/(%20)/g, '_')).replace(/([()])/g, '\\$1').substring(0,1700)})`
+             `... [See All](https://giraffeduck.com/api/echo/?w=${Discord.util.escapeMarkdown(img.common.tags.join(',').replace(/(%20)/g, '_')).replace(/([()])/g, '\\$1').substring(0,1700)})`
 
   let header
   let tooBig = false
@@ -261,25 +270,20 @@ async function postEmbed(imgs, siteUrl, searchTime, message, imageNumber, numIma
     message.channel.lastImagePosted = msg //Lazy way to easily delete the last image posted, see `delete.js`
 
     if (!message.guild || message.channel.permissionsFor(message.guild.me).has('ADD_REACTIONS')) {
-      let customEmote = (message.guild) ? new Map([['264246678347972610', '272782646407593986'],['211956704798048256', '269682750682955777']]).get(message.guild.id) : null
-      //NSFW, squares
-      //test server, glaceWhoa
 
       try {
         if (msg.reacts === undefined) {
-          if (customEmote)
-            await msg.react(message.client.emojis.get(customEmote))
-          else if ((!message.guild || message.guild.me.permissions.has('USE_EXTERNAL_EMOJIS')) && message.client.emojis.get('318296455280459777'))
+          if ((!message.guild || message.guild.me.permissions.has('USE_EXTERNAL_EMOJIS')) && message.client.emojis.get('318296455280459777'))
             await msg.react(message.client.emojis.get('318296455280459777'))
           else if (message.guild && message.channel.permissionsFor(message.client.user).has('ADD_REACTIONS'))
-            await msg.react('')
+            await msg.react(deleteImgEmoji)
         }
 
         if (imageNumber !== numImages) {
           await msg.react(nextImgEmoji).then(r => {
             // I tied to use awaitReactions or createReactionCollector instead, but they both acted buggy and often wouldn't catch new > reacts
             // And in the end they stopped added > reacts completely
-            let timeout = setTimeout(() => prevImgs.has(msg.id) && prevImgs.delete(msg.message.id) && r.remove(), nextImgTimeout)
+            let timeout = setTimeout(() => prevImgs.has(msg.id) && prevImgs.delete(msg.id) && r.remove(), nextImgTimeout)
             prevImgs.set(msg.id, {imgs, siteUrl, searchTime, message, imageNumber, numImages, timeout})
           })
         }
