@@ -16,7 +16,7 @@ Detailed changelog [here](https://github.com/AtlasTheBot/Booru-Discord/issues/14
 * Uses fancy embeds! (With fallbacks in case embeds are disabled)
 * Some other stuff I forgot
 
-~~Invite!~~ Not yet, let me finish the beta first.
+# [Invite!](https://discordapp.com/oauth2/authorize?client_id=204721731162734592&scope=bot&permissions=0)
 
 ---
 
@@ -65,20 +65,11 @@ Note about the blacklist:
 #### Can you add support/alias for (site)?
 Ask me, and I'll try my best. Just note that I can't get images from a booru without an api. Be sure to check the site list to see if I haven't tried to support it already.
 
-~~If this gets popular I expect someone to ask for derpiboo.ru~~
-
 #### Can I use this code?
-~~What are you? Suicidal?~~
-
-~~Go ahead, but it's an absolute mess.~~
-
-It's not that bad anymore, but it's still a mess since i haven't gotten around to refactoring it yet.
+Sure! You can either host it yourself or fork it or extend it or...
 
 #### Can I run the bot myself?
-It's probably better to wait until this is out of beta, it's still buggy and unfinished.
-
-#### >js >not python
-I know I'm a pleb. But hey, it works, right?
+Feel free to, although you might run into a few issues for some manual configuration stuff (Although I tried to avoid that!)
 
 ---
 
