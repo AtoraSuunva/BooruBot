@@ -4,7 +4,8 @@ module.exports.config = {
   name: 'invite',
   invokers: ['invite'],
   help: 'Get an invite for the bot/the help server!',
-  expandedHelp: 'Use `b!invite` to invite the bot, `b!invite server` for an invite to the help server (DMed to you) so you can yell at me.'
+  expandedHelp: 'Get an invite for the bot or the help server.',
+  usage: ['Invite the bot', 'invite', 'Get invite to help server', 'invite server']
 }
 
 module.exports.events = {}

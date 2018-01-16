@@ -6,7 +6,8 @@ module.exports.config = {
   name: 'info',
   invokers: ['info'],
   help: 'Find out about the bot!',
-  expandedHelp: 'Get some ~~dirt~~ info about this bot.\n**Usage:**\n`b!info`\nThat\'s it.'
+  expandedHelp: 'Get some ~~dirt~~ info about this bot.',
+  usage: ['info', 'info']
 }
 
 module.exports.events = {}

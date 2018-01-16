@@ -4,7 +4,8 @@ module.exports.config = {
   name: 'blacklist',
   invokers: ['blacklist', 'bl', 'whitelist', 'wl', 'unblacklist'],
   help: 'Blacklists/Whitelists tags/sites',
-  expandedHelp: 'Allows you to blacklist tags/sites\n\n**Usage:**\n`blacklist tag cat` => Blacklists the tag "cat"\n`blacklist site sb` => Blacklists safebooru\n`whitelist tag cat` => Removes "cat" from the blacklist\n\nYou can also use "all" to blacklist all sites or to clear the blacklist.\nView the blacklist with `blacklist [tags|site]`'
+  expandedHelp: 'Allows you to blacklist tags/sites\nYou can use "all" to blacklist all sites or to clear the blacklist.\nEditing the blacklist requires "Manage Messages"',
+  usage: ['Check the blacklist', 'blacklist', 'Blacklist a tag', 'blacklist tag cat', 'Also blacklist a tag', 'bl cat', 'Blacklist a site', 'bl site e6', 'Whitelist a tag', 'wl cat', 'Whitelist a site', 'wl site e6']
 }
 
 const fs = require('fs')

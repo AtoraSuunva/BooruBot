@@ -4,7 +4,8 @@ module.exports.config = {
   name: 'stats',
   invokers: ['stats'],
   help: 'Displays some stats about the bot',
-  expandedHelp: 'Displays some stats.\n**Usage:**\n`stats`\nIt does nothing else.'
+  expandedHelp: 'Displays some stats.',
+  usage: ['stats', 'stats']
 }
 
 module.exports.events = {}

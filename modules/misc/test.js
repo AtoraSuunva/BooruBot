@@ -22,6 +22,9 @@ module.exports.config = {
   //help text to show when you call help test
   expandedHelp: 'Wow look even more help!',
 
+  // Usage help, goes 'description', 'command'
+  usage: ['Do a thing', 'command', 'Do another thing', 'command anotherThing']
+
   //If true, this module won't show on the list when help is called
   //It's optional, by default it'll show
   invisible: true,
@@ -54,9 +57,11 @@ module.exports.events.message = (bot, message) => {
 
 //Here's an example with channelUpdate
 //The args for the function are pretty much the same, just with "bot" added
-module.exports.events.channelUpdate = (bot, oldChannel, newChannel) => {
-  //newChannel.send('There\'s been an update here!')
+/*
+ module.exports.events.channelUpdate = (bot, oldChannel, newChannel) => {
+  newChannel.send('There\'s been an update here!')
 }
+*/
 
 //Finally, show off ready
 module.exports.events.ready = (bot) => {

@@ -5,7 +5,8 @@ module.exports.config = {
   name: 'delete',
   invokers: ['delete', 'del', 'delet this'],
   help: 'Deletes images that the bot posted',
-  expandedHelp: 'Deletes the last X images that the bot posted.\n\n**Usage:**:\n`delete` => Deletes last image\n`delete 4` => Deletes last 4 images\n\nUsers without "Manage Messages" perm can only delete 5 images at a time'
+  expandedHelp: 'Deletes the last X images that the bot posted.\n\nUsers without "Manage Messages" perm can only delete 5 images at a time',
+  usage: ['Delete the last image', 'delete', 'Delete the last 4 images', 'delete 4']
 }
 
 const Discord = require('discord.js')

@@ -3,7 +3,8 @@ module.exports.config = {
   name: 'link',
   invokers: ['link', 'ln'],
   help: 'Create an embed from a link to a post',
-  expandedHelp: '`b!link https:\/\/somebooru.com/post/12345`\nIf you have the ID and the site, you can also use `b![site] id:[id]'
+  expandedHelp: 'Creates an embed (like when you normally search) from a url by using magic!',
+  usage: ['Create an embed from a url', 'b!link https:\/\/somebooru.com/post/12345', 'Link using just id', 'b![site] id:[id]']
 }
 
 const booru = require('booru')

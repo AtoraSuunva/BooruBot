@@ -3,7 +3,8 @@ module.exports.config = {
   name: 'ping',
   invokers: ['ping', 'table'],
   help: 'pong',
-  expandedHelp: 'Tests the bot\'s ping\n\n**Usage:** `ping`',
+  expandedHelp: 'Tests the bot\'s ping.',
+  usage: ['pong', 'ping']
 }
 
 module.exports.events = {}

@@ -5,6 +5,7 @@ module.exports.config = {
   invokers: ['invoker', 'invokers'],
   help: 'Add/remove invokers on the fly',
   expandedHelp: '`invoker [add|rm|save] invoker`\nAdd/remove invokers on the fly\nChanges aren\'t saved unless you use "invoker save" and will reset when the bot shutsdown',
+  usage: ['View invokers', 'invoker', 'Add invoker', 'invoker add new', 'Remove invoker', 'invoker rm new', 'Save invokers', 'invoker save'],
   invisible: true
 }
 
@@ -27,6 +28,7 @@ module.exports.events.message = (bot, message) => {
       return
     break
 
+    case 'remove':
     case 'rm':
       if (args[2] === undefined || config.invokers.indexOf(args[2]) === -1) break
       if (config.invokers.length === 1) {

@@ -3,7 +3,8 @@ module.exports.config = {
   name: 'settings',
   invokers: ['settings', 'setting', 'seting', 'set'],
   help: 'Change/view settings',
-  expandedHelp: 'Change/View settings for BooruBot\nRequires "Manage Server" perms to change\n**Usage:**\n`setting` => View current settings\n`setting settingName` => View current setting + info about it\n`setting settingName newValue` => Change a setting '
+  expandedHelp: 'Change/View settings for BooruBot\nRequires "Manage Server" perms to change',
+  usage: ['View settings', 'setting', 'Get setting info', 'setting [settingName]', 'Set new setting', 'setting nsfwServer true']
 }
 
 const fs = require('fs')
