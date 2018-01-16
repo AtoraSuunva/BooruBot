@@ -1,13 +1,10 @@
 {
+  "tags": [],
+  "sites": [],
   "options": {
-    "silentBlacklist": false
-  },
-  "users": [
-    "74768773940256768"
-  ],
-  "blacklist": {
-    "tags": [],
-    "channels": [],
-    "sites": []
+    "nsfwServer": false,
+    "minScore": null,
+    "topicEnable": false,
+    "deprecationWarning": false
   }
 }

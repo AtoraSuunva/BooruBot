@@ -1,0 +1,12 @@
+{
+    "token": "your token here",
+    "owner": null,
+    "moduleFolder": "modules",
+    "invokers": [
+        "b!",
+        "booru!"
+    ],
+    "botbans": [],
+    "debug": false,
+    "selfbot": false
+}
