@@ -20,14 +20,14 @@ module.exports.events.message = (bot, message) => {
 
   if (Number.isNaN(msgsToDelete)) {
     if (message.channel.lastImagePosted === undefined)
-      return message.channel.sendMessage('I don\'t have a message cached for this channel! You can still try `delete 1` and force me to search the last 50 messages')
+      return message.channel.send('I don\'t have a message cached for this channel! You can still try `delete 1` and force me to search the last 50 messages')
 
     message.channel.lastImagePosted.delete()
-      .then(msg => message.channel.sendMessage('Deleted last image...'))
-      .catch(err => message.channel.sendMessage('I don\'t have a message cached for this channel! You can still try `delete 1` and force me to search the last 50 messages'))
+      .then(msg => message.channel.send('Deleted last image...'))
+      .catch(err => message.channel.send('I don\'t have a message cached for this channel! You can still try `delete 1` and force me to search the last 50 messages'))
 
   } else if (msgsToDelete > 5 && !message.channel.permissionsFor(message.author).hasPermission('MANAGE_MESSAGES')) {
-    message.channel.sendMessage('Whoa there, users without "Manage Messages" can only delete max 5 images at a time')
+    message.channel.send('Whoa there, users without "Manage Messages" can only delete max 5 images at a time')
 
   } else {
     message.channel.fetchMessages({limit: 50})
