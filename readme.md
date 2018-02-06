@@ -69,7 +69,22 @@ Ask me, and I'll try my best. Just note that I can't get images from a booru wit
 Sure! You can either host it yourself or fork it or extend it or...
 
 #### Can I run the bot myself?
-Feel free to, although you might run into a few issues for some manual configuration stuff (Although I tried to avoid that!)
+Feel free to, although you might run into a few issues for some manual configuration stuff (Although I tried to avoid that!)  
+Check the section below
+
+---
+
+### Selfhosting
+You're free to host the bot yourself, just a few things to keep in mind:
+
+* This requires node v8 minimum (Or v7 with the `--harmony-async-await` flag)
+* You need to rename `config_example.json` to `config.json`
+  * You need to put in your bot's token in config.json, you don't need to edit anything else to get the bot to run (But you might want to change the invokers)
+  * `debug` mode logs more info about commands being used and such
+  * `selfbot` allows you to use it as a selfbot, **but keep in mind selfbots are against ToS and _can_ get your account suspended** I will not be fixing any selfbot-related bugs!
+* You need to install the dependencies first, run `npm i` or `yarn` inside the bot's directory
+* The bot is easily extendable, checkout [test.js](https://gist.github.com/AtlasTheBot/ee9a1e305f530abbf0c4d43fbb058c2a). Do note that there's very little docs for it besides test.js
+* This code might break on you, in that case open up on issue here on the repo
 
 ---
 

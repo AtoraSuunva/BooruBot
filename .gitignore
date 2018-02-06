@@ -20,6 +20,3 @@ modules/extra/
 modules/mod/
 modules/music/
 modules/secret/
-
-modules/misc/hello.js
-modules/misc/test.js
