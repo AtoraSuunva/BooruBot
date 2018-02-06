@@ -14,9 +14,4 @@ yarn.lock
 
 # Keep the folder, get rid of everything else
 settings/*
-
-# Don't commit certain subsections
-modules/extra/
-modules/mod/
-modules/music/
-modules/secret/
+!settings/.gitkeep
