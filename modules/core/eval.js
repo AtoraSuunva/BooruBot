@@ -17,7 +17,7 @@ module.exports.events.message = async (bot, message) => {
   const shlex = bot.modules.shlex
   const modules = bot.modules
   const Discord = require('discord.js')
-  const request = require('request-promise-native')
+  const fetch = require('snekfetch')
 
   let args = shlex(message.content)
   let evalMsg = message.content.substring(message.content.indexOf(args[0]) + args[0].length)

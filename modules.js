@@ -7,7 +7,7 @@ const fs = require('fs')
 const path = require('path')
 const Logger = require('./logger.js')
 const Settings = require('./settings.js')
-const request = require('request-promise-native')
+const snek = require('snekfetch')
 const recurReadSync = require('recursive-readdir-sync') //to read all files in a directory, including subdirectories
 //this allows you to sort modules into directories
 
@@ -509,15 +509,10 @@ function writeFile(fileName, fileContent) {
  * @return {Promise} GitHub's response
  */
 function createGist(files, description = '') {
-  const o = {
-    method: 'POST',
-    uri: 'https://api.github.com' + '/gists',
-    headers: { 'User-Agent': `${bot.user.username} Bot by ${config.owner.username} on Discord` },
-    json: true,
-    body: { description, files }
-  }
-
-  return request(o)
+  return snek.post('https://api.github.com/gists', {
+    headers: { 'User-Agent': `${bot.user.username} Bot by ${config.owner.username} on Discord`},
+    data: {description, files}
+  })
 }
 module.exports.createGist = createGist
 

@@ -1,6 +1,6 @@
 {
   "name": "boorubot",
-  "version": "3.1.0",
+  "version": "3.2.0",
   "description": "A Discord bot to search boorus",
   "main": "modules.js",
   "scripts": {
@@ -18,7 +18,7 @@
   },
   "homepage": "https://github.com/AtlasTheBot/Booru-Discord#readme",
   "dependencies": {
-    "booru": "^0.3.4",
+    "booru": "^0.4.0",
     "discord.js": "^11.2.1",
     "erlpack": "^0.1.2",
     "recursive-readdir-sync": "^1.0.6",

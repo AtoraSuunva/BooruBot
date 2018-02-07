@@ -15,7 +15,7 @@ function SearchError(message) {
 }
 SearchError.prototype = Error.prototype
 
-const request = require('request-promise-native')
+const snek = require('snekfetch')
 const booru = require('booru')
 const Discord = require('discord.js')
 const path = require('path')
@@ -138,7 +138,7 @@ function search(site, tags, settings, message) {
         }
       })
       .catch(err => {
-        if (err.name === 'booruError')
+        if (err.name === 'BooruError')
           return reject(err)
 
         console.error(err)
@@ -233,21 +233,21 @@ async function postEmbed(imgs, siteUrl, searchTime, message, imageNumber, numIma
     : Discord.util.escapeMarkdown(img.common.tags.join(', ').substr(0,50)) +
              `... [See All](https://giraffeduck.com/api/echo/?w=${Discord.util.escapeMarkdown(img.common.tags.join(',').replace(/(%20)/g, '_')).replace(/([()])/g, '\\$1').substring(0,1700)})`
 
-  let header
+  let headers
   let tooBig = false
   let imgError = false
 
   try {
-    header = await request.head(encodeURI(img.common.file_url))
+    headers = (await snek.head(encodeURI(img.common.file_url))).headers
   } catch (e) { imgError = true /* who needs to catch shit */}
 
-  if (header)
-    tooBig = (header['content-length'] / 1000000) > 10
+  if (headers)
+    tooBig = (headers['content-length'] / 1000000) > 10
 
   embed.setDescription(`**Score:** ${img.common.score} | ` +
                        `**Rating:** ${img.common.rating.toUpperCase()} | ` +
                        `[Image](${encodeURI(img.common.file_url.replace(/([()])/g, '\\$1'))}) | ` +
-                       `${path.extname(img.common.file_url).toLowerCase()}, ${header ? fileSizeSI(header['content-length']) : '? kB'}\n` +
+                       `${path.extname(img.common.file_url).toLowerCase()}, ${headers ? fileSizeSI(headers['content-length']) : '? kB'}\n` +
                        `**Tags:** ${tags} [](${JSON.stringify(metadata)})` +
                        ((!['.jpg', '.jpeg', '.png', '.gif'].includes(path.extname(img.common.file_url).toLowerCase())) ? '\n\n`The file will probably not embed.`' : '' ) +
                        ((tooBig) ? '\n`The image is over 10MB and will not embed.`' : '') + ((imgError) ? '\n`I got an error while trying to get the image.`' : '') )

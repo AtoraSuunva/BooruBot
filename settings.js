@@ -69,16 +69,15 @@ module.exports = class Settings {
    * @return {Promise} A Map containing all settings saved
    */
   saveAll() {
-    let that = this
-    return new Promise(function (resolve, reject) {
+    return new Promise((resolve, reject) => {
       let promises = []
-      for (let setting of that.cache) { //[0] = settingId, [1] = settings
-        promises.push(that.writeSettings(setting[0], setting[1]))
+      for (let setting of this.cache) { //[0] = settingId, [1] = settings
+        promises.push(this.writeSettings(setting[0], setting[1]))
       }
 
       Promise.all(promises)
         .then(() => {
-          resolve(that.cache)
+          resolve(this.cache)
         }).catch((e) => {
           this.logger.error(e, 'Save Settings (All)')
           reject()
