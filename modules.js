@@ -142,6 +142,16 @@ let handler = {
   apply(target, thisArg, args) {
     let promise, [content, options] = args, callMsg = thisArg._message
 
+    const perms = thisArg.permissionsFor(bot.user)
+
+    if (!perms.has('SEND_MESSAGES'))
+      return
+
+    if ( ((content && content.embed) || (options && options.embed)) && !perms.has('EMBED_LINKS') ) {
+      logger.error('No embed support!!: ' + (new Error().stack))
+      return target.call(thisArg, '`[ Embeds are disabled and no non-embed version is available ]`')
+    }
+
     if ((content+'').trim() === '') {
       content = 'Empty Message.\n' +
                 (new Error()).stack.split('\n')[1].match(/(\/modules\/.+?)\)/)[1]
@@ -165,7 +175,7 @@ let handler = {
       logger.info('Edited old')
     }
 
-    if (!config.selfbot && callMsg && callMsg.author.id !== bot.user.id)
+    if (!config.selfbot && callMsg && callMsg.author.id !== bot.user.id && options && options.autoDelete !== false)
       promise.then(m => {
         sentMessages.set(callMsg.id, m)
         if (sentMessages.size > maxSentMessagesCache)
@@ -357,20 +367,26 @@ function loadModules() {
   let fails = []
 
   for (let file of moduleFiles) {
-    purgeCache(`${file}`)
+    purgeCache(file)
 
-    if (require(`${file}`).config.autoLoad === false) {
-      logger.debug(`Skipping ${file.replace(path.join(__dirname, 'modules/'), '')}: AutoLoad Disabled`)
-      continue
-    }
-
-    logger.debug(`Loading ${file.replace(path.join(__dirname, 'modules/'), '')}`)
     try {
-      modules[require(`${file}`).config.name] = require(`${file}`)
-      succ.push(require(`${file}`).config.name)
+      const rName = file.replace(path.join(__dirname, 'modules/'), '')
+      const rFile = require(file)
+
+      if (rFile.config === undefined)
+        continue
+
+      if (rFile.config.autoLoad === false) {
+        logger.debug(`Skipping ${rName}: AutoLoad Disabled`)
+        continue
+      }
+
+      logger.debug(`Loading ${rName}`)
+      modules[rFile.config.name] = rFile
+      succ.push(rFile.config.name)
     } catch (e) {
-      logger.warn(`Failed to load ${file.replace(path.join(__dirname, 'modules/'), '')}: \n${e}`)
-      fails.push(file.replace(path.join(__dirname, 'modules/')))
+      logger.warn(`Failed to load ${rName}: \n${e}`)
+      fails.push(rName)
     }
   }
 
@@ -390,15 +406,19 @@ function loadModule(moduleName) {
 
     for (let file of moduleFiles) {
       if (path.extname(file) !== '.js') continue
-      if (moduleName === require(file).config.name) {
-        logger.debug(`Loading ${file.replace(path.join(__dirname, 'modules/'), '')}`)
+
+      const rName = file.replace(path.join(__dirname, 'modules/'), '')
+      const rFile = require(file)
+
+      if (rFile.config && moduleName === rFile.config.name) {
+        logger.debug(`Loading ${rName}`)
         purgeCache(file)
-        modules[moduleName] = require(file)
+        modules[moduleName] = rFile
         return `Loaded ${moduleName} successfully`
       }
     }
 
-    return 'Could not find module'
+    return 'Could not find module.'
   } catch (e) {
     logger.error(e)
     return 'Something went wrong!'
@@ -445,7 +465,7 @@ function getModuleInfo(moduleName) {
       if (path.extname(file) !== '.js') continue
 
       let config = require(file).config
-      if (moduleName === config.name) {
+      if (config && moduleName === config.name) {
         let p = file
         let dir = path.parse(file).dir.split(path.sep).pop() //returns the folder it's in
         return {config, path: p, dir}
