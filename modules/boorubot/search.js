@@ -177,9 +177,16 @@ function randSearch(tags, settings, message) {
 
 //Compares arrays for matching elements and returns the matches
 //returns null if no matches are found
+// Assumes arrays of strings
 function compareArrays(arr1, arr2) {
   let matches = []
-  arr1.forEach(ele1 => {arr2.forEach(ele2 => {if(ele1 === ele2) matches.push(ele1)})})
+  arr1.forEach(ele1 => {
+    arr2.forEach(ele2 => {
+      if (ele1.toLowerCase() === ele2.toLowerCase()) {
+        matches.push(ele1)
+      }
+    })
+  })
 
   return (matches[0] === undefined) ? null : matches
 }
@@ -192,9 +199,9 @@ function hasBlacklistedType(imgUrl, tags) {
 }
 
 function hasBlacklistedRating(rating, tags) {
-  let ratings = tags.filter(t => t.startsWith('rating:')).map(t => t.substring(7))
+  let ratings = tags.filter(t => t.startsWith('rating:')).map(t => t.substring(7).toLowerCase())
 
-  return ratings.includes(rating)
+  return ratings.includes(rating.toLowerCase())
 }
 
 //Format the embed so I don't have to copy paste
@@ -231,7 +238,7 @@ async function postEmbed(imgs, siteUrl, searchTime, message, imageNumber, numIma
 
   let tags = (img.common.tags.join(', ').length < 50) ? Discord.util.escapeMarkdown(img.common.tags.join(', '))
     : Discord.util.escapeMarkdown(img.common.tags.join(', ').substr(0,50)) +
-             `... [See All](https://giraffeduck.com/api/echo/?w=${Discord.util.escapeMarkdown(img.common.tags.join(',').replace(/(%20)/g, '_')).replace(/([()])/g, '\\$1').substring(0,1700)})`
+             `... [See All](https://giraffeduck.com/api/echo/?w=${Discord.util.escapeMarkdown(img.common.tags.join(',').replace(/(%20)/g, '_')).replace(/([()])/g, '\\$1').substring(0,1500)})`
 
   let headers
   let tooBig = false
@@ -244,13 +251,13 @@ async function postEmbed(imgs, siteUrl, searchTime, message, imageNumber, numIma
   if (headers)
     tooBig = (headers['content-length'] / 1000000) > 10
 
-  embed.setDescription(`**Score:** ${img.common.score} | ` +
+  embed.setDescription((`**Score:** ${img.common.score} | ` +
                        `**Rating:** ${img.common.rating.toUpperCase()} | ` +
                        `[Image](${encodeURI(img.common.file_url.replace(/([()])/g, '\\$1'))}) | ` +
                        `${path.extname(img.common.file_url).toLowerCase()}, ${headers ? fileSizeSI(headers['content-length']) : '? kB'}\n` +
                        `**Tags:** ${tags} [](${JSON.stringify(metadata)})` +
                        ((!['.jpg', '.jpeg', '.png', '.gif'].includes(path.extname(img.common.file_url).toLowerCase())) ? '\n\n`The file will probably not embed.`' : '' ) +
-                       ((tooBig) ? '\n`The image is over 10MB and will not embed.`' : '') + ((imgError) ? '\n`I got an error while trying to get the image.`' : '') )
+                       ((tooBig) ? '\n`The image is over 10MB and will not embed.`' : '') + ((imgError) ? '\n`I got an error while trying to get the image.`' : '')).substring(0, 2048) )
 
   embed.setColor((message.guild) ? message.guild.members.get(message.client.user.id).highestRole.color : '#34363C')
 
@@ -272,7 +279,7 @@ async function postEmbed(imgs, siteUrl, searchTime, message, imageNumber, numIma
           await msg.react(nextImgEmoji).then(r => {
             // I tied to use awaitReactions or createReactionCollector instead, but they both acted buggy and often wouldn't catch new > reacts
             // And in the end they stopped added > reacts completely
-            let timeout = setTimeout(() => prevImgs.has(msg.id) && prevImgs.delete(msg.id) && r.remove(), nextImgTimeout)
+            let timeout = setTimeout(() => prevImgs.has(msg.id) && prevImgs.delete(msg.id) && r.remove().catch(e => {}), nextImgTimeout)
             prevImgs.set(msg.id, {imgs, siteUrl, searchTime, message, imageNumber, numImages, timeout})
           })
         }
@@ -299,14 +306,14 @@ module.exports.events.messageReactionAdd = async (bot, react, user) => {
   postEmbed(imgs, siteUrl, searchTime, message, imageNumber, numImages, react.message)
 
   if (react.message.channel.type !== 'dm' && react.message.channel.permissionsFor(bot.user).has('MANAGE_MESSAGES'))
-    react.remove(user)
+    react.remove(user).catch(e => {})
 
   // If there's no more images
   if (imageNumber + 1 === numImages)
-    return react.remove(bot.user)
+    return react.remove(bot.user).catch(e => {})
 
   clearTimeout(timeout)
-  timeout = setTimeout(() => prevImgs.has(react.message.id) && prevImgs.delete(react.message.id) && react.remove(), nextImgTimeout)
+  timeout = setTimeout(() => prevImgs.has(react.message.id) && prevImgs.delete(react.message.id) && react.remove().catch(e => {}), nextImgTimeout)
 
   prevImgs.set(react.message.id, {imgs, siteUrl, searchTime, message, imageNumber, numImages, timeout})
 }
