@@ -72,32 +72,30 @@ module.exports.events.message = (bot, message) => {
   if (!['r', 'rand', 'random'].includes(args[1]) && !booru.resolveSite(args[1]))
     return message.channel.send('That is not a supported site. Use `b!sites` to see them all.')
 
-  //Sure it looks simple and clean here, but don't scroll down
-  if (['r', 'rand', 'random'].includes(args[1])) {
-    message.channel.startTyping()
-    message.botClient = bot
-    randSearch([...args.slice(2)], settings, message)
-      .then(r => postEmbed(...r)) //promises can only return one value, so I return an array then spread it
-      .catch(() => {
-        message.channel.stopTyping()
-        message.channel.send('Found no images anywhere...')
-      })
-  } else {
-    message.channel.startTyping()
-    search(args[1], [...args.slice(2)], settings, message)
-      .then(r => postEmbed(...r))
-      .catch(e => {
-        message.channel.stopTyping()
-        if (e.message === 'You didn\'t give any images') {
-          message.channel.send('Didn\'t find any images...')
-        } else if (e.name === 'SearchError') {
-          message.channel.send(e.message)
-        } else {
-          message.channel.send('Got an error: \n```js\n' + JSON.stringify(e.message, null, 2) + '\n```')
-          bot.logger.error(e)
-        }
-      })
-  }
+
+  message.botClient = bot
+  const searchR = ['r', 'rand', 'random'].includes(args[1])
+                  ? randSearch(args.slice(2), settings, message)
+                  : search(args[1], args.slice(2), settings, message)
+
+ message.channel.startTyping()
+
+ searchR
+  .then(r => postEmbed(...r))
+  .catch(e => {
+    message.channel.stopTyping()
+
+    if (e.message === 'You didn\'t give any images') {
+      message.channel.send('Did not find any images...')
+    } else if (e.name === 'SearchError') {
+      message.channel.send(e.message)
+    } else if (e.name === 'HttpError') {
+      message.channel.send(`Booru requested returned an error: ${e.message}`)
+    } else {
+      message.channel.send('Got an error: \n```js\n' + JSON.stringify(e.message, null, 2) + '\n```')
+      bot.logger.error(e)
+    }
+  })
 }
 
 //Search a single booru
@@ -138,7 +136,7 @@ function search(site, tags, settings, message) {
         }
       })
       .catch(err => {
-        if (err.name === 'BooruError')
+        if (err.name === 'BooruError' || err.name === 'HttpError')
           return reject(err)
 
         console.error(err)
@@ -169,7 +167,7 @@ function randSearch(tags, settings, message) {
       if (imgs === undefined || imgs[0] === undefined) continue
       return resolve(imgs)
     }
-    reject(new Error('Found no images anywhere...'))
+    reject(new SearchError('Found no images anywhere...'))
   })
 }
 //the future is async
@@ -199,9 +197,9 @@ function hasBlacklistedType(imgUrl, tags) {
 }
 
 function hasBlacklistedRating(rating, tags) {
-  let ratings = tags.filter(t => t.startsWith('rating:')).map(t => t.substring(7).toLowerCase())
+  let ratings = tags.filter(t => t && t.startsWith('rating:')).map(t => t.substring(7).toLowerCase())
 
-  return ratings.includes(rating.toLowerCase())
+  return rating && ratings.includes(rating.toLowerCase())
 }
 
 //Format the embed so I don't have to copy paste
@@ -291,8 +289,15 @@ async function postEmbed(imgs, siteUrl, searchTime, message, imageNumber, numIma
 
   if (oldMessage === undefined)
     return message.channel.send(`${message.author.username}, result for \`${message.content}\`\nhttps://${siteUrl}${booru.sites[siteUrl].postView}${img.common.id}`, {embed}).then(afterPost)
-  else
-    return oldMessage.edit(`${message.author.username}, result for \`${message.content}\`\nhttps://${siteUrl}${booru.sites[siteUrl].postView}${img.common.id}`, {embed}).then(afterPost)
+  else {
+    try {
+      return oldMessage.edit(`${message.author.username}, result for \`${message.content}\`\nhttps://${siteUrl}${booru.sites[siteUrl].postView}${img.common.id}`, {embed}).then(afterPost)
+    } catch (e) {
+      // For some reason .edit returns undefined?
+      // I think it's because the message was delete or *something*, but it's unclear and annoying
+      'Do nothing'
+    }
+  }
 }
 
 module.exports.events.messageReactionAdd = async (bot, react, user) => {
