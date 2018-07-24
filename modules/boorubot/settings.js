@@ -65,11 +65,11 @@ module.exports.events.message = (bot, message) => {
     else
       message.channel.send('That is probably not a valid setting.')
   } else { //Set a setting
-    if (message.guild && !message.member.hasPermission('MANAGE_GUILD') && message.author.id !== bot.modules.config.owner.id)
-      return message.channel.send('You don\'t have "Manage Server" perms.')
-
     if (setTemplate[setting] === undefined)
       return message.channel.send('That\'s not a valid setting! Use `b!setting` to view them all')
+
+    if (message.guild && !message.member.hasPermission('MANAGE_GUILD') && message.author.id !== bot.modules.config.owner.id)
+      return message.channel.send('You don\'t have "Manage Server" perms.')
 
     let newVal
 
