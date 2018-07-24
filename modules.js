@@ -142,12 +142,12 @@ let handler = {
   apply(target, thisArg, args) {
     let promise, [content, options] = args, callMsg = thisArg._message
 
-    const perms = thisArg.permissionsFor(bot.user)
+    const perms = thisArg.type == 'dm' ? null : thisArg.permissionsFor(bot.user)
 
-    if (!perms.has('SEND_MESSAGES'))
+    if (perms && !perms.has('SEND_MESSAGES'))
       return
 
-    if ( ((content && content.embed) || (options && options.embed)) && !perms.has('EMBED_LINKS') ) {
+    if ( ((content && content.embed) || (options && options.embed)) && (perms && !perms.has('EMBED_LINKS')) ) {
       logger.error('No embed support!!: ' + (new Error().stack))
       return target.call(thisArg, '`[ Embeds are disabled and no non-embed version is available ]`')
     }
