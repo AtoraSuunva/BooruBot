@@ -38,7 +38,7 @@ module.exports.events.message = (bot, message) => {
         if (delMsgs.length === 0)
           return message.channel.send('There\'s nothing for me to delete.')
 
-        if (delMsgs.length < 2 || !message.channel.permissionsFor(bot.user).hasPermission('MANAGE_MESSAGES')) {
+        if (delMsgs.length < 2 || message.channel.type === 'dm' || !message.channel.permissionsFor(bot.user).hasPermission('MANAGE_MESSAGES')) {
           for (let msg of delMsgs) msg.delete()
           message.channel.send(`Deleted ${delMsgs.length} message${(delMsgs.length === 1) ? '' : 's'} manually...`)
         } else {
