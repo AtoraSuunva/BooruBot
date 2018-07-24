@@ -12,21 +12,23 @@ module.exports.events.message = (bot, message) => {
   const [cmd] = bot.modules.shlex(message)
   let score = [randInt(0,8), randInt(0,8)]
 
-  message.channel.send(dedent`
-    \`\`\`xl
-    ─────┬───── atlas sucks
-    |   ${score[0]}░${score[1]}
-    ·    ░   |
-    ─────┴─────
-    \`\`\``).then(newMsg => {
-      newMsg.edit(dedent`
-        \`\`\`xl
-        ─────┬───── ${cmd.toLowerCase() == 'ping' ? 'Pong' : 'Tennis'}! ${newMsg.createdTimestamp - message.createdTimestamp}ms
-        |   ${score[0]}░${score[1]+1}
-        .    ░   |
-        ─────┴───── Heartbeat: ${bot.pings} => ${bot.ping.toFixed(2)}ms
-        \`\`\``)
-    })
+  try {
+    message.channel.send(dedent`
+      \`\`\`xl
+     ─────┬───── atlas sucks
+     |   ${score[0]}░${score[1]}
+     ·    ░   |
+     ─────┴─────
+     \`\`\``).then(newMsg => {
+        newMsg.edit(dedent`
+         \`\`\`xl
+         ─────┬───── ${cmd.toLowerCase() == 'ping' ? 'Pong' : 'Tennis'}! ${newMsg.createdTimestamp - message.createdTimestamp}ms
+         |   ${score[0]}░${score[1]+1}
+         .    ░   |
+         ─────┴───── Heartbeat: ${bot.pings} => ${bot.ping.toFixed(2)}ms
+         \`\`\``)
+      })
+  } catch (e) {}
 }
 
 //thanks mdn
