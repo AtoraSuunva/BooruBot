@@ -4,122 +4,111 @@ module.exports.config = {
   name: 'blacklist',
   invokers: ['blacklist', 'bl', 'whitelist', 'wl', 'unblacklist'],
   help: 'Blacklists/Whitelists tags/sites',
-  expandedHelp: 'Allows you to blacklist tags/sites\nYou can use "all" to blacklist all sites or to clear the blacklist.\nEditing the blacklist requires "Manage Messages"',
-  usage: ['Check the blacklist', 'blacklist', 'Blacklist a tag', 'blacklist tag cat', 'Also blacklist a tag', 'bl cat', 'Blacklist a site', 'bl site e6', 'Whitelist a tag', 'wl cat', 'Whitelist a site', 'wl site e6']
+  expandedHelp: 'Allows you to blacklist tags/sites so they don\'t appear in searches\nEditing the blacklist requires "Manage Messages"',
+  usage: ['Check the blacklist', 'blacklist', 'Blacklist a tag', 'blacklist tag cat', 'Blacklist tags', 'bl cat dog hat', 'Blacklist a site', 'bl site e6', 'Whitelist a tag', 'wl cat', 'Whitelist a site', 'wl site e6', 'Blacklist nsfw (or sfw) sites', 'bl sites nsfw']
 }
 
-const fs = require('fs')
+const sep = '='.repeat(20)
+const Booru = require('booru')
 
 module.exports.events = {}
 
 module.exports.events.message = (bot, message) => {
-  let settingsId = (message.guild !== null) ? message.guild.id : message.channel.id //DMs are a channel, interestingly enough
-  let settings = bot.modules.settings.get(settingsId)
-  let args = bot.modules.shlex(message.content, {lowercaseAll: true})
+  const settingsId = (message.guild !== null) ? message.guild.id : message.channel.id
+  const settings = bot.sleet.settings.get(settingsId)
+  let [cmd, type, ...values] = bot.sleet.shlex(message.content, {lowercaseAll: true})
 
-  let canEditBlacklist = (message.guild !== null) ? message.member.hasPermission('MANAGE_MESSAGES') || message.author.id === bot.modules.config.owner.id : true //true if it's a dm
-  //also true if it's me ;^)
+  const canEditBlacklist = (message.guild)
+        ? message.member.permissions.has('MANAGE_MESSAGES') || message.author.id === bot.sleet.config.owner.id
+        : true
 
-  //b!bl tag cat
-  //['bl', 'tag', 'cat']
-  // 0     1      2
+  if (type && !type.endsWith('s'))
+    type += 's'
 
-  if (args[1] !== undefined && args[2] === undefined)
-    args.splice(1, 0, 'tags')
+  if (type && !['tags', 'sites'].includes(type))
+    return message.channel.send('You need to specify if you\'re blacklisting `tags` or `sites`\nCheck `b!help blacklist` for more info')
 
-  if (args[1] !== undefined && !args[1].endsWith('s')) args[1] += 's'
+  if (values.length && !canEditBlacklist)
+    return message.channel.send('You need "Manage Messages" perms to edit the blacklist')
 
-  if (args[1] && (args[1] !== 'tags' && args[1] !== 'sites'))
-    return message.channel.send('That\'s not something you can blacklist!')
+  if (['blacklist', 'bl'].includes(cmd)) {
+    blacklist(message, settings, type, values)
+  } else {
+    whitelist(message, settings, type, values)
+  }
 
-  //I'm sorry for how messy this following code is
-  //i coded this at like at like 3am kek
-  //also I'm too lazy to make this better somehow
+  bot.sleet.settings.set(settingsId, settings)
+  bot.sleet.settings.save(settingsId)
+}
 
-  if (args[0] === 'blacklist' || args[0] === 'bl') { //blacklist somthin
-    if (args[1] === undefined) {
-      message.channel.sendCode('asciidoc', `Blacklisted tags:\n${'='.repeat(20)}\n[${settings.tags.join(', ')}]\n\nBlacklisted sites:\n${'='.repeat(20)}\n[${settings.sites.join(', ')}]`)
+function blacklist(message, settings, type, values) {
+  if (!type)
+    return message.channel.send(`Blacklisted tags:\n${sep}\n[${settings.tags.join(', ')}]\n\nBlacklisted sites:\n${sep}\n[${settings.sites.join(', ')}]`, {code: 'asciidoc'})
 
-    } else if (args[2] === undefined && settings[args[1]] !== undefined) {
-      message.channel.sendCode('asciidoc', `Blacklisted ${args[1]}:\n${'='.repeat(20)}\n[${settings[args[1]].join(', ')}]`)
+  if (!values.length)
+    return message.channel.send(`Blacklisted ${type}:\n${sep}\n[${settings[type].join(', ')}]`, {code: 'asciidoc'})
 
-    } else if (settings[args[1]] !== undefined) {
-      if (!canEditBlacklist) return message.channel.send(`You can't edit the blacklist since you don't have "Manage Messages" perms`)
+  const toBlacklist = (type === 'sites') ? getSites(values) : values
 
-      if (args[1] === 'sites') {
-        if (args[2] === 'all') {
-          args[2] = Object.keys(require('booru').sites)
-        } else if (args[2] === 'nsfw' || args[2] === 'sfw') {
-          let sites = []
-          for (let site of Object.entries(require('booru').sites)) {
-            if ((args[2] === 'nsfw') ? site[1].nsfw : !site[1].nsfw) sites.push(site[0])
-          }
-          args[2] = sites
-        } else {
-          args[2] = require('booru').resolveSite(args[2])
-          if (args[2] === false) {
-            message.channel.send(`That's not a supported site!`)
-            return;
-          }
-        }
-      }
+  settings[type] = ensureUnique(settings[type].concat(toBlacklist.filter(v => typeof v === 'string')))
 
-      if (args[1] === 'tags' && args[2] === 'all')
-        return message.channel.send('I can\'t know all tags...')
+  console.log(values, toBlacklist)
 
-      if (typeof args[2] === 'string')  args[2] = [args[2]]
-      bot.modules.logger.log(args[2])
-      settings[args[1]].push(...args[2])
-      settings[args[1]] = ensureUnique(settings[args[1]])
+  message.channel.send(
+    toBlacklist.map(v => typeof v === 'string' ? `Blacklisted \`${v}\`` : `Failed to blacklist \`${v.v}\`: **${v.m}**`).join('\n') +
+    '\n```asciidoc\n' +
+    `Blacklisted ${type}:\n${sep}\n[${settings[type].join(', ')}]` +
+    '\n```'
+  )
+}
 
-      message.channel.send(
-        `Added \`${args[2]}\` to \`${args[1]}\` blacklist!` +
-        '\n```asciidoc\n' +
-        `Blacklisted ${args[1]}:\n${'='.repeat(20)}\n[${settings[args[1]].join(', ')}]` +
-        '\n```'
-      ) //sorry not sorry
-    }
-  } else { //whitelist something
-    if (!canEditBlacklist) return message.channel.send(`You can't edit the blacklist since you don't have "Manage Messages" perms`)
-    if (args[1] === undefined) {
-      message.channel.send('I can\'t whitelist nothing\n`whitelist tag/site something`' )
+function whitelist(message, settings, type, values) {
+  if (!type)
+    return message.channel.send(`I need a type [sites, tags] to blacklist`)
 
-    } else if (args[2] === undefined && settings[args[1]] !== undefined) {
-      message.channel.send('You didn\'t tell me what to whitelist')
+  if (!values.length)
+    return message.channel.send(`I need something to whitelist`)
 
-    } else if (settings[args[1]] !== undefined) {
+  if (values.map(v => v.toLowerCase()).includes('all')) {
+    const old = settings[type]
+    settings[type] = []
 
-      if (args[1] === 'sites' && args[2] !== 'all') {
-        args[2] = require('booru').resolveSite(args[2])
-        if (args[2] === false) {
-          message.channel.send(`That's not a supported site!`)
-          return;
-        }
-      }
+    return message.channel.send(`Cleared ${type} blacklist, removed: \`${old.join(', ')}\``)
+  }
 
-      if (!settings[args[1]].includes(args[2]) && args[2] !== 'all') {
-        message.channel.send(`It's not even blacklisted in the first place!`)
-        return;
-      }
+  const toWhitelist = (type === 'sites') ? getSites(values) : values
 
-      settings[args[1]] = settings[args[1]].filter((val) => {return val !== args[2]})
+  settings[type] = settings[type].filter(v => !toWhitelist.includes(v))
 
-      if (args[2] === 'all') {
-        settings[args[1]] = []
-      }
+  message.channel.send(
+    toWhitelist.map(v => typeof v === 'string' ? `Whitelisted \`${v}\`` : `Failed to whitelist \`${v.v}\`: **${v.m}**`.join('\n')) +
+    '\n```asciidoc\n' +
+    `Blacklisted ${type}:\n${sep}\n[${settings[type].join(', ')}]` +
+    '\n```'
+  )
+}
 
-      message.channel.send(
-        `Removed \`${args[2]}\` from the \`${args[1]}\` blacklist!` +
-        '\n```asciidoc\n' +
-        `Blacklisted ${args[1]}:\n${'='.repeat(20)}\n[${settings[args[1]].join(', ')}]` +
-        '\n```'
-      ) //sorry again
+function getSites(values) {
+  const sites = []
+  let site
+
+  for (let v of values) {
+    if (v === 'all') {
+      sites.push(...Object.keys(Booru.sites))
+    } else if (['nsfw', 'sfw'].includes(v)) {
+      const nsfw = v === 'nsfw'
+      sites.push(
+        ...Object.entries(Booru.sites).filter(s => nsfw === s[1].nsfw).map(s => s[0])
+      )
+    } else {
+      site = Booru.resolveSite(v)
+      sites.push(site === null ? {v, m: 'Unsupported site'} : site)
     }
   }
 
-  bot.modules.settings.set(settingsId, settings)
+  return sites
 }
 
-function ensureUnique(arr) { //do some set magic
+function ensureUnique(arr) {
   return [...new Set(arr)]
 }

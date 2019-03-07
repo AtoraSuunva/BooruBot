@@ -15,12 +15,12 @@ module.exports.events.message = (bot, message) => {
   getCPUUsage().then(cpu => {
     let fields = new Map()
     .set('Links:'   , '[Github](https://github.com/AtlasTheBot/Booru-Discord)\nBot Invite/Sever: `b!invite`')
-    .set('Owner:'   , `${bot.modules.config.owner.username}#${bot.modules.config.owner.discriminator}`)
+    .set('Owner:'   , `${bot.sleet.config.owner.username}#${bot.sleet.config.owner.discriminator}`)
     .set('Using:'   , `Node ${process.version}\ndiscord.js v${require('discord.js').version}`)
     .set('CPU:'     , `${(100 - (cpu * 100)).toFixed(2)}%`)
     .set('RAM:'     , `${formatBytes(os.totalmem() - os.freemem(), 1)}/${formatBytes(os.totalmem(), 1)} - ${((os.totalmem() - os.freemem()) / os.totalmem()*100).toFixed(2)}%`)
 
-    if (message.guild !== null && message.channel.permissionsFor(message.client.user).hasPermission('EMBED_LINKS')) {
+    if (message.guild !== null && message.channel.permissionsFor(message.client.user).has('EMBED_LINKS')) {
       let Discord = require('discord.js')
       let embed = new Discord.RichEmbed()
         .setAuthor(bot.user.username, bot.user.avatarURL)

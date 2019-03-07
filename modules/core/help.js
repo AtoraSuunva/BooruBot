@@ -12,9 +12,9 @@ const Discord = require('discord.js')
 
 module.exports.events = {}
 module.exports.events.message = (bot, message) => {
-  let modules = bot.modules.modules
-  let config = bot.modules.config
-  let [cmd, ...helpFor] = bot.modules.shlex(message.content, {lowercaseAll: true})
+  let modules = bot.sleet.modules
+  let config = bot.sleet.config
+  let [cmd, ...helpFor] = bot.sleet.shlex(message.content, {lowercaseAll: true})
   helpFor = helpFor.join(' ')
 
   let embed = new Discord.RichEmbed()
@@ -26,7 +26,7 @@ module.exports.events.message = (bot, message) => {
 
     for (let module in modules) {
       if (modules[module].config.invisible !== true) {
-        let info = bot.modules.getModuleInfo(module)
+        let info = bot.sleet.getModuleInfo(module)
         if (typeof info === 'string') continue
 
         if (!cmds.has(info.dir))

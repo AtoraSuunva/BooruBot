@@ -29,10 +29,10 @@ module.exports.events.ready = bot => {
 }
 
 module.exports.events.message = (bot, message) => {
-  if (message.author.id !== bot.modules.config.owner.id)
+  if (message.author.id !== bot.sleet.config.owner.id)
     return message.channel.send('Nah, how about I do what I want.')
 
-  let [cmd, ...playing] = bot.modules.shlex(message)
+  let [cmd, ...playing] = bot.sleet.shlex(message)
   playing = playing.join(' ')
 
   let activity = playing ? getPlayingFrom(playing) : getPlaying()

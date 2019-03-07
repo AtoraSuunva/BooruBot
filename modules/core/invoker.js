@@ -11,8 +11,8 @@ module.exports.config = {
 
 module.exports.events = {}
 module.exports.events.message = (bot, message) => {
-  let shlex = bot.modules.shlex
-  let config = bot.modules.config
+  let shlex = bot.sleet.shlex
+  let config = bot.sleet.config
 
   let args = shlex(message.content)
 
@@ -23,7 +23,7 @@ module.exports.events.message = (bot, message) => {
       if (args[2] === undefined) break
       config.invokers.push(args[2])
       config.invokers = Array.from(new Set(config.invokers)) //some magic to ensure there's no duplicate invokers
-      bot.modules.reloadConfig(config)
+      bot.sleet.reloadConfig(config)
       message.channel.send(`Added \`${args[2]}\`\nCurrent invokers are \`${config.invokers.join('\`, \`')}\``)
       return
     break
@@ -36,7 +36,7 @@ module.exports.events.message = (bot, message) => {
         return
       }
       config.invokers.splice(config.invokers.indexOf(args[2]), 1)
-      bot.modules.reloadConfig(config)
+      bot.sleet.reloadConfig(config)
       message.channel.send(`Removed \`${args[2]}\`\nCurrent invokers are \`${config.invokers.join('\`, \`')}\``)
       return
     break
@@ -44,7 +44,7 @@ module.exports.events.message = (bot, message) => {
     case 'save':
       require('fs').writeFile('./config.json', JSON.stringify(config, null, 4), (err) => {
         if (err) throw err;
-        bot.modules.logger.log('Updated Config.json!')
+        bot.sleet.logger.log('Updated Config.json!')
         message.channel.send(`Saved config!`)
       })
       return

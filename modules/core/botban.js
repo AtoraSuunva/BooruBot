@@ -11,8 +11,8 @@ module.exports.config = {
 
 module.exports.events = {}
 module.exports.events.message = (bot, message) => {
-  let config = bot.modules.config
-  let [cmd, userToBotban, ...reason] = bot.modules.shlex(message.content.replace('don\'t talk to me or my bot ever again', 'botban'))
+  let config = bot.sleet.config
+  let [cmd, userToBotban, ...reason] = bot.sleet.shlex(message.content.replace('don\'t talk to me or my bot ever again', 'botban'))
   reason = reason.join(' ')
 
   if (message.author.id !== config.owner.id) return message.channel.send('no.')
@@ -36,11 +36,11 @@ module.exports.events.message = (bot, message) => {
       msg = `Unbotbanned ${user.username}.`
     }
 
-    bot.modules.reloadConfig(config)
-    bot.modules.saveConfig()
+    bot.sleet.reloadConfig(config)
+    bot.sleet.saveConfig()
       .then(message.channel.send(msg))
   }).catch(e => {
-    bot.modules.logger.log(e)
+    bot.sleet.logger.log(e)
     message.channel.send('Something went wrong...')
   })
 }

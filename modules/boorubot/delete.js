@@ -13,7 +13,7 @@ const Discord = require('discord.js')
 
 module.exports.events = {}
 module.exports.events.message = (bot, message) => {
-  let args = bot.modules.shlex(message.content)
+  let args = bot.sleet.shlex(message.content)
   let msgsToDelete = parseInt(args[1])
 
   if (msgsToDelete <= 0)
@@ -27,7 +27,7 @@ module.exports.events.message = (bot, message) => {
       .then(msg => message.channel.send('Deleted last image...'))
       .catch(err => message.channel.send('I don\'t have a message cached for this channel! You can still try `delete 1` and force me to search the last 50 messages'))
 
-  } else if (msgsToDelete > 5 && !message.channel.permissionsFor(message.author).hasPermission('MANAGE_MESSAGES')) {
+  } else if (msgsToDelete > 5 && !message.channel.permissionsFor(message.author).has('MANAGE_MESSAGES')) {
     message.channel.send('Whoa there, users without "Manage Messages" can only delete max 5 images at a time')
 
   } else {
@@ -38,7 +38,7 @@ module.exports.events.message = (bot, message) => {
         if (delMsgs.length === 0)
           return message.channel.send('There\'s nothing for me to delete.')
 
-        if (delMsgs.length < 2 || message.channel.type === 'dm' || !message.channel.permissionsFor(bot.user).hasPermission('MANAGE_MESSAGES')) {
+        if (delMsgs.length < 2 || message.channel.type === 'dm' || !message.channel.permissionsFor(bot.user).has('MANAGE_MESSAGES')) {
           for (let msg of delMsgs) msg.delete()
           message.channel.send(`Deleted ${delMsgs.length} message${(delMsgs.length === 1) ? '' : 's'} manually...`)
         } else {

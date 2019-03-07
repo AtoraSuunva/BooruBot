@@ -40,8 +40,8 @@ const space = '\u00b7' //MIDDLE DOT
 module.exports.events = {}
 module.exports.events.message = (bot, message) => {
   let settingsId = (message.guild !== null) ? message.guild.id : message.channel.id //DMs are a channel, interestingly enough
-  let settings = bot.modules.settings.get(settingsId) //yay settings
-  let [cmd, setting, ...value] = bot.modules.shlex(message.content)
+  let settings = bot.sleet.settings.get(settingsId) //yay settings
+  let [cmd, setting, ...value] = bot.sleet.shlex(message.content)
 
   value = value.join(' ')
 
@@ -68,7 +68,7 @@ module.exports.events.message = (bot, message) => {
     if (setTemplate[setting] === undefined)
       return message.channel.send('That\'s not a valid setting! Use `b!setting` to view them all')
 
-    if (message.guild && !message.member.hasPermission('MANAGE_GUILD') && message.author.id !== bot.modules.config.owner.id)
+    if (message.guild && !message.member.permissions.has('MANAGE_GUILD') && message.author.id !== bot.sleet.config.owner.id)
       return message.channel.send('You don\'t have "Manage Server" perms.')
 
     let newVal
@@ -86,7 +86,7 @@ module.exports.events.message = (bot, message) => {
     message.channel.send(`Setting changed!\n\`${setting}\` = \`${settings.options[setting]}\``)
   }
 
-  bot.modules.settings.set(settingsId, settings)
+  bot.sleet.settings.set(settingsId, settings)
 }
 
 //Convert stuff to it's primitive values

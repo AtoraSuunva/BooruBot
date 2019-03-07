@@ -26,10 +26,14 @@ const nextImgEmoji = '\u{25B6}' // BLACK RIGHT-POINTING TRIANGLE
 const deleteImgEmoji = '\u{274c}' // CROSS MARK
 
 module.exports.events = {}
+module.exports.events.raw = (bot, packet) => {
+  if (packet.t === 'MESSAGE_DELETE') prevImgs.delete(packet.d.id)
+}
+
 module.exports.events.message = (bot, message) => {
   let settingsId = (message.guild) ? message.guild.id : message.channel.id //DMs are a channel, interestingly enough
-  let settings = bot.modules.settings.get(settingsId)
-  let args = bot.modules.shlex(message.content).map(_ => _.toLowerCase())
+  let settings = bot.sleet.settings.get(settingsId)
+  let args = bot.sleet.shlex(message.content).map(_ => _.toLowerCase())
 
   // b!s sb cat cute
   // ['s', 'sb', 'cat', 'cute']
@@ -39,10 +43,15 @@ module.exports.events.message = (bot, message) => {
   // b!e6 cat cute
   // ['e6', 'cat', 'cute']
 
-  if (booru.resolveSite(args[0]) || ['r', 'rand', 'random'].includes(args[0]))
+  if (booru.resolveSite(args[0]) || ['r', 'rand', 'random'].includes(args[0])) {
     args.unshift('')
-  else
+  } else if (module.exports.config.invokers.includes(args[0])) {
+    if (!booru.resolveSite(args[1]) && !['r', 'rand', 'random'].includes(args[1])) {
+      return message.channel.send('That is not a valid site to search')
+    }
+  } else {
     return
+  }
 
   let tags = args.slice(2)
 
@@ -72,30 +81,45 @@ module.exports.events.message = (bot, message) => {
   if (!['r', 'rand', 'random'].includes(args[1]) && !booru.resolveSite(args[1]))
     return message.channel.send('That is not a supported site. Use `b!sites` to see them all.')
 
-
   message.botClient = bot
-  const searchR = ['r', 'rand', 'random'].includes(args[1])
-                  ? randSearch(args.slice(2), settings, message)
-                  : search(args[1], args.slice(2), settings, message)
 
- message.channel.startTyping()
+  if (['r', 'rand', 'random'].includes(args[1])) {
+    message.channel.startTyping()
+    randSearch([...args.slice(2)], settings, message)
+      .then(r => postEmbed(...r)) //promises can only return one value, so I return an array then spread it
+      .catch(() => {
+        message.channel.stopTyping()
+        message.channel.send('Found no images anywhere...')
+      })
+  } else {
+    message.channel.startTyping()
+    search(args[1], [...args.slice(2)], settings, message)
+      .then(r => postEmbed(...r))
+      .catch(e => {
+        message.channel.stopTyping()
+        const logE = e.innerErr || e
 
- searchR
-  .then(r => postEmbed(...r))
-  .catch(e => {
-    message.channel.stopTyping()
+        if (e.message === 'You didn\'t give any images') {
+          message.channel.send('Didn\'t find any images...')
+        } else if (e.name === 'SearchError') {
+          message.channel.send(e.message)
+        } else if (logE.request && logE.request.res.statusCode) {
+          const extra = logE.body.message
+          message.channel.send('Got an error from the booru: \n```js\n'
+           + `${logE.request.res.statusCode}: ${logE.request.res.statusMessage}`
+           + (extra ? `\n${extra}` : '')
+           + '\n```')
+        } else if (e.message === 'You cannot search for more than 2 tags at a time') {
+          message.channel.send('I cannot search more than 1 tag on Danbooru, since `order:random` takes up one tag. I would need to pay $20/$40 for 6/12 tags :(')
+        } else if (e.message.startsWith('Internal Error:')) {
+          message.channel.send(`Got an error from the booru: \n\`\`\`js\n${e.message}\n\`\`\``)
+        } else {
+          message.channel.send('Got an error: \n```js\n' + JSON.stringify(e.message, null, 2) + '\n```')
 
-    if (e.message === 'You didn\'t give any images') {
-      message.channel.send('Did not find any images...')
-    } else if (e.name === 'SearchError') {
-      message.channel.send(e.message)
-    } else if (e.name === 'HttpError') {
-      message.channel.send(`Booru requested returned an error: ${e.message}`)
-    } else {
-      message.channel.send('Got an error: \n```js\n' + JSON.stringify(e.message, null, 2) + '\n```')
-      bot.logger.error(e)
-    }
-  })
+          bot.logger.error(logE)
+        }
+      })
+  }
 }
 
 //Search a single booru
@@ -112,16 +136,16 @@ function search(site, tags, settings, message) {
       nsfw = false
 
     booru.search(site, tags, {limit: 100, random: true})
-      .then(booru.commonfy)
-      .then((imgs) => {
+      .then(imgs => {
         if (imgs[0] !== undefined) {
 
           for (let img of imgs) {
-            if (compareArrays(img.common.tags, settings.tags) === null &&
-               !hasBlacklistedType(img.common.file_url, settings.tags) &&
+            if (img.file_url &&
+               compareArrays(img.tags, settings.tags) === null &&
+               !hasBlacklistedType(img.file_url, settings.tags) &&
                !hasBlacklistedRating(img.rating, settings.tags) &&
                (nsfw || !['e', 'q', 'u'].includes(img.rating.toLowerCase())) &&
-               ([null, undefined].includes(settings.options.minScore) || img.common.score > settings.options.minScore))
+               ([null, undefined].includes(settings.options.minScore) || img.score > settings.options.minScore))
 
               validImgs.push(img)
           }
@@ -136,11 +160,13 @@ function search(site, tags, settings, message) {
         }
       })
       .catch(err => {
-        if (err.name === 'BooruError' || err.name === 'HttpError')
+        if (err.name === 'BooruError')
           return reject(err)
 
-        console.error(err)
-        reject(new Error('Something went wrong while searching. Go yell at Atlas#2564.'))
+        const e = new Error('Something went wrong while searching...')
+        e.innerErr = err
+
+        reject(e)
       })
   })
 }
@@ -167,7 +193,7 @@ function randSearch(tags, settings, message) {
       if (imgs === undefined || imgs[0] === undefined) continue
       return resolve(imgs)
     }
-    reject(new SearchError('Found no images anywhere...'))
+    reject(new Error('Found no images anywhere...'))
   })
 }
 //the future is async
@@ -175,21 +201,17 @@ function randSearch(tags, settings, message) {
 
 //Compares arrays for matching elements and returns the matches
 //returns null if no matches are found
-// Assumes arrays of strings
 function compareArrays(arr1, arr2) {
   let matches = []
-  arr1.forEach(ele1 => {
-    arr2.forEach(ele2 => {
-      if (ele1.toLowerCase() === ele2.toLowerCase()) {
-        matches.push(ele1)
-      }
-    })
-  })
+  arr1.forEach(ele1 => {arr2.forEach(ele2 => {if(ele1 === ele2) matches.push(ele1)})})
 
   return (matches[0] === undefined) ? null : matches
 }
 
 function hasBlacklistedType(imgUrl, tags) {
+  if (imgUrl === null)
+    return false
+
   let types = tags.filter(t => t.startsWith('type:')).map(t => '.' + t.substring(5))
   let fileType = path.extname(imgUrl).toLowerCase()
 
@@ -197,9 +219,9 @@ function hasBlacklistedType(imgUrl, tags) {
 }
 
 function hasBlacklistedRating(rating, tags) {
-  let ratings = tags.filter(t => t && t.startsWith('rating:')).map(t => t.substring(7).toLowerCase())
+  let ratings = tags.filter(t => t.startsWith('rating:')).map(t => t.substring(7))
 
-  return rating && ratings.includes(rating.toLowerCase())
+  return ratings.includes(rating)
 }
 
 //Format the embed so I don't have to copy paste
@@ -211,10 +233,7 @@ async function postEmbed(imgs, siteUrl, searchTime, message, imageNumber, numIma
   if (img === undefined) return
 
   if (message.guild && !message.channel.permissionsFor(message.client.user).has('EMBED_LINKS')) {
-    return message.channel.send(
-      encodeURI(`https://${siteUrl}${booru.sites[siteUrl].postView}${img.common.id}`) + '\n' +
-      encodeURI(img.common.file_url)
-    )
+    return message.channel.send(img.postView + '\n' + img.file_url)
   }
 
   let metadata = {
@@ -223,40 +242,41 @@ async function postEmbed(imgs, siteUrl, searchTime, message, imageNumber, numIma
 
   let embed = new Discord.RichEmbed({
     author: {
-      name: `Post ${img.common.id}`,
-      url: encodeURI(`https://${siteUrl}${booru.sites[siteUrl].postView}${img.common.id}`) //link directly to the post
+      name: `Post ${img.id}`,
+      url: img.postView //link directly to the post
     },
-    image: {url: encodeURI(img.common.file_url)},
-    url: encodeURI(img.common.file_url),
+    image: {url: img.file_url},
+    url: img.file_url,
     footer: {
       text: `${siteUrl} - ${imageNumber}/${numImages} - ${((searchTime[0] * 1e9 + searchTime[1])/1000000).toFixed(2)}ms`,
       icon_url: `https://www.${siteUrl}/favicon.ico` //pray they have their favicon here like a regular site
     }
   })
 
-  let tags = (img.common.tags.join(', ').length < 50) ? Discord.util.escapeMarkdown(img.common.tags.join(', '))
-    : Discord.util.escapeMarkdown(img.common.tags.join(', ').substr(0,50)) +
-             `... [See All](https://giraffeduck.com/api/echo/?w=${Discord.util.escapeMarkdown(img.common.tags.join(',').replace(/(%20)/g, '_')).replace(/([()])/g, '\\$1').substring(0,1500)})`
+  let tags = (img.tags.join(', ').length < 50) ? Discord.util.escapeMarkdown(img.tags.join(', '))
+    : Discord.util.escapeMarkdown(img.tags.join(', ').substr(0,50)) +
+             `... [See All](https://giraffeduck.com/api/echo/?w=${Discord.util.escapeMarkdown(img.tags.join(',').replace(/(%20)/g, '_')).replace(/([()])/g, '\\$1').substring(0,1200)})`
 
-  let headers
+  let header
   let tooBig = false
   let imgError = false
 
   try {
-    headers = (await snek.head(encodeURI(img.common.file_url))).headers
+    header = (await snek.head(img.file_url)).headers
   } catch (e) { imgError = true /* who needs to catch shit */}
 
-  if (headers)
-    tooBig = (headers['content-length'] / 1000000) > 10
+  if (header)
+    tooBig = (header['content-length'] / 1000000) > 10
 
-  embed.setDescription((`**Score:** ${img.common.score} | ` +
-                       `**Rating:** ${img.common.rating.toUpperCase()} | ` +
-                       `[Image](${encodeURI(img.common.file_url.replace(/([()])/g, '\\$1'))}) | ` +
-                       `${path.extname(img.common.file_url).toLowerCase()}, ${headers ? fileSizeSI(headers['content-length']) : '? kB'}\n` +
+  embed.setDescription(`**Score:** ${img.score} | ` +
+                       `**Rating:** ${img.rating.toUpperCase()} | ` +
+                       `[Image](${encodeURI(img.file_url.replace(/([()])/g, '\\$1'))}) | ` +
+                       `${path.extname(img.file_url).toLowerCase()}, ${header ? fileSizeSI(header['content-length']) : '? kB'}\n` +
                        `**Tags:** ${tags} [](${JSON.stringify(metadata)})` +
-                       ((!['.jpg', '.jpeg', '.png', '.gif'].includes(path.extname(img.common.file_url).toLowerCase())) ? '\n\n`The file will probably not embed.`' : '' ) +
-                       ((tooBig) ? '\n`The image is over 10MB and will not embed.`' : '') + ((imgError) ? '\n`I got an error while trying to get the image.`' : '')).substring(0, 2048) )
+                       ((!['.jpg', '.jpeg', '.png', '.gif'].includes(path.extname(img.file_url).toLowerCase())) ? '\n\n`The file will probably not embed.`' : '' ) +
+                       ((tooBig) ? '\n`The image is over 10MB and will not embed.`' : '') + ((imgError) ? '\n`I got an error while trying to get the image.`' : '') )
 
+  embed.setDescription(embed.description.substring(0, 2048))
   embed.setColor((message.guild) ? message.guild.members.get(message.client.user.id).highestRole.color : '#34363C')
 
   const afterPost = async msg => {
@@ -275,9 +295,9 @@ async function postEmbed(imgs, siteUrl, searchTime, message, imageNumber, numIma
 
         if (imageNumber !== numImages) {
           await msg.react(nextImgEmoji).then(r => {
-            // I tied to use awaitReactions or createReactionCollector instead, but they both acted buggy and often wouldn't catch new > reacts
-            // And in the end they stopped added > reacts completely
-            let timeout = setTimeout(() => prevImgs.has(msg.id) && prevImgs.delete(msg.id) && r.remove().catch(e => {}), nextImgTimeout)
+            // I tried to use awaitReactions or createReactionCollector instead, but they both acted buggy and often wouldn't catch new reacts
+            // And in the end they stopped adding reacts completely
+            let timeout = setTimeout(() => prevImgs.has(msg.id) && prevImgs.delete(msg.id) && r.remove().catch(_=>{}), nextImgTimeout)
             prevImgs.set(msg.id, {imgs, siteUrl, searchTime, message, imageNumber, numImages, timeout})
           })
         }
@@ -287,17 +307,14 @@ async function postEmbed(imgs, siteUrl, searchTime, message, imageNumber, numIma
     }
   }
 
-  if (oldMessage === undefined)
-    return message.channel.send(`${message.author.username}, result for \`${message.content}\`\nhttps://${siteUrl}${booru.sites[siteUrl].postView}${img.common.id}`, {embed}).then(afterPost)
-  else {
-    try {
-      return oldMessage.edit(`${message.author.username}, result for \`${message.content}\`\nhttps://${siteUrl}${booru.sites[siteUrl].postView}${img.common.id}`, {embed}).then(afterPost)
-    } catch (e) {
-      // For some reason .edit returns undefined?
-      // I think it's because the message was delete or *something*, but it's unclear and annoying
-      'Do nothing'
-    }
-  }
+  const content = `${message.author.username}, result for \`${message.content}\`\n${img.postView}`
+
+  console.log(oldMessage)
+
+  if (oldMessage)
+    return oldMessage.edit(content, {embed})
+
+  message.channel.send(content, {embed}).then(afterPost).catch(e => message.botClient.logger.error('Failed to send post', e, embed))
 }
 
 module.exports.events.messageReactionAdd = async (bot, react, user) => {
@@ -311,16 +328,20 @@ module.exports.events.messageReactionAdd = async (bot, react, user) => {
   postEmbed(imgs, siteUrl, searchTime, message, imageNumber, numImages, react.message)
 
   if (react.message.channel.type !== 'dm' && react.message.channel.permissionsFor(bot.user).has('MANAGE_MESSAGES'))
-    react.remove(user).catch(e => {})
+    react.remove(user)
 
   // If there's no more images
   if (imageNumber + 1 === numImages)
-    return react.remove(bot.user).catch(e => {})
+    return react.remove(bot.user)
 
   clearTimeout(timeout)
-  timeout = setTimeout(() => prevImgs.has(react.message.id) && prevImgs.delete(react.message.id) && react.remove().catch(e => {}), nextImgTimeout)
+  timeout = setTimeout(() => prevImgs.has(react.message.id) && prevImgs.delete(react.message.id) && react.remove(), nextImgTimeout)
 
   prevImgs.set(react.message.id, {imgs, siteUrl, searchTime, message, imageNumber, numImages, timeout})
+}
+
+module.exports.events.messageDelete = (bot, message) => {
+  prevImgs.delete(message.id)
 }
 
 // from https://stackoverflow.com/a/20463021

@@ -17,13 +17,13 @@ let sleep   = (time) => {return new Promise(function(resolve, reject) {setTimeou
 module.exports.events = {}
 module.exports.events.message = (bot, message) => {
   (async function a() { //jshint ignore:line
-    let args = bot.modules.shlex(message.content)
+    let args = bot.sleet.shlex(message.content)
     if (['continue', 'clean', 'keep'].includes(args[0])) return message.channel.send('👌')
 
     let canSearch = checkSearch(bot, message)
-    let canEditBlacklist = message.member.hasPermission('MANAGE_MESSAGES')
-    let canEditSettings = (message.guild !== null && message.member.hasPermission('MANAGE_GUILD'))
-    let bbCanManageMessages = await message.guild.fetchMember(bot.user).then(m => m.hasPermission('MANAGE_MESSAGES')) //jshint ignore:line
+    let canEditBlacklist = message.member.permissions.has('MANAGE_MESSAGES')
+    let canEditSettings = (message.guild !== null && message.member.permissions.has('MANAGE_GUILD'))
+    let bbCanManageMessages = await message.guild.fetchMember(bot.user).then(m => m.permissions.has('MANAGE_MESSAGES')) //jshint ignore:line
 
     let prompts = [
       {ask: "*Tutorial started.*\nThe tutorial will continue automatically once you type in commands. When examples are given with words wrapped in `[]`, don't actually include them.\nTo continue, type `b!continue`\nTo exit anytime, just let the bot time out or type `b!exit`", waitFor: ['b!continue']},
@@ -59,9 +59,9 @@ module.exports.events.message = (bot, message) => {
 
     for (let p of prompts) {
       if (p.need !== false) {
-        bot.modules.logger.log('ASKING: ' + p.ask)
+        bot.sleet.logger.log('ASKING: ' + p.ask)
         let messages = await prompt(message, p.ask, p.waitFor) //jshint ignore:line
-        bot.modules.logger.log('RECEIVED: ' + messages[1])
+        bot.sleet.logger.log('RECEIVED: ' + messages[1])
         tutMessages.push(...messages)
         if (tutMessages[tutMessages.length - 1].content.startsWith('b!exit')) {
           exit(message.channel)
@@ -70,7 +70,7 @@ module.exports.events.message = (bot, message) => {
       }
     }
 
-    bot.modules.logger.log('asfasf' + tutMessages[tutMessages.length - 1].content.startsWith('b!clean') + ' aaa' + bbCanManageMessages)
+    bot.sleet.logger.log('asfasf' + tutMessages[tutMessages.length - 1].content.startsWith('b!clean') + ' aaa' + bbCanManageMessages)
     if (tutMessages[tutMessages.length - 1].content.startsWith('b!clean') && bbCanManageMessages)
       message.channel.bulkDelete(tutMessages).catch(console.log) //jshint ignore:line
 
@@ -91,7 +91,7 @@ function prompt(message, ask, waitfor) {
             }
             resolve([msg, ...msgs.array()])
           })
-          .catch(e => {bot.modules.logger.log(e); exit(message.channel)})
+          .catch(e => {bot.sleet.logger.log(e); exit(message.channel)})
       })
   })
 }

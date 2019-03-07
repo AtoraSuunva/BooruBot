@@ -11,8 +11,8 @@ module.exports.config = {
 module.exports.events = {}
 module.exports.events.message = (bot, message) => {
   let settingsId = (message.guild !== null) ? message.guild.id : message.channel.id
-  let settings = bot.modules.settings.get(settingsId)
-  let args = bot.modules.shlex(message.content)
+  let settings = bot.sleet.settings.get(settingsId)
+  let args = bot.sleet.shlex(message.content)
 
   if (settings.options.topicEnable && !message.channel.topic.includes('bb=true'))
     return message.channel.send('I can\'t send an invite in channels without `bb=true` in the topic (Set `topicEnable` to false to disable this).')

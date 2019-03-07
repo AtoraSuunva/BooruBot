@@ -10,12 +10,12 @@ module.exports.config = {
 
 module.exports.events = {}
 module.exports.events.message = async (bot, message) => {
-  const config = bot.modules.config
+  const config = bot.sleet.config
 
   if (message.author.id !== config.owner.id) return
 
-  const shlex = bot.modules.shlex
-  const modules = bot.modules
+  const shlex = bot.sleet.shlex
+  const modules = bot.sleet
   const Discord = require('discord.js')
   const fetch = require('snekfetch')
 
@@ -27,7 +27,7 @@ module.exports.events.message = async (bot, message) => {
   console.log(message.content)
   console.log(args)
 
-  bot.modules.logger.log(evalMsg)
+  bot.sleet.logger.log(evalMsg)
 
   try {
     output = eval(evalMsg)
@@ -37,7 +37,7 @@ module.exports.events.message = async (bot, message) => {
       output = await output
     }
 
-    if (args[0] === 'eval?') bot.modules.logger.log(msg)
+    if (args[0] === 'eval?') bot.sleet.logger.log(msg)
     let length = require('util').inspect(output, { depth: 2 }).length
 
     if (length > 2000 && args[0] !== 'eval!' && args[0] !== 'eval...')
@@ -49,7 +49,7 @@ module.exports.events.message = async (bot, message) => {
       condEdit(message, msg, output)
 
   } catch (e) {
-    bot.modules.logger.warn(e)
+    bot.sleet.logger.warn(e)
     e.message = e.message.replace(bot.token, '[no token for you]')
 
     let length = e.message.length

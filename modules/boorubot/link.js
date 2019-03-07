@@ -14,7 +14,7 @@ const urlReg = /((?:https?:\/\/)?(www\.)?([-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2
 
 module.exports.events = {}
 module.exports.events.message = (bot, message) => {
-  let [cmd, site] = bot.modules.shlex(message)
+  let [cmd, site] = bot.sleet.shlex(message)
 
   site = urlReg.exec(site)
 

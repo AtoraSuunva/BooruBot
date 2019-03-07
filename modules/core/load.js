@@ -11,14 +11,14 @@ module.exports.config = {
 
 module.exports.events = {}
 module.exports.events.message = (bot, message) => {
-  let config = bot.modules.config
+  let config = bot.sleet.config
   if (message.author.id !== config.owner.id) return
 
-  let loadModule = bot.modules.loadModule
-  let loadModules = bot.modules.loadModules
-  let unloadModule = bot.modules.unloadModule
+  let loadModule = bot.sleet.loadModule
+  let loadModules = bot.sleet.loadModules
+  let unloadModule = bot.sleet.unloadModule
 
-  let [cmd, module] = bot.modules.shlex(message.content)
+  let [cmd, module] = bot.sleet.shlex(message.content)
 
   if (cmd !== 'unload') {
     if (module !== 'all') {
