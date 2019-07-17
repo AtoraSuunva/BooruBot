@@ -160,8 +160,11 @@ function search(site, tags, settings, message) {
         }
       })
       .catch(err => {
-        if (err.name === 'BooruError')
+        if (err.name === 'BooruError') {
+          err.booru = site
+          err.tags = tags
           return reject(err)
+        }
 
         const e = new Error('Something went wrong while searching...')
         e.innerErr = err

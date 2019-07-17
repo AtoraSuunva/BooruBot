@@ -81,7 +81,7 @@ function whitelist(message, settings, type, values) {
   settings[type] = settings[type].filter(v => !toWhitelist.includes(v))
 
   message.channel.send(
-    toWhitelist.map(v => typeof v === 'string' ? `Whitelisted \`${v}\`` : `Failed to whitelist \`${v.v}\`: **${v.m}**`.join('\n')) +
+    toWhitelist.map(v => typeof v === 'string' ? `Whitelisted \`${v}\`` : `Failed to whitelist \`${v.v}\`: **${v.m}**`) +
     '\n```asciidoc\n' +
     `Blacklisted ${type}:\n${sep}\n[${settings[type].join(', ')}]` +
     '\n```'
