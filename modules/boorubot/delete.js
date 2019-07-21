@@ -49,13 +49,15 @@ module.exports.events.message = (bot, message) => {
   }
 }
 
-module.exports.events.messageReactionAdd = (bot, react, user) => {
+module.exports.events.messageReactionAdd = async (bot, react, user) => {
   if (react.users.size < 2 || !react.message.embeds[0] || react.message.author.id !== bot.user.id) return
   if (react.emoji.name !== react.message.reactions.first().emoji.name) return
 
-  //react.message.channel.send(`**count**: ${react.count}\n**users**: ${[...react.users.keys()].join(', ')}\n**users.size**: ${react.users.size}`)
+  // react.message.channel.send(`**count**: ${react.count}\n**users**: ${[...react.users.keys()].join(', ')}\n**users.size**: ${react.users.size}`)
 
-  if (react.me && react.users.size >= 2 && !react.message.embeds[0].description.endsWith('[](META-DELETED)')) {
+  const hasPerms = !react.message.guild ? true : react.message.author.id === user.id || react.message.channel.permissionsFor(user).has('MANAGE_MESSAGES')
+
+  if (react.me && react.users.size >= 2 && !react.message.embeds[0].description.endsWith('[](META-DELETED)') && hasPerms) {
     let embed = new Discord.RichEmbed()
       .setAuthor(`Message deleted by ${user.username}#${user.discriminator} (Click for image)`, react.message.embeds[0].url, react.message.embeds[0].url)
       .setDescription('Use `b!del` to remove this completely. [](META-DELETED)')

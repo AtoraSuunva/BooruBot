@@ -15,6 +15,8 @@ function SearchError(message) {
 }
 SearchError.prototype = Error.prototype
 
+const getSettings = require('./settings.js').getSettings
+
 const snek = require('snekfetch')
 const booru = require('booru')
 const Discord = require('discord.js')
@@ -32,7 +34,7 @@ module.exports.events.raw = (bot, packet) => {
 
 module.exports.events.message = (bot, message) => {
   let settingsId = (message.guild) ? message.guild.id : message.channel.id //DMs are a channel, interestingly enough
-  let settings = bot.sleet.settings.get(settingsId)
+  let settings = getSettings(bot, settingsId)
   let args = bot.sleet.shlex(message.content).map(_ => _.toLowerCase())
 
   // b!s sb cat cute
@@ -86,7 +88,7 @@ module.exports.events.message = (bot, message) => {
   if (['r', 'rand', 'random'].includes(args[1])) {
     message.channel.startTyping()
     randSearch([...args.slice(2)], settings, message)
-      .then(r => postEmbed(...r)) //promises can only return one value, so I return an array then spread it
+      .then(r => postEmbed({ ...r, settings }))
       .catch(() => {
         message.channel.stopTyping()
         message.channel.send('Found no images anywhere...')
@@ -94,7 +96,7 @@ module.exports.events.message = (bot, message) => {
   } else {
     message.channel.startTyping()
     search(args[1], [...args.slice(2)], settings, message)
-      .then(r => postEmbed(...r))
+      .then(r => postEmbed({ ...r, settings }))
       .catch(e => {
         message.channel.stopTyping()
         const logE = e.innerErr || e
@@ -151,7 +153,7 @@ function search(site, tags, settings, message) {
           }
 
           if (validImgs[0] !== undefined)
-            resolve([validImgs, booru.resolveSite(site), process.hrtime(searchStart), message]) //can't resolve multiple values
+            resolve({imgs: validImgs, siteUrl: booru.resolveSite(site), searchTime: process.hrtime(searchStart), message})
           else
             reject(new SearchError('All found images are blacklisted.'))
 
@@ -174,27 +176,26 @@ function search(site, tags, settings, message) {
   })
 }
 
-//Keep searching boorus until you either find an image or run out of boorus
+// Keep searching boorus until you either find an image or run out of boorus
 function randSearch(tags, settings, message) {
-  //oh god what am i doing
   return new Promise(async (resolve, reject) => {
 
-    let imgs
+    let result
     let randSites = Object.keys(booru.sites).sort(() => Math.random() - 0.5)
 
     for (let site of randSites) {
       if (settings.sites.includes(site)) continue
 
-      //let searchTimeout = setTimeout(()=>{message.botClient.modules.logger.log(`Timed out ${site}`)}, maxTime)
+      // let searchTimeout = setTimeout(()=>{message.botClient.modules.logger.log(`Timed out ${site}`)}, maxTime)
 
       try {
-        imgs = await search(site, tags, settings, message)
-      } catch (e) { imgs = undefined; continue }
+        result = await search(site, tags, settings, message)
+      } catch (e) { continue }
 
-      //clearTimeout(searchTimeout)
+      // clearTimeout(searchTimeout)
 
-      if (imgs === undefined || imgs[0] === undefined) continue
-      return resolve(imgs)
+      if (result === undefined || result[0] === undefined) continue
+      return resolve(result)
     }
     reject(new Error('Found no images anywhere...'))
   })
@@ -227,8 +228,8 @@ function hasBlacklistedRating(rating, tags) {
   return ratings.includes(rating)
 }
 
-//Format the embed so I don't have to copy paste
-async function postEmbed(imgs, siteUrl, searchTime, message, imageNumber, numImages, oldMessage) {
+// Format the embed so I don't have to copy paste
+async function postEmbed({ imgs = [], siteUrl = '', searchTime = 0, message = null, imageNumber = 0, numImages = 0, oldMessage = null, settings = { options: {} } } = {}) {
   const img = imgs.shift()
   imageNumber = (imageNumber || 0) + 1
   numImages   = numImages || (imgs.length + 1)
@@ -246,18 +247,18 @@ async function postEmbed(imgs, siteUrl, searchTime, message, imageNumber, numIma
   let embed = new Discord.RichEmbed({
     author: {
       name: `Post ${img.id}`,
-      url: img.postView //link directly to the post
+      url: img.postView // link directly to the post
     },
-    image: {url: img.file_url},
+    image: { url: img.file_url },
     url: img.file_url,
     footer: {
-      text: `${siteUrl} - ${imageNumber}/${numImages} - ${((searchTime[0] * 1e9 + searchTime[1])/1000000).toFixed(2)}ms`,
-      icon_url: `https://www.${siteUrl}/favicon.ico` //pray they have their favicon here like a regular site
+      text: `${siteUrl} · ${imageNumber}/${numImages} · ${((searchTime[0] * 1e9 + searchTime[1]) / 1e6).toFixed(2)}ms`,
+      icon_url: `https://www.${siteUrl}/favicon.ico` // pray they have their favicon here like a regular site
     }
   })
 
   let tags = (img.tags.join(', ').length < 50) ? Discord.util.escapeMarkdown(img.tags.join(', '))
-    : Discord.util.escapeMarkdown(img.tags.join(', ').substr(0,50)) +
+    : Discord.util.escapeMarkdown(img.tags.join(', ').substr(0, 50)) +
              `... [See All](https://giraffeduck.com/api/echo/?w=${Discord.util.escapeMarkdown(img.tags.join(',').replace(/(%20)/g, '_')).replace(/([()])/g, '\\$1').substring(0,1200)})`
 
   let header
@@ -275,7 +276,7 @@ async function postEmbed(imgs, siteUrl, searchTime, message, imageNumber, numIma
                        `**Rating:** ${img.rating.toUpperCase()} | ` +
                        `[Image](${encodeURI(img.file_url.replace(/([()])/g, '\\$1'))}) | ` +
                        `${path.extname(img.file_url).toLowerCase()}, ${header ? fileSizeSI(header['content-length']) : '? kB'}\n` +
-                       `**Tags:** ${tags} [](${JSON.stringify(metadata)})` +
+                       `**Tags:** ${tags}` +
                        ((!['.jpg', '.jpeg', '.png', '.gif'].includes(path.extname(img.file_url).toLowerCase())) ? '\n\n`The file will probably not embed.`' : '' ) +
                        ((tooBig) ? '\n`The image is over 10MB and will not embed.`' : '') + ((imgError) ? '\n`I got an error while trying to get the image.`' : '') )
 
@@ -284,7 +285,7 @@ async function postEmbed(imgs, siteUrl, searchTime, message, imageNumber, numIma
 
   const afterPost = async msg => {
     message.channel.stopTyping()
-    message.channel.lastImagePosted = msg //Lazy way to easily delete the last image posted, see `delete.js`
+    message.channel.lastImagePosted = msg // Lazy way to easily delete the last image posted, see `delete.js`
 
     if (!message.guild || message.channel.permissionsFor(message.guild.me).has('ADD_REACTIONS')) {
 
@@ -296,12 +297,14 @@ async function postEmbed(imgs, siteUrl, searchTime, message, imageNumber, numIma
             await msg.react(deleteImgEmoji)
         }
 
-        if (imageNumber !== numImages) {
+        console.log(settings)
+
+        if (imageNumber !== numImages && !settings.options.disableNextImage) {
           await msg.react(nextImgEmoji).then(r => {
             // I tried to use awaitReactions or createReactionCollector instead, but they both acted buggy and often wouldn't catch new reacts
             // And in the end they stopped adding reacts completely
             let timeout = setTimeout(() => prevImgs.has(msg.id) && prevImgs.delete(msg.id) && r.remove().catch(_=>{}), nextImgTimeout)
-            prevImgs.set(msg.id, {imgs, siteUrl, searchTime, message, imageNumber, numImages, timeout})
+            prevImgs.set(msg.id, { imgs, siteUrl, searchTime, message, imageNumber, numImages, timeout })
           })
         }
       } catch (e) {
@@ -311,8 +314,6 @@ async function postEmbed(imgs, siteUrl, searchTime, message, imageNumber, numIma
   }
 
   const content = `${message.author.username}, result for \`${message.content}\`\n${img.postView}`
-
-  console.log(oldMessage)
 
   if (oldMessage)
     return oldMessage.edit(content, {embed})
@@ -324,11 +325,16 @@ module.exports.events.messageReactionAdd = async (bot, react, user) => {
   if (react.users.size < 2 || react.message.author.id !== bot.user.id || react.emoji.name !== nextImgEmoji) return
   if (!prevImgs.has(react.message.id)) return
 
-  let {imgs, siteUrl, searchTime, message, imageNumber, numImages, timeout} = prevImgs.get(react.message.id)
+  let { imgs, siteUrl, searchTime, message, imageNumber, numImages, timeout } = prevImgs.get(react.message.id)
 
   if (user.id !== message.author.id) return
 
-  postEmbed(imgs, siteUrl, searchTime, message, imageNumber, numImages, react.message)
+  const settingsId = react.message.guild ? react.message.guild.id : react.message.channel.id
+  const settings = getSettings(bot, settingsId)
+
+  console.log(settingsId, imageNumber)
+
+  postEmbed({ imgs, siteUrl, searchTime, message, imageNumber: imageNumber + 1, numImages, oldMessage: react.message, settings })
 
   if (react.message.channel.type !== 'dm' && react.message.channel.permissionsFor(bot.user).has('MANAGE_MESSAGES'))
     react.remove(user)
