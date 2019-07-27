@@ -63,7 +63,7 @@ module.exports.events.message = (bot, message) => {
   if (message.guild &&
      !message.channel.nsfw &&
      !settings.options.nsfwServer &&
-     compareArrays(tags, ['rating:e', 'rating:q', 'rating:explicit', 'rating:questionnable']))
+     compareArrays(tags, ['rating:e', 'rating:q', 'rating:explicit', 'rating:questionable']))
     return message.channel.send('Try searching something sfw.')
 
   if (args[1] === undefined)
@@ -87,7 +87,7 @@ module.exports.events.message = (bot, message) => {
 
   if (['r', 'rand', 'random'].includes(args[1])) {
     message.channel.startTyping()
-    randSearch([...args.slice(2)], settings, message)
+    randSearch(args.slice(2), settings, message)
       .then(r => postEmbed({ ...r, settings }))
       .catch(() => {
         message.channel.stopTyping()
@@ -95,7 +95,7 @@ module.exports.events.message = (bot, message) => {
       })
   } else {
     message.channel.startTyping()
-    search(args[1], [...args.slice(2)], settings, message)
+    search(args[1], args.slice(2), settings, message)
       .then(r => postEmbed({ ...r, settings }))
       .catch(e => {
         message.channel.stopTyping()
@@ -194,7 +194,7 @@ function randSearch(tags, settings, message) {
 
       // clearTimeout(searchTimeout)
 
-      if (result === undefined || result[0] === undefined) continue
+      if (result === undefined || result.imgs === undefined || result.imgs[0] === undefined) continue
       return resolve(result)
     }
     reject(new Error('Found no images anywhere...'))
@@ -297,7 +297,6 @@ async function postEmbed({ imgs = [], siteUrl = '', searchTime = 0, message = nu
             await msg.react(deleteImgEmoji)
         }
 
-        console.log(settings)
 
         if (imageNumber !== numImages && !settings.options.disableNextImage) {
           await msg.react(nextImgEmoji).then(r => {
@@ -331,8 +330,6 @@ module.exports.events.messageReactionAdd = async (bot, react, user) => {
 
   const settingsId = react.message.guild ? react.message.guild.id : react.message.channel.id
   const settings = getSettings(bot, settingsId)
-
-  console.log(settingsId, imageNumber)
 
   postEmbed({ imgs, siteUrl, searchTime, message, imageNumber: imageNumber + 1, numImages, oldMessage: react.message, settings })
 

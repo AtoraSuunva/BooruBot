@@ -40,7 +40,7 @@ module.exports.events.message = (bot, message) => {
 
       return message.channel.send(msg)
     }
-  }).catch(console.log)
+  })
 }
 
 //WOO COMPUTER STUFF

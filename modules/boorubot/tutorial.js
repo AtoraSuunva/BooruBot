@@ -11,7 +11,7 @@ module.exports.config = {
 let tutMessages = []
 let options = {max: 2, time: 60000, errors: ['time']}
 let filter  = (m, args) => {for(let arg of args) {if (m.content.startsWith(arg)) return true} if (message.author.equals(bot.user)) return true; return false}
-let exit    = (chn) => {chn.send(`Tutorial exited. Cleaning up messages if possible...`); if (tutMessages.length > 0) chn.bulkDelete(tutMessages).catch(console.log)}
+let exit    = (chn) => {chn.send(`Tutorial exited. Cleaning up messages if possible...`); if (tutMessages.length > 0) chn.bulkDelete(tutMessages)}
 let sleep   = (time) => {return new Promise(function(resolve, reject) {setTimeout(()=>{resolve()}, time)})}
 
 module.exports.events = {}
@@ -72,7 +72,7 @@ module.exports.events.message = (bot, message) => {
 
     bot.sleet.logger.log('asfasf' + tutMessages[tutMessages.length - 1].content.startsWith('b!clean') + ' aaa' + bbCanManageMessages)
     if (tutMessages[tutMessages.length - 1].content.startsWith('b!clean') && bbCanManageMessages)
-      message.channel.bulkDelete(tutMessages).catch(console.log) //jshint ignore:line
+      message.channel.bulkDelete(tutMessages) //jshint ignore:line
 
   })() //jshint ignore:line
 }

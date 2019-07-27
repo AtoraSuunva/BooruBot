@@ -52,8 +52,6 @@ function blacklist(message, settings, type, values) {
 
   settings[type] = ensureUnique(settings[type].concat(toBlacklist.filter(v => typeof v === 'string')))
 
-  console.log(values, toBlacklist)
-
   message.channel.send(
     toBlacklist.map(v => typeof v === 'string' ? `Blacklisted \`${v}\`` : `Failed to blacklist \`${v.v}\`: **${v.m}**`).join('\n') +
     '\n```asciidoc\n' +

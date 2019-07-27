@@ -43,7 +43,7 @@ module.exports.events.message = (bot, message) => {
           message.channel.send(`Deleted ${delMsgs.length} message${(delMsgs.length === 1) ? '' : 's'} manually...`)
         } else {
           message.channel.bulkDelete(delMsgs)
-            .then(msgs => message.channel.send(`Deleted ${msgs.size} message${(msgs.size === 1) ? '' : 's'}...`)).catch(console.log)
+            .then(msgs => message.channel.send(`Deleted ${msgs.size} message${(msgs.size === 1) ? '' : 's'}...`))
         }
       })
   }
