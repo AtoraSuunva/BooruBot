@@ -58,7 +58,6 @@ module.exports.events.message = (bot, message) => {
     }
 
     message.channel.send(`Current settings\n${'='.repeat(longest + 3)}\n${options.map(v => v[0] + space.repeat(longest - v[0].length + 1) + ':: ' + v[1]).join('\n')}\n\nUse 'b!setting [setting]' for more info.`, {code: 'asciidoc'})
-
   } else if (value === '') { // List one setting + info
     if (setTemplate[setting])
       message.channel.send(`${setting}\n${'='.repeat(setting.length)}\nType${space.repeat(4)}:: ${setTemplate[setting].type}\nDefault${space}:: ${setTemplate[setting].default}\nCurrent${space}:: ${settings.options[setting]}\n\n${setTemplate[setting].help}`, {code: 'asciidoc'})
@@ -86,30 +85,22 @@ module.exports.events.message = (bot, message) => {
 
     settings.options[setting] = newVal
     message.channel.send(`Setting changed!\n\`${setting}\` = \`${settings.options[setting]}\``)
+    bot.sleet.settings.set(settingsId, settings)
   }
-
-  bot.sleet.settings.set(settingsId, settings)
 }
 
 const setTemplateEntries = Object.entries(setTemplate)
 
 function getSettings(bot, settingsId) {
   const settings = bot.sleet.settings.get(settingsId)
-  let shouldUpdate = false
 
   for (const [key, value] of setTemplateEntries) {
     if (settings.options[key] === undefined) {
-      shouldUpdate = true
       settings.options[key] = value.default
     } else if (typeof settings.options[key] !== value.type) {
-      shouldUpdate = true
       const prim = toPrim(settings.options[key])
       settings.options[key] = typeof prim === value.type ? prim : value.default
     }
-  }
-
-  if (shouldUpdate) {
-    bot.sleet.settings.set(settingsId, settings)
   }
 
   return settings

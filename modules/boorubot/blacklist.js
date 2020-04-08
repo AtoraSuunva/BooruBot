@@ -32,16 +32,13 @@ module.exports.events.message = (bot, message) => {
     return message.channel.send('You need "Manage Messages" perms to edit the blacklist')
 
   if (['blacklist', 'bl'].includes(cmd)) {
-    blacklist(message, settings, type, values)
+    blacklist(bot, message, settings, type, values)
   } else {
-    whitelist(message, settings, type, values)
+    whitelist(bot, message, settings, type, values)
   }
-
-  bot.sleet.settings.set(settingsId, settings)
-  bot.sleet.settings.save(settingsId)
 }
 
-function blacklist(message, settings, type, values) {
+function blacklist(bot, message, settings, type, values) {
   if (!type)
     return message.channel.send(`Blacklisted tags:\n${sep}\n[${settings.tags.join(', ')}]\n\nBlacklisted sites:\n${sep}\n[${settings.sites.join(', ')}]`, {code: 'asciidoc'})
 
@@ -58,9 +55,13 @@ function blacklist(message, settings, type, values) {
     `Blacklisted ${type}:\n${sep}\n[${settings[type].join(', ')}]` +
     '\n```'
   )
+
+  const settingsId = (message.guild !== null) ? message.guild.id : message.channel.id
+  bot.sleet.settings.set(settingsId, settings)
+  bot.sleet.settings.save(settingsId)
 }
 
-function whitelist(message, settings, type, values) {
+function whitelist(bot, message, settings, type, values) {
   if (!type)
     return message.channel.send(`I need a type [sites, tags] to blacklist`)
 
@@ -84,6 +85,10 @@ function whitelist(message, settings, type, values) {
     `Blacklisted ${type}:\n${sep}\n[${settings[type].join(', ')}]` +
     '\n```'
   )
+
+  const settingsId = (message.guild !== null) ? message.guild.id : message.channel.id
+  bot.sleet.settings.set(settingsId, settings)
+  bot.sleet.settings.save(settingsId)
 }
 
 function getSites(values) {

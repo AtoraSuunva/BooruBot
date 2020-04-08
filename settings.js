@@ -1,5 +1,11 @@
 const fs = require('fs')
 const path = require('path')
+const DEFAULT_SETTINGS = require('./defaultSettings.json')
+
+function cloneObj(obj) {
+  return JSON.parse(JSON.stringify(obj))
+}
+
 /* Settings are stored in separate files under `settings/`
  * And are loaded only when needed
  * `settings` includes a bunch of functions to get/set/save settings
@@ -14,6 +20,7 @@ module.exports = class Settings {
    */
   constructor(logger) {
     this.cache = new Map() //Internal cache to store settings
+    this.deleted = new Map()
     //You shouldn't ever need to use it
     this.logger = logger
   }
@@ -32,6 +39,7 @@ module.exports = class Settings {
    * @return {Object}           The settings for the guild/user
    */
   get(settingId) {
+    if (this.deleted.get(settingId) === true) return cloneObj(DEFAULT_SETTINGS)
     this.verifyCacheFor(settingId)
     return this.cache.get(settingId)
   }
@@ -52,7 +60,6 @@ module.exports = class Settings {
    * @param {string} settingId The ID of the guild/user
    */
   save(settingId) {
-    this.verifyCacheFor(settingId)
     this.writeSettings(settingId, this.get(settingId))
       .then(() => {
         return
@@ -86,6 +93,24 @@ module.exports = class Settings {
     })
   }
 
+  delete(settingId) {
+    return new Promise(res => {
+      try {
+        const settingsPath = path.join(process.cwd(), 'settings', `${settingId}.json`)
+        require(settingsPath)
+        // Exists
+        fs.unlink(settingsPath, e => {
+          this.cache.delete(settingId)
+          this.deleted.set(settingId, true)
+          res(!e)
+        })
+      } catch (e) {
+        // Doesn't exist
+        res(false)
+      }
+    })
+  }
+
   /**
    * Checks the cache the the settings for settingId, then if it
    *
@@ -96,19 +121,22 @@ module.exports = class Settings {
    * @param {string} settingId The id for the guild/user
    */
   verifyCacheFor(settingId) {
+    // console.log('verifying cache for', settingId, '@', new Error().stack.split('\n')[3], new Error().stack.split('\n')[4])
     if (this.cache.get(settingId) !== undefined) return //It exists! We don't need to do anything
 
     //So we don't have the settings cached, let's load em'!
     try {
+      if (this.deleted.get(settingId) === true) throw new Error('skip cache')
       this.cache.set(settingId, require(path.join(process.cwd(), 'settings', `${settingId}.json`)))
       return
     } catch (e) {
-      //Either it doesn't exist or it erroed, so we have to create new settings
+      //Either it doesn't exist or it errored, so we have to create new settings
       this.logger.debug(`Creating settings for: ${settingId}`)
 
       try {
         fs.writeFileSync(path.join(process.cwd(), 'settings', `${settingId}.json`), JSON.stringify(require('./defaultSettings.json')))
         this.cache.set(settingId, require(path.join(process.cwd(), 'settings', `${settingId}.json`)))
+        this.deleted.set(settingId, false)
         return
       } catch (e) {
         this.logger.error(e, 'Save Settings (Create)') //fug

@@ -33,8 +33,6 @@ module.exports.events.raw = (bot, packet) => {
 }
 
 module.exports.events.message = (bot, message) => {
-  let settingsId = (message.guild) ? message.guild.id : message.channel.id //DMs are a channel, interestingly enough
-  let settings = getSettings(bot, settingsId)
   let args = bot.sleet.shlex(message.content).map(_ => _.toLowerCase())
 
   // b!s sb cat cute
@@ -55,6 +53,8 @@ module.exports.events.message = (bot, message) => {
     return
   }
 
+  let settingsId = (message.guild) ? message.guild.id : message.channel.id //DMs are a channel, interestingly enough
+  let settings = getSettings(bot, settingsId)
   let tags = args.slice(2)
 
   if (settings.options.topicEnable && message.channel.topic !== null && !message.channel.topic.includes('bb=true') && !message.isMentioned(bot.user) && !message.isLink)
@@ -147,7 +147,7 @@ function search(site, tags, settings, message) {
                !hasBlacklistedType(img.file_url, settings.tags) &&
                !hasBlacklistedRating(img.rating, settings.tags) &&
                (nsfw || !['e', 'q', 'u'].includes(img.rating.toLowerCase())) &&
-               ([null, undefined].includes(settings.options.minScore) || img.score > settings.options.minScore))
+               ([null, undefined].includes(settings.options.minScore) || Number.isNaN(img.score) || img.score > settings.options.minScore))
 
               validImgs.push(img)
           }
@@ -341,7 +341,7 @@ module.exports.events.messageReactionAdd = async (bot, react, user) => {
     return react.remove(bot.user)
 
   clearTimeout(timeout)
-  timeout = setTimeout(() => prevImgs.has(react.message.id) && prevImgs.delete(react.message.id) && react.remove(), nextImgTimeout)
+  timeout = setTimeout(() => prevImgs.has(react.message.id) && prevImgs.delete(react.message.id) && react.remove().catch(() => {}), nextImgTimeout)
 
   prevImgs.set(react.message.id, {imgs, siteUrl, searchTime, message, imageNumber, numImages, timeout})
 }
