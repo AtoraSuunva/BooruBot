@@ -1,7 +1,7 @@
 {
   "token": "your token here",
   "owner": null,
-  "moduleFolder": "modules",
+  "moduleDir": "modules",
   "invokers": [
     "b!",
     "booru!"

@@ -8,18 +8,24 @@ module.exports.config = {
   usage: ['Invite the bot', 'invite', 'Get invite to help server', 'invite server']
 }
 
+const { getSettings } = require('../boorubot/settings.js')
+
 module.exports.events = {}
-module.exports.events.message = (bot, message) => {
+module.exports.events.message = async (bot, message) => {
   let settingsId = (message.guild !== null) ? message.guild.id : message.channel.id
-  let settings = bot.sleet.settings.get(settingsId)
+  let settings = await getSettings(bot, settingsId)
   let args = bot.sleet.shlex(message.content)
 
-  if (settings.options.topicEnable && !message.channel.topic.includes('bb=true'))
+  if (settings.topicEnable && !message.channel.topic.includes('bb=true'))
     return message.channel.send('I can\'t send an invite in channels without `bb=true` in the topic (Set `topicEnable` to false to disable this).')
 
   if (args[1] === 'server' || args[1] === 'guild') {
-    message.author.send('https://discord.gg/0w6AYrrMIUfO71oV')
-    return message.channel.send('Sent! Check your DMs')
+    try {
+      await message.author.send('https://discord.gg/0w6AYrrMIUfO71oV')
+      return message.channel.send('Sent! Check your DMs')
+    } catch (e) {
+      return message.channel.send('Failed to send you the invite in DMs, are your DMs open?')
+    }
   }
 
   bot.generateInvite(['MANAGE_MESSAGES', 'EMBED_LINKS'])

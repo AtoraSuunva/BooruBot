@@ -32,7 +32,7 @@ module.exports.events.raw = (bot, packet) => {
   if (packet.t === 'MESSAGE_DELETE') prevImgs.delete(packet.d.id)
 }
 
-module.exports.events.message = (bot, message) => {
+module.exports.events.message = async (bot, message) => {
   let args = bot.sleet.shlex(message.content).map(_ => _.toLowerCase())
 
   // b!s sb cat cute
@@ -54,15 +54,15 @@ module.exports.events.message = (bot, message) => {
   }
 
   let settingsId = (message.guild) ? message.guild.id : message.channel.id //DMs are a channel, interestingly enough
-  let settings = getSettings(bot, settingsId)
+  let settings = await getSettings(bot, settingsId)
   let tags = args.slice(2)
 
-  if (settings.options.topicEnable && message.channel.topic !== null && !message.channel.topic.includes('bb=true') && !message.isMentioned(bot.user) && !message.isLink)
+  if (settings.topicEnable && message.channel.topic !== null && !message.channel.topic.includes('bb=true') && !message.isMentioned(bot.user) && !message.isLink)
     return message.channel.send('You need to enable searching in this channel by putting `bb=true` in the topic first (Set `topicEnable` to false to disable this).')
 
   if (message.guild &&
      !message.channel.nsfw &&
-     !settings.options.nsfwServer &&
+     !settings.nsfwServer &&
      compareArrays(tags, ['rating:e', 'rating:q', 'rating:explicit', 'rating:questionable']))
     return message.channel.send('Try searching something sfw.')
 
@@ -118,7 +118,7 @@ module.exports.events.message = (bot, message) => {
         } else {
           message.channel.send('Got an error: \n```js\n' + JSON.stringify(e.message, null, 2) + '\n```')
 
-          bot.logger.error(logE)
+          bot.sleet.logger.error(logE)
         }
       })
   }
@@ -134,7 +134,7 @@ function search(site, tags, settings, message) {
 
     if (message.guild &&
         !message.channel.nsfw &&
-        !settings.options.nsfwServer)
+        !settings.nsfwServer)
       nsfw = false
 
     booru.search(site, tags, {limit: 100, random: true})
@@ -147,7 +147,7 @@ function search(site, tags, settings, message) {
                !hasBlacklistedType(img.file_url, settings.tags) &&
                !hasBlacklistedRating(img.rating, settings.tags) &&
                (nsfw || !['e', 'q', 'u'].includes(img.rating.toLowerCase())) &&
-               ([null, undefined].includes(settings.options.minScore) || Number.isNaN(img.score) || img.score > settings.options.minScore))
+               ([null, undefined].includes(settings.minScore) || Number.isNaN(img.score) || img.score > settings.minScore))
 
               validImgs.push(img)
           }
@@ -229,7 +229,7 @@ function hasBlacklistedRating(rating, tags) {
 }
 
 // Format the embed so I don't have to copy paste
-async function postEmbed({ imgs = [], siteUrl = '', searchTime = 0, message = null, imageNumber = 0, numImages = 0, oldMessage = null, settings = { options: {} } } = {}) {
+async function postEmbed({ imgs = [], siteUrl = '', searchTime = 0, message = null, imageNumber = 0, numImages = 0, oldMessage = null, settings = {} } = {}) {
   const img = imgs.shift()
   imageNumber = (imageNumber || 0) + 1
   numImages   = numImages || (imgs.length + 1)
@@ -298,7 +298,7 @@ async function postEmbed({ imgs = [], siteUrl = '', searchTime = 0, message = nu
         }
 
 
-        if (imageNumber !== numImages && !settings.options.disableNextImage) {
+        if (imageNumber !== numImages && !settings.disableNextImage) {
           await msg.react(nextImgEmoji).then(r => {
             // I tried to use awaitReactions or createReactionCollector instead, but they both acted buggy and often wouldn't catch new reacts
             // And in the end they stopped adding reacts completely
@@ -329,7 +329,7 @@ module.exports.events.messageReactionAdd = async (bot, react, user) => {
   if (user.id !== message.author.id) return
 
   const settingsId = react.message.guild ? react.message.guild.id : react.message.channel.id
-  const settings = getSettings(bot, settingsId)
+  const settings = await getSettings(bot, settingsId)
 
   postEmbed({ imgs, siteUrl, searchTime, message, imageNumber: imageNumber + 1, numImages, oldMessage: react.message, settings })
 

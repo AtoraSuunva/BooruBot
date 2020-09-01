@@ -7,6 +7,8 @@ module.exports.config = {
   usage: ['View settings', 'setting', 'Get setting info', 'setting [settingName]', 'Set new setting', 'setting nsfwServer true']
 }
 
+const Settings = require('../_settings.js')
+
 const setTemplate = {
   topicEnable: {
     type: 'boolean',
@@ -31,20 +33,14 @@ const setTemplate = {
     default: false,
     help: 'Disables the "next image" arrow reaction',
   },
-
-  deprecationWarning: {
-    type: 'boolean',
-    default: false,
-    help: 'Warn if a user tries to use a deprecated command (Like `=help`).'
-  },
 }
 
 const space = '-'
 
 module.exports.events = {}
-module.exports.events.message = (bot, message) => {
-  const settingsId = (message.guild !== null) ? message.guild.id : message.channel.id // DMs are a channel
-  const settings = getSettings(bot, settingsId) // yay settings
+module.exports.events.message = async (bot, message) => {
+  const settingsId = (message.guild !== null) ? message.guild.id : message.channel.id
+  const settings = await getSettings(bot, settingsId)
   let [cmd, setting, ...value] = bot.sleet.shlex(message.content)
 
   value = value.join(' ')
@@ -53,14 +49,14 @@ module.exports.events.message = (bot, message) => {
     let options = []
     let longest = 1
     for (let option in setTemplate) {
-      options.push([option, settings.options[option]])
+      options.push([option, settings[option]])
       if (option.length > longest) longest = option.length
     }
 
     message.channel.send(`Current settings\n${'='.repeat(longest + 3)}\n${options.map(v => v[0] + space.repeat(longest - v[0].length + 1) + ':: ' + v[1]).join('\n')}\n\nUse 'b!setting [setting]' for more info.`, {code: 'asciidoc'})
   } else if (value === '') { // List one setting + info
     if (setTemplate[setting])
-      message.channel.send(`${setting}\n${'='.repeat(setting.length)}\nType${space.repeat(4)}:: ${setTemplate[setting].type}\nDefault${space}:: ${setTemplate[setting].default}\nCurrent${space}:: ${settings.options[setting]}\n\n${setTemplate[setting].help}`, {code: 'asciidoc'})
+      message.channel.send(`${setting}\n${'='.repeat(setting.length)}\nType${space.repeat(4)}:: ${setTemplate[setting].type}\nDefault${space}:: ${setTemplate[setting].default}\nCurrent${space}:: ${settings[setting]}\n\n${setTemplate[setting].help}`, {code: 'asciidoc'})
     else
       message.channel.send('That is probably not a valid setting. Be sure you aren\'t doing `b!setting [minScore]` (Don\'t add the `[]`).')
   } else { // Set a setting
@@ -83,24 +79,34 @@ module.exports.events.message = (bot, message) => {
       return message.channel.send(`The types don't match! You need a ${type}${type === 'boolean' ? ' (\`true\` or \`false\`)' : ''}!`)
     }
 
-    settings.options[setting] = newVal
-    message.channel.send(`Setting changed!\n\`${setting}\` = \`${settings.options[setting]}\``)
-    bot.sleet.settings.set(settingsId, settings)
+    settings[setting] = newVal
+    message.channel.send(`Setting changed!\n\`${setting}\` = \`${settings[setting]}\``)
+    Settings.setSettings(bot, settingsId, settings)
   }
 }
 
 const setTemplateEntries = Object.entries(setTemplate)
 
-function getSettings(bot, settingsId) {
-  const settings = bot.sleet.settings.get(settingsId)
+async function getSettings(bot, settingsId) {
+  const settings = await Settings.getSettings(bot, settingsId) || {}
+  let shouldUpdate = false
 
   for (const [key, value] of setTemplateEntries) {
-    if (settings.options[key] === undefined) {
-      settings.options[key] = value.default
-    } else if (typeof settings.options[key] !== value.type) {
-      const prim = toPrim(settings.options[key])
-      settings.options[key] = typeof prim === value.type ? prim : value.default
+    if (settings[key] === undefined) {
+      shouldUpdate = true
+      settings[key] = value.default
+    } else if (typeof settings[key] !== value.type) {
+      shouldUpdate = true
+      const prim = toPrim(settings[key])
+      settings[key] = typeof prim === value.type ? prim : value.default
     }
+  }
+
+  if (!settings.tags) settings.tags = []
+  if (!settings.sites) settings.sites = []
+
+  if (shouldUpdate) {
+    await Settings.setSettings(bot, settingsId, settings)
   }
 
   return settings

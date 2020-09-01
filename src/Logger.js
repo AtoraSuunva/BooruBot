@@ -29,7 +29,7 @@ module.exports = class Logger {
       'log'  : {disp: 'LOG ', color: '0', func: console.log},
       'info' : {disp: 'INFO', color: '36', func: console.info},
       'warn' : {disp: 'WARN', color: '33', func: console.warn},
-      'error': {disp: 'ERR!', color: '41', func: console.error},
+      'error': {disp: 'ERR!', color: '31', func: console.error},
       'dir'  : {disp: 'DIR?', color: '34', func: console.log},
       'trace': {disp: 'TRCE', color: '32', func: console.log},
       'debug': {disp: 'DBUG', color: '35', func: console.log},
@@ -88,9 +88,8 @@ module.exports = class Logger {
    * @param {Object}   obj     The object to inspect
    * @param {String[]} message Same as console.log(), first can be a string used for Util.format
    */
-  dir(obj, ...message) {
-    this._log(new Date(), 'dir', ...message)
-    console.dir(obj, {colors: true})
+  dir(obj, options) {
+    console.dir(obj, { ...options, colors: true })
   }
 
   /**
@@ -125,11 +124,11 @@ module.exports = class Logger {
    * @param {String[]} message The message(s) to log. Util.format is called on this
    */
   _log(date, type, ...message) {
-    let time = `${this._padLeft(date.getMonth()+1,2,0)}/${this._padLeft(date.getDate(),2,0)} ${this._padLeft(date.getHours(),2,0)}:${this._padLeft(date.getMinutes(),2,0)}`
+    const time = `${this._padLeft(date.getMonth()+1,2,0)}/${this._padLeft(date.getDate(),2,0)} ${this._padLeft(date.getHours(),2,0)}:${this._padLeft(date.getMinutes(),2,0)}`
     if (this._types[type] === undefined)
       type = '????'
 
-    let formatted = `\u001b[${this._types[type].color}m[${time}][${this._types[type].disp}] ${require('util').format(...message)}\u001b[0m`
+    const formatted = `\u001b[${this._types[type].color}m[${time}][${this._types[type].disp}] ${require('util').format(...message)}\u001b[0m`
 
     this._types[type].func(formatted)
     return formatted

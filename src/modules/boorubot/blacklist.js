@@ -10,12 +10,14 @@ module.exports.config = {
 
 const sep = '='.repeat(20)
 const Booru = require('booru')
+const Settings = require('../_settings.js')
+const { getSettings } = require('./settings.js')
 
 module.exports.events = {}
 
-module.exports.events.message = (bot, message) => {
+module.exports.events.message = async (bot, message) => {
   const settingsId = (message.guild !== null) ? message.guild.id : message.channel.id
-  const settings = bot.sleet.settings.get(settingsId)
+  const settings = await getSettings(bot, settingsId)
   let [cmd, type, ...values] = bot.sleet.shlex(message.content, {lowercaseAll: true})
 
   const canEditBlacklist = (message.guild)
@@ -57,8 +59,7 @@ function blacklist(bot, message, settings, type, values) {
   )
 
   const settingsId = (message.guild !== null) ? message.guild.id : message.channel.id
-  bot.sleet.settings.set(settingsId, settings)
-  bot.sleet.settings.save(settingsId)
+  Settings.setSettings(bot, settingsId, settings)
 }
 
 function whitelist(bot, message, settings, type, values) {
@@ -87,8 +88,7 @@ function whitelist(bot, message, settings, type, values) {
   )
 
   const settingsId = (message.guild !== null) ? message.guild.id : message.channel.id
-  bot.sleet.settings.set(settingsId, settings)
-  bot.sleet.settings.save(settingsId)
+  Settings.setSettings(bot, settingsId, settings)
 }
 
 function getSites(values) {

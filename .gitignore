@@ -15,3 +15,4 @@ yarn.lock
 # Keep the folder, get rid of everything else
 settings/*
 !settings/.gitkeep
+ecosystem.config.js
