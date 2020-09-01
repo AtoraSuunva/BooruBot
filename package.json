@@ -1,8 +1,8 @@
 {
-  "name": "booru-discord",
-  "version": "1.2.0",
-  "description": "Get images from various boorus and send them on discord",
-  "main": "booru.js",
+  "name": "boorubot",
+  "version": "3.2.1",
+  "description": "A Discord bot to search boorus",
+  "main": "modules.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -10,11 +10,7 @@
     "type": "git",
     "url": "git+https://github.com/AtlasTheBot/Booru-Discord.git"
   },
-  "keywords": [
-    "a",
-    "booru",
-    "definitely-not-for-porn"
-  ],
+  "keywords": [],
   "author": "AtlasTheBot",
   "license": "ISC",
   "bugs": {
@@ -22,11 +18,12 @@
   },
   "homepage": "https://github.com/AtlasTheBot/Booru-Discord#readme",
   "dependencies": {
-    "discord.js": "^11.0.0",
-    "fs-extra": "^0.30.0",
-    "node-base64-image": "^1.0.1",
-    "request": "^2.74.0",
-    "uws": "^0.12.0",
-    "xml2js": "^0.4.17"
+    "@discordjs/uws": "^10.149.0",
+    "booru": "^2.3.2",
+    "discord.js": "^11.5.1",
+    "pg-promise": "^10.5.8",
+    "pmx": "^1.6.7",
+    "recursive-readdir-sync": "^1.0.6",
+    "zucc": "^0.1.2"
   }
 }
