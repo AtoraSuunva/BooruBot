@@ -137,7 +137,9 @@ function search(site, tags, settings, message) {
         !settings.nsfwServer)
       nsfw = false
 
-    booru.search(site, tags, {limit: 100, random: true})
+    const random = !tags.some(t => t.toLowerCase().startsWith('order:'))
+
+    booru.search(site, tags, { limit: 100, random })
       .then(imgs => {
         if (imgs[0] !== undefined) {
 

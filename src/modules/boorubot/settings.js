@@ -12,25 +12,25 @@ const Settings = require('../_settings.js')
 const setTemplate = {
   topicEnable: {
     type: 'boolean',
-    default: false,
+    default: Settings.defaults.topicEnable,
     help: 'Only allow BooruBot to search in channels with `bb=true` in the topic (Other commands will still work, except no invite link for BB will be posted).'
   },
 
   nsfwServer: {
     type: 'boolean',
-    default: false,
+    default: Settings.defaults.nsfwServer,
     help: 'Makes the bot treat every channel on the server as nsfw. By default only sfw images are posted out of nsfw channels.'
   },
 
   minScore: {
     type: 'number',
-    default: null,
+    default: Settings.defaults.minScore,
     help: 'The minimum score an image should have to be posted, `null` means no limit. Setting it too high will make BooruBot not return most images, something like `-5` is a good cut off point.'
   },
 
   disableNextImage: {
     type: 'boolean',
-    default: false,
+    default: Settings.defaults.disableNextImage,
     help: 'Disables the "next image" arrow reaction',
   },
 }
@@ -95,15 +95,13 @@ async function getSettings(bot, settingsId) {
     if (settings[key] === undefined) {
       shouldUpdate = true
       settings[key] = value.default
-    } else if (typeof settings[key] !== value.type) {
-      shouldUpdate = true
-      const prim = toPrim(settings[key])
-      settings[key] = typeof prim === value.type ? prim : value.default
     }
   }
 
   if (!settings.tags) settings.tags = []
   if (!settings.sites) settings.sites = []
+
+  shouldUpdate = shouldUpdate || !settings.tags || !settings.sites
 
   if (shouldUpdate) {
     await Settings.setSettings(bot, settingsId, settings)

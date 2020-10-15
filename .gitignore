@@ -16,3 +16,4 @@ yarn.lock
 settings/*
 !settings/.gitkeep
 ecosystem.config.js
+src/modules/secret

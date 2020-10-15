@@ -85,6 +85,7 @@ You're free to host the bot yourself, just a few things to keep in mind:
 * You need to install the dependencies first, run `npm i` or `yarn` inside the bot's directory
 * The bot is easily extendable, checkout [test.js](https://gist.github.com/AtlasTheBot/ee9a1e305f530abbf0c4d43fbb058c2a). Do note that there's very little docs for it besides test.js
 * This code might break on you, in that case open up on issue here on the repo
+* You need a postgres server running, with the sql scripts setup and DB connection details as env vars (`DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_DATABASE`)
 
 ---
 
