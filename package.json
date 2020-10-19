@@ -19,9 +19,9 @@
   "homepage": "https://github.com/AtlasTheBot/Booru-Discord#readme",
   "dependencies": {
     "@discordjs/uws": "^10.149.0",
-    "booru": "^2.3.2",
-    "discord.js": "^11.5.1",
-    "pg-promise": "^10.6.1",
+    "booru": "^2.3.3",
+    "discord.js": "^11.6.4",
+    "pg-promise": "^10.7.0",
     "pmx": "^1.6.7",
     "recursive-readdir-sync": "^1.0.6",
     "zucc": "^0.1.2"
