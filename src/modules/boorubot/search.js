@@ -17,7 +17,7 @@ SearchError.prototype = Error.prototype
 
 const getSettings = require('./settings.js').getSettings
 
-const snek = require('snekfetch')
+const fetch = require('node-fetch')
 const booru = require('booru')
 const Discord = require('discord.js')
 const path = require('path')
@@ -263,21 +263,24 @@ async function postEmbed({ imgs = [], siteUrl = '', searchTime = 0, message = nu
     : Discord.util.escapeMarkdown(img.tags.join(', ').substr(0, 50)) +
              `... [See All](https://giraffeduck.com/api/echo/?w=${Discord.util.escapeMarkdown(img.tags.join(',').replace(/(%20)/g, '_')).replace(/([()])/g, '\\$1').substring(0,1200)})`
 
-  let header
+  let headers
   let tooBig = false
   let imgError = false
 
   try {
-    header = (await snek.head(img.file_url)).headers
+    headers = (
+      await fetch(img.file_url, { method: 'HEAD' })
+    ).headers
   } catch (e) { imgError = true /* who needs to catch shit */}
 
-  if (header)
-    tooBig = (header['content-length'] / 1000000) > 10
+  if (headers) {
+    tooBig = (parseInt(headers.get('content-length'), 10) / 1000000) > 10
+  }
 
   embed.setDescription(`**Score:** ${img.score} | ` +
                        `**Rating:** ${img.rating.toUpperCase()} | ` +
                        `[Image](${encodeURI(img.file_url.replace(/([()])/g, '\\$1'))}) | ` +
-                       `${path.extname(img.file_url).toLowerCase()}, ${header ? fileSizeSI(header['content-length']) : '? kB'}\n` +
+                       `${path.extname(img.file_url).toLowerCase()}, ${headers ? fileSizeSI(headers.get('content-length')) : '? kB'}\n` +
                        `**Tags:** ${tags}` +
                        ((!['.jpg', '.jpeg', '.png', '.gif'].includes(path.extname(img.file_url).toLowerCase())) ? '\n\n`The file will probably not embed.`' : '' ) +
                        ((tooBig) ? '\n`The image is over 10MB and will not embed.`' : '') + ((imgError) ? '\n`I got an error while trying to get the image.`' : '') )

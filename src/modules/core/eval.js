@@ -17,7 +17,7 @@ module.exports.events.message = async (bot, message) => {
   const shlex = bot.sleet.shlex
   const modules = bot.sleet
   const Discord = require('discord.js')
-  const fetch = require('snekfetch')
+  const fetch = require('node-fetch')
 
   let args = shlex(message.content)
   let evalMsg = message.content.substring(message.content.indexOf(args[0]) + args[0].length)
