@@ -22,7 +22,7 @@
     "booru": "^2.4.0",
     "discord.js": "^11.6.4",
     "node-fetch": "^2.6.1",
-    "pg-promise": "^10.7.1",
+    "pg-promise": "^10.8.7",
     "pmx": "^1.6.7",
     "recursive-readdir-sync": "^1.0.6",
     "zucc": "^0.1.2"
