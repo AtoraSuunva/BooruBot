@@ -11,29 +11,34 @@ const recurReadSync = require('recursive-readdir-sync') //to read all files in a
 //this allows you to sort modules into directories
 
 const pmx = require('pmx').init({
-  http          : true, // HTTP routes logging (default: true)
-  ignore_routes : [], // Ignore http routes with this pattern (Default: [])
-  errors        : true, // Exceptions logging (default: true)
-  custom_probes : true, // Auto expose JS Loop Latency and HTTP req/s as custom metrics
-  network       : true, // Network monitoring at the application level
+  http: true, // HTTP routes logging (default: true)
+  ignore_routes: [], // Ignore http routes with this pattern (Default: [])
+  errors: true, // Exceptions logging (default: true)
+  custom_probes: true, // Auto expose JS Loop Latency and HTTP req/s as custom metrics
+  network: true, // Network monitoring at the application level
 })
 
 const metrics = {
-  messages_seen: pmx.probe().counter({name: 'Messages Seen'}),
-  messages_sent: pmx.probe().counter({name: 'Messages Sent'}),
-  commands_ran: pmx.probe().counter({name: 'Commands Ran'}),
-  modules_ran: pmx.probe().counter({name: 'Modules Ran'}),
-  guilds: pmx.probe().metric({name: 'Guilds'}),
-  ping: pmx.probe().histogram({name: 'Ping', measurement: 'mean'}),
+  messages_seen: pmx.probe().counter({ name: 'Messages Seen' }),
+  messages_sent: pmx.probe().counter({ name: 'Messages Sent' }),
+  commands_ran: pmx.probe().counter({ name: 'Commands Ran' }),
+  modules_ran: pmx.probe().counter({ name: 'Modules Ran' }),
+  guilds: pmx.probe().metric({ name: 'Guilds' }),
+  ping: pmx.probe().histogram({ name: 'Ping', measurement: 'mean' }),
 }
 
 setInterval(() => metrics.ping.update(bot.ping), 3000)
 
 const rootDir = path.join(__dirname)
 const configPath = path.join(rootDir, '../config.json')
-let config = module.exports.config = require(configPath)
-let logger = module.exports.logger = new Logger(path.join(rootDir, '../err.log'), reportError, config.debug)
-let sentMessages = new Discord.Collection(), maxSentMessagesCache = 100
+let config = (module.exports.config = require(configPath))
+let logger = (module.exports.logger = new Logger(
+  path.join(rootDir, '../err.log'),
+  reportError,
+  config.debug,
+))
+let sentMessages = new Discord.Collection(),
+  maxSentMessagesCache = 100
 let bot
 
 const dbSettings = {
@@ -41,7 +46,7 @@ const dbSettings = {
   port: process.env.DB_PORT,
   database: process.env.DB_DATABASE,
   user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD
+  password: process.env.DB_PASSWORD,
 }
 
 const pgp = require('pg-promise')({ capSQL: true })
@@ -80,8 +85,7 @@ function startEvents() {
   })
 
   bot.on('messageUpdate', (oldmessage, message) => {
-    if (oldmessage.content !== message.content)
-      processMessage(message)
+    if (oldmessage.content !== message.content) processMessage(message)
   })
 
   function processMessage(message) {
@@ -108,11 +112,19 @@ function startEvents() {
     }
 
     for (let module in modules) {
-      if (modules[module].events.message !== undefined && startsWithInvoker(message.content, modules[module].config.invokers)) {
+      if (
+        modules[module].events.message !== undefined &&
+        startsWithInvoker(message.content, modules[module].config.invokers)
+      ) {
         if (config.botbans.some(b => b.id === message.author.id))
-          return logger.info(`Botbanned user: ${message.author.username}#${message.author.discriminator} (${message.author.id})`)
+          return logger.info(
+            `Botbanned user: ${message.author.username}#${message.author.discriminator} (${message.author.id})`,
+          )
 
-        if (modules[module].config.invokers !== null && modules[module].config.invokers !== undefined)
+        if (
+          modules[module].config.invokers !== null &&
+          modules[module].config.invokers !== undefined
+        )
           logger.debug(`Running ${module}`)
 
         metrics.commands_ran.inc()
@@ -125,7 +137,9 @@ function startEvents() {
           }
         }).catch(e => {
           logErrorWithContext(e, message)
-          message.channel.send(`Something went wrong!\nI sent ${config.owner.username} some debug info.`)
+          message.channel.send(
+            `Something went wrong!\nI sent ${config.owner.username} some debug info.`,
+          )
         })
       }
     }
@@ -140,8 +154,7 @@ function startEvents() {
 
   function deleteMessage(message) {
     for (let [key, val] of sentMessages) {
-      if (val.id === message.id)
-        return sentMessages.delete(key)
+      if (val.id === message.id) return sentMessages.delete(key)
     }
 
     if (sentMessages.has(message.id)) {
@@ -155,37 +168,49 @@ function startEvents() {
 //Some helper functions
 
 function logErrorWithContext(e, message) {
-  ctx = !message ? 'Message undefined' : {
-    guild: message.channel.guild ? message.channel.guild.id : null,
-    type: message.channel.type,
-    channel: message.channel.id,
-    messageId: message.id,
-    messageContent: message.content
-  }
+  ctx = !message
+    ? 'Message undefined'
+    : {
+        guild: message.channel.guild ? message.channel.guild.id : null,
+        type: message.channel.type,
+        channel: message.channel.id,
+        messageId: message.id,
+        messageContent: message.content,
+      }
 
   logger.error(e.stack + '\n' + JSON.stringify(ctx, null, 2))
 }
 
-let send = Object.getOwnPropertyDescriptor(Discord.TextChannel.prototype, 'send')
+let send = Object.getOwnPropertyDescriptor(
+  Discord.TextChannel.prototype,
+  'send',
+)
 
 let handler = {
   apply(target, thisArg, args) {
-    let promise, [content, options] = args, callMsg = thisArg._message
+    let promise,
+      [content, options] = args,
+      callMsg = thisArg._message
 
     const perms = thisArg.permissionsFor(bot.user)
 
-    if (!perms.has('SEND_MESSAGES'))
-      return
+    if (!perms.has('SEND_MESSAGES')) return
 
-    if ( ((content && content.embed) || (options && options.embed)) && !perms.has('EMBED_LINKS') ) {
-      logger.error('No embed support!!: ' + (new Error().stack))
-      return target.call(thisArg, '`[ Embeds are disabled and no non-embed version is available ]`')
+    if (
+      ((content && content.embed) || (options && options.embed)) &&
+      !perms.has('EMBED_LINKS')
+    ) {
+      logger.error('No embed support!!: ' + new Error().stack)
+      return target.call(
+        thisArg,
+        '`[ Embeds are disabled and no non-embed version is available ]`',
+      )
     }
 
-
-    if (((content+'').trim() === '') && options === undefined) {
-      content = 'Empty Message.\n' +
-                (new Error()).stack.split('\n')[1].match(/(\/modules\/.+?)\)/)[1]
+    if ((content + '').trim() === '' && options === undefined) {
+      content =
+        'Empty Message.\n' +
+        new Error().stack.split('\n')[1].match(/(\/modules\/.+?)\)/)[1]
       // lol stacktraces
     }
 
@@ -207,7 +232,7 @@ let handler = {
 
     metrics.messages_sent.inc()
     return promise
-  }
+  },
 }
 
 send.value = new Proxy(send.value, handler)
@@ -221,11 +246,15 @@ Object.defineProperty(Discord.TextChannel.prototype, 'send', send)
  */
 function startsWithInvoker(msg, invokers) {
   if (invokers === null) return true
-  msg = msg.toLowerCase().replace(/^(\/\/|\\\\\/\/\\\\)/, '').trim()
+  msg = msg
+    .toLowerCase()
+    .replace(/^(\/\/|\\\\\/\/\\\\)/, '')
+    .trim()
 
   let startsWith = false
 
-  for (let invoker of config.invokers) { //Check for the global invoker(s)
+  for (let invoker of config.invokers) {
+    //Check for the global invoker(s)
     invoker = invoker.toLowerCase()
     if (msg.startsWith(invoker)) {
       startsWith = true
@@ -237,26 +266,30 @@ function startsWithInvoker(msg, invokers) {
   if (!startsWith) return false
   startsWith = false
 
-  for (let invoker of invokers) { //Check for the module invoker(s)
+  for (let invoker of invokers) {
+    //Check for the module invoker(s)
     invoker = invoker.toLowerCase()
     if (invoker === '') return true //Allow you to use '' as an invoker, meaning that it's called whenever the global invoker is used
     if (msg.startsWith(invoker)) {
-      if (msg[msg.indexOf(invoker) + invoker.length] === undefined || msg[msg.indexOf(invoker) + invoker.length] === ' ') startsWith = true
-       //You might be wondering why there's this long line here
-       //It's not that I'm crazy, this is in fact to allow you to have 'h' and 'help' as invoker for two different commands
-       //We check the character after the invoker to be sure we are matching the full thing and not just part of it
+      if (
+        msg[msg.indexOf(invoker) + invoker.length] === undefined ||
+        msg[msg.indexOf(invoker) + invoker.length] === ' '
+      )
+        startsWith = true
+      //You might be wondering why there's this long line here
+      //It's not that I'm crazy, this is in fact to allow you to have 'h' and 'help' as invoker for two different commands
+      //We check the character after the invoker to be sure we are matching the full thing and not just part of it
 
-       //m!help ('help' and 'h' are both invokers, but for different commands)
-       //help   (Strip the global invoker)
-       //help   (Both 'help' and 'h' match, since 'help' starts with both)
-       // ^  ^  (So we check the character after. It doesn't match 'h' since after it's 'e', not undefined or a space.)
-       //In this case only 'help' runs. As it's meant to do
+      //m!help ('help' and 'h' are both invokers, but for different commands)
+      //help   (Strip the global invoker)
+      //help   (Both 'help' and 'h' match, since 'help' starts with both)
+      // ^  ^  (So we check the character after. It doesn't match 'h' since after it's 'e', not undefined or a space.)
+      //In this case only 'help' runs. As it's meant to do
     }
   }
 
   return startsWith
 }
-
 
 /**
  * Removes the (global) invoker from a command and slices the arguments up into an array
@@ -267,12 +300,15 @@ function startsWithInvoker(msg, invokers) {
  * @param  {Object}   options Shlex options
  * @return {string[]}         The result of the shlexed string
  */
-function shlex(str, {
-  lowercaseCommand = false,
-  lowercaseAll = false,
-  stripOnlyCommand = false,
-  invokers = []
-} = {}) {
+function shlex(
+  str,
+  {
+    lowercaseCommand = false,
+    lowercaseAll = false,
+    stripOnlyCommand = false,
+    invokers = [],
+  } = {},
+) {
   if (str === undefined || str === null) return []
   if (str.content) str = str.content
 
@@ -303,11 +339,9 @@ function shlex(str, {
     matches.push(result[1] || result[2] || result[3])
   }
 
-  if (lowercaseCommand)
-    matches[0] = matches[0].toLowerCase()
+  if (lowercaseCommand) matches[0] = matches[0].toLowerCase()
 
-  if (lowercaseAll)
-    matches = matches.map(v => v.toLowerCase())
+  if (lowercaseAll) matches = matches.map(v => v.toLowerCase())
 
   return matches.map(v => v.replace(/\\(")|\\(')/g, '$1'))
 }
@@ -319,7 +353,10 @@ const uReg = {
   id: /(\d+)/,
 }
 
-async function extractMembers(content, { id = false, keepIds = false, invokers = [], hasCommand = true } = {}) {
+async function extractMembers(
+  content,
+  { id = false, keepIds = false, invokers = [], hasCommand = true } = {},
+) {
   let guild
   let message
   let channel
@@ -327,23 +364,23 @@ async function extractMembers(content, { id = false, keepIds = false, invokers =
   const source = content.source ? content.source : content
   const str = content.from ? content.from : content.content
 
-  if (source instanceof Discord.Guild)
-    guild = source
+  if (source instanceof Discord.Guild) guild = source
   else if (source instanceof Discord.Message)
     [guild, message, channel] = [source.guild, source, source.channel]
   else if (source instanceof Discord.Channel)
     [guild, channel] = [source.guild, source]
-  else
-    throw new Error('`source` must be one of [Guild, Message, Channel]')
+  else throw new Error('`source` must be one of [Guild, Message, Channel]')
 
   if (!str)
-    throw new Error('There was no content to extract members from (Did you pass a guild or channel?)')
+    throw new Error(
+      'There was no content to extract members from (Did you pass a guild or channel?)',
+    )
 
   const shlexed = shlex(str, { invokers })
   let arr
 
   if (content instanceof Discord.Message && hasCommand) {
-    [cmd, ...arr] = shlexed
+    ;[cmd, ...arr] = shlexed
   } else {
     arr = shlexed
   }
@@ -363,9 +400,9 @@ async function extractMembers(content, { id = false, keepIds = false, invokers =
       u = guild.me
     } else if (['random', 'someone'].includes(la)) {
       u = guild.members.random()
-    } else if (match = uReg.full.exec(a)) {
+    } else if ((match = uReg.full.exec(a))) {
       u = guild.members.find(m => m.user.tag === match[1])
-    } else if (match = uReg.id.exec(a)) {
+    } else if ((match = uReg.id.exec(a))) {
       u = guild.members.get(match[1]) || (keepIds ? match[1] : undefined)
     } else if (message && guild) {
       u = await interactiveFuzzyMatchMembers(message, la)
@@ -374,8 +411,7 @@ async function extractMembers(content, { id = false, keepIds = false, invokers =
     if (u) users.push(u)
   }
 
-  if (id)
-    return users.map(m => m.id || m)
+  if (id) return users.map(m => m.id || m)
 
   return users
 }
@@ -383,44 +419,74 @@ module.exports.extractMembers = extractMembers
 
 function interactiveFuzzyMatchMembers(message, query) {
   return new Promise(resolve => {
-    const results = [], exactResults = []
+    const results = [],
+      exactResults = []
 
     message.guild.members.forEach(m => {
-      if (m.user.username.toLowerCase().includes(query) || m.displayName.toLowerCase().includes(query))
-        results.push({ member: m, tag: m.user.tag, id: m.user.id, nickname: m.nickname })
+      if (
+        m.user.username.toLowerCase().includes(query) ||
+        m.displayName.toLowerCase().includes(query)
+      )
+        results.push({
+          member: m,
+          tag: m.user.tag,
+          id: m.user.id,
+          nickname: m.nickname,
+        })
 
-     if (m.user.username.toLowerCase() === query || m.displayName.toLowerCase() === query)
-        exactResults.push({ member: m, tag: m.user.tag, id: m.user.id, nickname: m.nickname })
+      if (
+        m.user.username.toLowerCase() === query ||
+        m.displayName.toLowerCase() === query
+      )
+        exactResults.push({
+          member: m,
+          tag: m.user.tag,
+          id: m.user.id,
+          nickname: m.nickname,
+        })
     })
 
     if (results.length === 0) return resolve(null)
     if (exactResults.length === 1) return resolve(exactResults[0].member)
 
     const prompt = `${results.length} matches found, is one of these close?`
-    const userList = '```py\n'
-                   + results.map((v,i) =>
-                       `[${i}] ${v.tag}: ${v.id} ${v.nickname ? '-- Nickname: ' + v.nickname :''}`
-                     ).join('\n').substring(0, 1900)
-                   + '```'
+    const userList =
+      '```py\n' +
+      results
+        .map(
+          (v, i) =>
+            `[${i}] ${v.tag}: ${v.id} ${
+              v.nickname ? '-- Nickname: ' + v.nickname : ''
+            }`,
+        )
+        .join('\n')
+        .substring(0, 1900) +
+      '```'
 
-    message.channel.send(`${prompt}\n${userList}`)
-      .then(msg =>
-        msg.channel.awaitMessages(m => m.author.id === message.author.id && !Number.isNaN(parseInt(m.content)), { max: 1, time: 10000, errors: ['time']} )
-          .then(col => {
-            const n = parseInt(col.first().content)
+    message.channel.send(`${prompt}\n${userList}`).then(msg =>
+      msg.channel
+        .awaitMessages(
+          m =>
+            m.author.id === message.author.id &&
+            !Number.isNaN(parseInt(m.content)),
+          { max: 1, time: 10000, errors: ['time'] },
+        )
+        .then(col => {
+          const n = parseInt(col.first().content)
 
-            if (results[n] === undefined) {
-              msg.edit(`"${n}" is not a valid choice, aborting\n${userList}`)
-              resolve(null)
-            } else {
-              msg.delete().catch(_ => {})
-              resolve(results[n].member)
-            }
-          }).catch(e => {
-            msg.edit(`Selection Timed Out\n${userList}`)
+          if (results[n] === undefined) {
+            msg.edit(`"${n}" is not a valid choice, aborting\n${userList}`)
             resolve(null)
-          })
-      )
+          } else {
+            msg.delete().catch(_ => {})
+            resolve(results[n].member)
+          }
+        })
+        .catch(e => {
+          msg.edit(`Selection Timed Out\n${userList}`)
+          resolve(null)
+        }),
+    )
   })
 }
 
@@ -429,7 +495,7 @@ function interactiveFuzzyMatchMembers(message, query) {
  * @param  {Object}   fuckIDunnoWhatJSDocWantsHere Object with only one property: getUnused. If the function should return unused events instead of used events
  * @return {string[]} All the events used by the modules
  */
-function getAllEvents({getUnused = false} = {}) {
+function getAllEvents({ getUnused = false } = {}) {
   let events = []
 
   for (let module in modules) {
@@ -439,7 +505,8 @@ function getAllEvents({getUnused = false} = {}) {
 
   events = Array.from(new Set(events)) //Ensure there's only unique events by using a set
 
-  if (events.indexOf('message') !== -1) { //Remove the message event since we always listen for it
+  if (events.indexOf('message') !== -1) {
+    //Remove the message event since we always listen for it
     events.splice(events.indexOf('message'), 1)
   }
 
@@ -449,7 +516,9 @@ function getAllEvents({getUnused = false} = {}) {
 
   //We're asked to return unused events, not used.
   if (getUnused) {
-    for (let event of events.map(e => e.replace(/([A-Z])/g, '_$1').toUpperCase())) //SNAKE_CASE the events, so we can filter them correctly
+    for (let event of events.map(e =>
+      e.replace(/([A-Z])/g, '_$1').toUpperCase(),
+    )) //SNAKE_CASE the events, so we can filter them correctly
       discordEvents = discordEvents.filter(e => e !== event)
 
     events = discordEvents.filter(e => e !== 'MESSAGE_CREATE')
@@ -459,8 +528,10 @@ function getAllEvents({getUnused = false} = {}) {
     //Filter out events that aren't Discord events
     let eventsC = events
     events = []
-    for (let event of discordEvents.map(e => e.toLowerCase().replace(/(_\w)/g, m => m.replace('_','').toUpperCase())))  //camelCase the events, not sorry for this
-      eventsC.forEach(e => (e === event) ? events.push(e) : true)
+    for (let event of discordEvents.map(e =>
+      e.toLowerCase().replace(/(_\w)/g, m => m.replace('_', '').toUpperCase()),
+    )) //camelCase the events, not sorry for this
+      eventsC.forEach(e => (e === event ? events.push(e) : true))
   }
 
   return events
@@ -472,7 +543,7 @@ function getAllEvents({getUnused = false} = {}) {
  */
 function reloadConfig(newConfig) {
   purgeCache(configPath)
-  config = (newConfig !== undefined) ? newConfig : require(configPath)
+  config = newConfig !== undefined ? newConfig : require(configPath)
   module.exports.config = config
 }
 module.exports.reloadConfig = reloadConfig
@@ -483,7 +554,7 @@ module.exports.reloadConfig = reloadConfig
  */
 function saveConfig() {
   // Avoid circular JSON from having a User object as the owner
-  config.owner = (config.owner ? extractOwner(config.owner) : null)
+  config.owner = config.owner ? extractOwner(config.owner) : null
   return writeFile(configPath, config)
 }
 module.exports.saveConfig = saveConfig
@@ -511,8 +582,7 @@ function loadModules() {
     try {
       const rFile = require(file)
 
-      if (rFile.config === undefined)
-        continue
+      if (rFile.config === undefined) continue
 
       if (rFile.config.autoload === false || rFile.config.autoLoad === false) {
         logger.debug(`Skipping ${rName}: AutoLoad Disabled`)
@@ -530,7 +600,7 @@ function loadModules() {
     } catch (e) {
       logger.warn(`Failed to load ${rName}: \n${e}`)
       fails.push(rName)
-      moduleErrors.push({module: rName, error: e})
+      moduleErrors.push({ module: rName, error: e })
     }
   }
 
@@ -595,7 +665,9 @@ function unloadModule(moduleName) {
       const rFile = require(file)
 
       if (rFile.config && moduleName === rFile.config.name) {
-        logger.debug(`Unloading ${file.replace(path.join(rootDir, config.moduleDir), '')}`)
+        logger.debug(
+          `Unloading ${file.replace(path.join(rootDir, config.moduleDir), '')}`,
+        )
         purgeCache(`${file}`)
 
         if (typeof modules[moduleName].destroy === 'function') {
@@ -631,7 +703,7 @@ function getModuleInfo(moduleName) {
       if (config && moduleName === config.name) {
         let p = file
         let dir = path.parse(file).dir.split(path.sep).pop() //returns the folder it's in
-        return {config, path: p, dir}
+        return { config, path: p, dir }
       }
     }
 
@@ -651,7 +723,9 @@ module.exports.getModuleInfo = getModuleInfo
  */
 function purgeCache(moduleName) {
   const mod = require.resolve(moduleName)
-  Object.keys(require.cache).forEach(key => key === mod && delete require.cache[key])
+  Object.keys(require.cache).forEach(
+    key => key === mod && delete require.cache[key],
+  )
 }
 
 /**
@@ -666,7 +740,8 @@ function reportError(err, errType) {
 
   if (!config.selfbot && config.owner) {
     const owner = bot.users.get(config.owner.id)
-    if (owner) owner.send(errMsg, {split: {prepend: '```js\n', append: '\n```'}})
+    if (owner)
+      owner.send(errMsg, { split: { prepend: '```js\n', append: '\n```' } })
   }
 
   console.error(errType, err)
@@ -683,9 +758,9 @@ module.exports.reportError = reportError
  */
 function writeFile(fileName, fileContent) {
   return new Promise((resolve, reject) => {
-    fs.writeFile(fileName, JSON.stringify(fileContent, null, 2), (e) => {
-      if(e) reject(e)
-      else  resolve()
+    fs.writeFile(fileName, JSON.stringify(fileContent, null, 2), e => {
+      if (e) reject(e)
+      else resolve()
     })
   })
 }
@@ -699,9 +774,11 @@ function writeFile(fileName, fileContent) {
  * @param {addId=true}   If `(id)` should be appended
  * @return {String} The formatted string
  */
-function formatUser(user, {id = true, plain = false} = {}) {
+function formatUser(user, { id = true, plain = false } = {}) {
   user = user.user ? user.user : user
-  return `${plain ? '' : '**'}${escapeMarkdown(user.username)}${plain ? '' : '**'}\u{200e}#${user.discriminator}${id ? ' (' + user.id + ')' : ''}`
+  return `${plain ? '' : '**'}${escapeMarkdown(user.username)}${
+    plain ? '' : '**'
+  }\u{200e}#${user.discriminator}${id ? ' (' + user.id + ')' : ''}`
 }
 module.exports.formatUser = formatUser
 
@@ -713,7 +790,7 @@ function saveAndExit() {
 }
 module.exports.saveAndExit = saveAndExit
 
-bot = new Discord.Client()
+bot = new Discord.Client({ disableMentions: 'everyone' })
 bot.sleet = module.exports
 let modules = {}
 let moduleErrors = []
@@ -727,8 +804,8 @@ startEvents()
  */
 module.exports.modules = modules
 
-function extractOwner({id, username, discriminator, avatar}) {
-  return {id, username, discriminator, avatar}
+function extractOwner({ id, username, discriminator, avatar }) {
+  return { id, username, discriminator, avatar }
 }
 
 logger.info('Starting Login...')
@@ -747,13 +824,16 @@ bot.login(process.env.BOT_TOKEN || config.token).then(async () => {
     const OAuth = await bot.fetchApplication()
     config.owner = extractOwner(OAuth.owner)
 
-    fs.writeFile(configPath, JSON.stringify(config, null, 2), (err) => {
-      logger.info((err) ? err : 'Saved Owner info!')
+    fs.writeFile(configPath, JSON.stringify(config, null, 2), err => {
+      logger.info(err ? err : 'Saved Owner info!')
     })
   }
 
   if (moduleErrors.length > 0) {
-    reportError(moduleErrors.map(v => `${v.module}: ${v.error.message}`).join('\n'), 'Failed to load modules')
+    reportError(
+      moduleErrors.map(v => `${v.module}: ${v.error.message}`).join('\n'),
+      'Failed to load modules',
+    )
   }
 })
 
@@ -768,6 +848,10 @@ process.on('exit', code => {
 })
 
 process.on('unhandledRejection', (reason, p) => {
-  logger.error(`Uncaught Promise Error: \n${reason}\nStack:\n${reason.stack}\nPromise:\n${require('util').inspect(p, { depth: 2 })}`)
+  logger.error(
+    `Uncaught Promise Error: \n${reason}\nStack:\n${
+      reason.stack
+    }\nPromise:\n${require('util').inspect(p, { depth: 2 })}`,
+  )
   fs.appendFile('err.log', p, 'utf8', console.error)
 })

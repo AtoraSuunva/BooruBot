@@ -3,8 +3,14 @@ module.exports.config = {
   name: 'link',
   invokers: ['link', 'ln'],
   help: 'Create an embed from a link to a post',
-  expandedHelp: 'Creates an embed (like when you normally search) from a url by using magic!',
-  usage: ['Create an embed from a url', 'b!link https:\/\/somebooru.com/post/12345', 'Link using just id', 'b![site] id:[id]']
+  expandedHelp:
+    'Creates an embed (like when you normally search) from a url by using magic!',
+  usage: [
+    'Create an embed from a url',
+    'b!link https://somebooru.com/post/12345',
+    'Link using just id',
+    'b![site] id:[id]',
+  ],
 }
 
 const booru = require('booru')
@@ -18,11 +24,10 @@ module.exports.events.message = (bot, message) => {
 
   site = urlReg.exec(site)
 
-  if (site === null)
-    return message.channel.send(`That's not a valid url.`)
+  if (site === null) return message.channel.send(`That's not a valid url.`)
 
-  let url       = site[0]
-  let domain    = site[3]
+  let url = site[0]
+  let domain = site[3]
   let booruInfo = booru.sites[domain]
 
   if (booruInfo === undefined)
@@ -31,7 +36,9 @@ module.exports.events.message = (bot, message) => {
   if (!url.includes(booruInfo.postView))
     return message.channel.send(`Doesn't seem like that's a link to a post.`)
 
-  id = url.substring(url.indexOf(booruInfo.postView) + booruInfo.postView.length).split('/')[0]
+  id = url
+    .substring(url.indexOf(booruInfo.postView) + booruInfo.postView.length)
+    .split('/')[0]
 
   let dummyMessage = Discord.Util.cloneObject(message)
 
@@ -40,5 +47,3 @@ module.exports.events.message = (bot, message) => {
 
   search.events.message(bot, dummyMessage)
 }
-
-

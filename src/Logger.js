@@ -18,22 +18,30 @@ module.exports = class Logger {
    * @param {Function} [reportError=Noop]  The error reporting function, if any
    * @param {boolean}  [debug=false]       If Logger.debug should show
    */
-  constructor(logFile = 'log.txt', reportError = ()=>{}, debug = false) {
-    this.logStream = fs.createWriteStream(logFile, {'flags': 'a'})
+  constructor(logFile = 'log.txt', reportError = () => {}, debug = false) {
+    this.logStream = fs.createWriteStream(logFile, { flags: 'a' })
     // use {'flags': 'a'} to append and {'flags': 'w'} to erase and write a new file
     let date = new Date()
-    let time = `${this._padLeft(date.getMonth()+1,2,0)}/${this._padLeft(date.getDate(),2,0)} ${this._padLeft(date.getHours(),2,0)}:${this._padLeft(date.getMinutes(),2,0)}`
+    let time = `${this._padLeft(date.getMonth() + 1, 2, 0)}/${this._padLeft(
+      date.getDate(),
+      2,
+      0,
+    )} ${this._padLeft(date.getHours(), 2, 0)}:${this._padLeft(
+      date.getMinutes(),
+      2,
+      0,
+    )}`
     this.logStream.write(`[${time}][BGIN] Log Start!\n\r`)
 
     this._types = {
-      'log'  : {disp: 'LOG ', color: '0', func: console.log},
-      'info' : {disp: 'INFO', color: '36', func: console.info},
-      'warn' : {disp: 'WARN', color: '33', func: console.warn},
-      'error': {disp: 'ERR!', color: '31', func: console.error},
-      'dir'  : {disp: 'DIR?', color: '34', func: console.log},
-      'trace': {disp: 'TRCE', color: '32', func: console.log},
-      'debug': {disp: 'DBUG', color: '35', func: console.log},
-      '????' : {disp: '????', color: '0', func: console.log}
+      log: { disp: 'LOG ', color: '0', func: console.log },
+      info: { disp: 'INFO', color: '36', func: console.info },
+      warn: { disp: 'WARN', color: '33', func: console.warn },
+      error: { disp: 'ERR!', color: '31', func: console.error },
+      dir: { disp: 'DIR?', color: '34', func: console.log },
+      trace: { disp: 'TRCE', color: '32', func: console.log },
+      debug: { disp: 'DBUG', color: '35', func: console.log },
+      '????': { disp: '????', color: '0', func: console.log },
     }
     this._reportError = reportError
     this._debug = debug
@@ -78,7 +86,14 @@ module.exports = class Logger {
    */
   error(...message) {
     this._reportError(require('util').format(...message), 'Logger Caught')
-    this.logStream.write(`${this._log(new Date(), 'error', require('util').inspect(message[0], { depth: null }), ...message.slice(1))}\n\r`)
+    this.logStream.write(
+      `${this._log(
+        new Date(),
+        'error',
+        require('util').inspect(message[0], { depth: null }),
+        ...message.slice(1),
+      )}\n\r`,
+    )
   }
 
   /**
@@ -111,8 +126,7 @@ module.exports = class Logger {
    * @param {String[]} message Same as console.log(), first can be a string used for Util.format
    */
   debug(...message) {
-    if (this._debug)
-      this._log(new Date(), 'debug', ...message)
+    if (this._debug) this._log(new Date(), 'debug', ...message)
   }
 
   /**
@@ -124,11 +138,20 @@ module.exports = class Logger {
    * @param {String[]} message The message(s) to log. Util.format is called on this
    */
   _log(date, type, ...message) {
-    const time = `${this._padLeft(date.getMonth()+1,2,0)}/${this._padLeft(date.getDate(),2,0)} ${this._padLeft(date.getHours(),2,0)}:${this._padLeft(date.getMinutes(),2,0)}`
-    if (this._types[type] === undefined)
-      type = '????'
+    const time = `${this._padLeft(date.getMonth() + 1, 2, 0)}/${this._padLeft(
+      date.getDate(),
+      2,
+      0,
+    )} ${this._padLeft(date.getHours(), 2, 0)}:${this._padLeft(
+      date.getMinutes(),
+      2,
+      0,
+    )}`
+    if (this._types[type] === undefined) type = '????'
 
-    const formatted = `\u001b[${this._types[type].color}m[${time}][${this._types[type].disp}] ${require('util').format(...message)}\u001b[0m`
+    const formatted = `\u001b[${this._types[type].color}m[${time}][${
+      this._types[type].disp
+    }] ${require('util').format(...message)}\u001b[0m`
 
     this._types[type].func(formatted)
     return formatted
@@ -146,7 +169,10 @@ module.exports = class Logger {
    */
   _padRight(msg, pad, padChar = ' ') {
     padChar = '' + padChar
-    return new Array(pad).fill(0).map((v,i)=>msg.split('')[i]||padChar).join('')
+    return new Array(pad)
+      .fill(0)
+      .map((v, i) => msg.split('')[i] || padChar)
+      .join('')
   }
 
   /**

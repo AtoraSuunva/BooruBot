@@ -5,8 +5,15 @@ module.exports.config = {
   invokers: ['load', 'loaf', 'unfuck', 'unload'],
   help: '(Re)loads/unloads a module',
   expandedHelp: '(Re)loads a module.',
-  usage: ['Load a module', 'load moduleName', 'Unload a module', 'unload moduleName', '(Re)load all', 'load all'],
-  invisible: true
+  usage: [
+    'Load a module',
+    'load moduleName',
+    'Unload a module',
+    'unload moduleName',
+    '(Re)load all',
+    'load all',
+  ],
+  invisible: true,
 }
 
 module.exports.events = {}

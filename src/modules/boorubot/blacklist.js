@@ -4,8 +4,24 @@ module.exports.config = {
   name: 'blacklist',
   invokers: ['blacklist', 'bl', 'whitelist', 'wl', 'unblacklist'],
   help: 'Blacklists/Whitelists tags/sites',
-  expandedHelp: 'Allows you to blacklist tags/sites so they don\'t appear in searches\nEditing the blacklist requires "Manage Messages"',
-  usage: ['Check the blacklist', 'blacklist', 'Blacklist a tag', 'blacklist tag cat', 'Blacklist tags', 'bl cat dog hat', 'Blacklist a site', 'bl site e6', 'Whitelist a tag', 'wl cat', 'Whitelist a site', 'wl site e6', 'Blacklist nsfw (or sfw) sites', 'bl sites nsfw']
+  expandedHelp:
+    'Allows you to blacklist tags/sites so they don\'t appear in searches\nEditing the blacklist requires "Manage Messages"',
+  usage: [
+    'Check the blacklist',
+    'blacklist',
+    'Blacklist a tag',
+    'blacklist tag cat',
+    'Blacklist tags',
+    'bl cat dog hat',
+    'Blacklist a site',
+    'bl site e6',
+    'Whitelist a tag',
+    'wl cat',
+    'Whitelist a site',
+    'wl site e6',
+    'Blacklist nsfw (or sfw) sites',
+    'bl sites nsfw',
+  ],
 }
 
 const sep = '='.repeat(20)
@@ -16,22 +32,29 @@ const { getSettings } = require('./settings.js')
 module.exports.events = {}
 
 module.exports.events.message = async (bot, message) => {
-  const settingsId = (message.guild !== null) ? message.guild.id : message.channel.id
+  const settingsId =
+    message.guild !== null ? message.guild.id : message.channel.id
   const settings = await getSettings(bot, settingsId)
-  let [cmd, type, ...values] = bot.sleet.shlex(message.content, {lowercaseAll: true})
+  let [cmd, type, ...values] = bot.sleet.shlex(message.content, {
+    lowercaseAll: true,
+  })
 
-  const canEditBlacklist = (message.guild)
-        ? message.member.permissions.has('MANAGE_MESSAGES') || message.author.id === bot.sleet.config.owner.id
-        : true
+  const canEditBlacklist = message.guild
+    ? message.member.permissions.has('MANAGE_MESSAGES') ||
+      message.author.id === bot.sleet.config.owner.id
+    : true
 
-  if (type && !type.endsWith('s'))
-    type += 's'
+  if (type && !type.endsWith('s')) type += 's'
 
   if (type && !['tags', 'sites'].includes(type))
-    return message.channel.send('You need to specify if you\'re blacklisting `tags` or `sites`\nCheck `b!help blacklist` for more info')
+    return message.channel.send(
+      "You need to specify if you're blacklisting `tags` or `sites`\nCheck `b!help blacklist` for more info",
+    )
 
   if (values.length && !canEditBlacklist)
-    return message.channel.send('You need "Manage Messages" perms to edit the blacklist')
+    return message.channel.send(
+      'You need "Manage Messages" perms to edit the blacklist',
+    )
 
   if (['blacklist', 'bl'].includes(cmd)) {
     blacklist(bot, message, settings, type, values)
@@ -42,23 +65,40 @@ module.exports.events.message = async (bot, message) => {
 
 function blacklist(bot, message, settings, type, values) {
   if (!type)
-    return message.channel.send(`Blacklisted tags:\n${sep}\n[${settings.tags.join(', ')}]\n\nBlacklisted sites:\n${sep}\n[${settings.sites.join(', ')}]`, {code: 'asciidoc'})
+    return message.channel.send(
+      `Blacklisted tags:\n${sep}\n[${settings.tags.join(
+        ', ',
+      )}]\n\nBlacklisted sites:\n${sep}\n[${settings.sites.join(', ')}]`,
+      { code: 'asciidoc' },
+    )
 
   if (!values.length)
-    return message.channel.send(`Blacklisted ${type}:\n${sep}\n[${settings[type].join(', ')}]`, {code: 'asciidoc'})
+    return message.channel.send(
+      `Blacklisted ${type}:\n${sep}\n[${settings[type].join(', ')}]`,
+      { code: 'asciidoc' },
+    )
 
-  const toBlacklist = (type === 'sites') ? getSites(values) : values
+  const toBlacklist = type === 'sites' ? getSites(values) : values
 
-  settings[type] = ensureUnique(settings[type].concat(toBlacklist.filter(v => typeof v === 'string')))
-
-  message.channel.send(
-    toBlacklist.map(v => typeof v === 'string' ? `Blacklisted \`${v}\`` : `Failed to blacklist \`${v.v}\`: **${v.m}**`).join('\n') +
-    '\n```asciidoc\n' +
-    `Blacklisted ${type}:\n${sep}\n[${settings[type].join(', ')}]` +
-    '\n```'
+  settings[type] = ensureUnique(
+    settings[type].concat(toBlacklist.filter(v => typeof v === 'string')),
   )
 
-  const settingsId = (message.guild !== null) ? message.guild.id : message.channel.id
+  message.channel.send(
+    toBlacklist
+      .map(v =>
+        typeof v === 'string'
+          ? `Blacklisted \`${v}\``
+          : `Failed to blacklist \`${v.v}\`: **${v.m}**`,
+      )
+      .join('\n') +
+      '\n```asciidoc\n' +
+      `Blacklisted ${type}:\n${sep}\n[${settings[type].join(', ')}]` +
+      '\n```',
+  )
+
+  const settingsId =
+    message.guild !== null ? message.guild.id : message.channel.id
   Settings.setSettings(bot, settingsId, settings)
 }
 
@@ -73,21 +113,28 @@ function whitelist(bot, message, settings, type, values) {
     const old = settings[type]
     settings[type] = []
 
-    return message.channel.send(`Cleared ${type} blacklist, removed: \`${old.join(', ')}\``)
+    return message.channel.send(
+      `Cleared ${type} blacklist, removed: \`${old.join(', ')}\``,
+    )
   }
 
-  const toWhitelist = (type === 'sites') ? getSites(values) : values
+  const toWhitelist = type === 'sites' ? getSites(values) : values
 
   settings[type] = settings[type].filter(v => !toWhitelist.includes(v))
 
   message.channel.send(
-    toWhitelist.map(v => typeof v === 'string' ? `Whitelisted \`${v}\`` : `Failed to whitelist \`${v.v}\`: **${v.m}**`) +
-    '\n```asciidoc\n' +
-    `Blacklisted ${type}:\n${sep}\n[${settings[type].join(', ')}]` +
-    '\n```'
+    toWhitelist.map(v =>
+      typeof v === 'string'
+        ? `Whitelisted \`${v}\``
+        : `Failed to whitelist \`${v.v}\`: **${v.m}**`,
+    ) +
+      '\n```asciidoc\n' +
+      `Blacklisted ${type}:\n${sep}\n[${settings[type].join(', ')}]` +
+      '\n```',
   )
 
-  const settingsId = (message.guild !== null) ? message.guild.id : message.channel.id
+  const settingsId =
+    message.guild !== null ? message.guild.id : message.channel.id
   Settings.setSettings(bot, settingsId, settings)
 }
 
@@ -101,11 +148,13 @@ function getSites(values) {
     } else if (['nsfw', 'sfw'].includes(v)) {
       const nsfw = v === 'nsfw'
       sites.push(
-        ...Object.entries(Booru.sites).filter(s => nsfw === s[1].nsfw).map(s => s[0])
+        ...Object.entries(Booru.sites)
+          .filter(s => nsfw === s[1].nsfw)
+          .map(s => s[0]),
       )
     } else {
       site = Booru.resolveSite(v)
-      sites.push(site === null ? {v, m: 'Unsupported site'} : site)
+      sites.push(site === null ? { v, m: 'Unsupported site' } : site)
     }
   }
 

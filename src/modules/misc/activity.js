@@ -3,9 +3,17 @@ module.exports.config = {
   name: 'activity',
   invokers: ['activity'],
   help: 'Allows to randomly/manually set an activity',
-  expandedHelp: 'Format is `{TYPE} ACTIVITY MESSAGE`\nPLAYING, STREAMING, LISTENING, WATCHING\nBot owner only.',
-  usage: ['Random one', 'activity', 'Manual', 'activity something blah', 'Manual and custom', '{streaming} the bee movie'],
-  invisible: true
+  expandedHelp:
+    'Format is `{TYPE} ACTIVITY MESSAGE`\nPLAYING, STREAMING, LISTENING, WATCHING\nBot owner only.',
+  usage: [
+    'Random one',
+    'activity',
+    'Manual',
+    'activity something blah',
+    'Manual and custom',
+    '{streaming} the bee movie',
+  ],
+  invisible: true,
 }
 
 const statuses = [
@@ -23,13 +31,13 @@ const statuses = [
   'rating:e male/male',
   'rating:e female/male',
   'rating:e female/female',
-  '{watching} 👀'
+  '{watching} 👀',
 ]
 
 //strings starting with '{streaming}' will be shown as "Streaming X"
 const appendMsg = ' | b!help' //use this to keep a constant message after
 const interval = 60 * 15 //in seconds
-const twitch = 'https:\/\/twitch.tv/logout' //memes
+const twitch = 'https://twitch.tv/logout' //memes
 let interv
 
 module.exports.events = {}
@@ -37,7 +45,10 @@ module.exports.events = {}
 module.exports.events.ready = bot => {
   bot.user.setActivity(...getPlaying())
 
-  interv = setInterval(() => bot.user.setActivity(...getPlaying()), interval * 1000)
+  interv = setInterval(
+    () => bot.user.setActivity(...getPlaying()),
+    interval * 1000,
+  )
 }
 
 module.exports.events.message = (bot, message) => {
@@ -54,12 +65,17 @@ module.exports.events.message = (bot, message) => {
   if (playing) {
     clearInterval(interv)
   } else {
-    interv = setInterval(() => bot.user.setActivity(...getPlaying()), interval * 1000)
+    interv = setInterval(
+      () => bot.user.setActivity(...getPlaying()),
+      interval * 1000,
+    )
   }
 
   bot.user.setActivity(...activity)
 
-  message.channel.send(`Now *${activity[1].type.toLowerCase()}* **${activity[0]}**`)
+  message.channel.send(
+    `Now *${activity[1].type.toLowerCase()}* **${activity[0]}**`,
+  )
 }
 
 function getPlaying() {
@@ -72,12 +88,11 @@ function getPlayingFrom(str, append = false) {
 
   let name = (choice[2] + (append ? appendMsg : '')).trim()
   let type = (choice[1] || 'PLAYING').toUpperCase()
-  let url = (type === 'STREAMING') ? twitch : undefined
+  let url = type === 'STREAMING' ? twitch : undefined
 
-  return [name, {url, type}]
+  return [name, { url, type }]
 }
 
 function randomChoice(arr) {
   return arr[Math.floor(Math.random() * arr.length)]
 }
-
