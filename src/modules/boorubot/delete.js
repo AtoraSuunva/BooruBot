@@ -16,6 +16,7 @@ module.exports.config = {
 }
 
 const Discord = require('discord.js')
+const deleteImgEmoji = '\u{274c}' // CROSS MARK
 
 module.exports.events = {}
 module.exports.events.message = (bot, message) => {
@@ -86,10 +87,10 @@ module.exports.events.messageReactionAdd = async (bot, react, user) => {
   if (
     react.users.size < 2 ||
     !react.message.embeds[0] ||
-    react.message.author.id !== bot.user.id
-  )
+    react.emoji.name !== deleteImgEmoji
+  ) {
     return
-  if (react.emoji.name !== react.message.reactions.first().emoji.name) return
+  }
 
   // react.message.channel.send(`**count**: ${react.count}\n**users**: ${[...react.users.keys()].join(', ')}\n**users.size**: ${react.users.size}`)
 

@@ -28,6 +28,7 @@ const getSettings = require('./settings.js').getSettings
 const fetch = require('node-fetch')
 const booru = require('booru')
 const Discord = require('discord.js')
+const { escapeMarkdown } = Discord.Util
 const path = require('path')
 
 const prevImgs = new Map()
@@ -338,9 +339,9 @@ async function postEmbed({
 
   let tags =
     img.tags.join(', ').length < 50
-      ? Discord.util.escapeMarkdown(img.tags.join(', '))
-      : Discord.util.escapeMarkdown(img.tags.join(', ').substr(0, 50)) +
-        `... [See All](https://giraffeduck.com/api/echo/?w=${Discord.util
+      ? Discord.Util.escapeMarkdown(img.tags.join(', '))
+      : Discord.Util.escapeMarkdown(img.tags.join(', ').substr(0, 50)) +
+        `... [See All](https://giraffeduck.com/api/echo/?w=${Discord.Util
           .escapeMarkdown(img.tags.join(',').replace(/(%20)/g, '_'))
           .replace(/([()])/g, '\\$1')
           .substring(0, 1200)})`
@@ -377,7 +378,7 @@ async function postEmbed({
   )
 
   embed.setDescription(embed.description.substring(0, 2048))
-  embed.setColor(message.guild ? message.guild.me.roles.color : '#34363C')
+  embed.setColor(message.guild ? message.guild.me.roles.color.color : '#34363C')
 
   const afterPost = async msg => {
     message.channel.stopTyping()
@@ -388,22 +389,15 @@ async function postEmbed({
       message.channel.permissionsFor(message.guild.me).has('ADD_REACTIONS')
     ) {
       try {
-        if (msg.reacts === undefined) {
-          if (
-            (!message.guild ||
-              message.guild.me.permissions.has('USE_EXTERNAL_EMOJIS')) &&
-            message.client.emojis.cache.get('318296455280459777')
+        const shouldReact =
+          msg.reacts === undefined && (
+            !message.guild ||
+            message.channel.permissionsFor(message.client.user)
+                .has('ADD_REACTIONS')
           )
-            await msg.react(
-              message.client.emojis.cache.get('318296455280459777'),
-            )
-          else if (
-            message.guild &&
-            message.channel
-              .permissionsFor(message.client.user)
-              .has('ADD_REACTIONS')
-          )
-            await msg.react(deleteImgEmoji)
+
+        if (shouldReact) {
+           await msg.react(deleteImgEmoji)
         }
 
         if (imageNumber !== numImages && !settings.disableNextImage) {
@@ -435,7 +429,7 @@ async function postEmbed({
     }
   }
 
-  const content = `${message.author.username}, result for \`${message.content}\`\n${img.postView}`
+  const content = `${escapeMarkdown(message.author.username)}, result for \`${escapeMarkdown(message.content)}\`\n${img.postView}`
 
   if (oldMessage) return oldMessage.edit(content, { embed })
 

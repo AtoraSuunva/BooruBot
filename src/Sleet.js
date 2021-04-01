@@ -155,10 +155,6 @@ function startEvents() {
   })
 
   function deleteMessage(message) {
-    for (let [key, val] of sentMessages) {
-      if (val.id === message.id) return sentMessages.delete(key)
-    }
-
     if (sentMessages.has(message.id)) {
       sentMessages.get(message.id).delete()
       return sentMessages.delete(message.id)
@@ -217,7 +213,11 @@ let handler = {
     }
 
     if (callMsg && sentMessages.has(callMsg.id)) {
-      promise = sentMessages.get(callMsg.id).edit(content, options)
+      const sent = sentMessages.get(callMsg.id)
+      const editOptions = options
+      editOptions.split = undefined
+
+      promise = sent.edit(content, editOptions)
       logger.info('Edited old', { content })
     } else {
       promise = target.call(thisArg, content, options)
@@ -226,7 +226,7 @@ let handler = {
 
     if (callMsg && (!options || options.autoDelete !== false)) {
       promise.then(m => {
-        sentMessages.set(callMsg.id, m)
+        sentMessages.set(callMsg.id, Array.isArray(m) ? m[0] : m)
         if (sentMessages.size > maxSentMessagesCache)
           sentMessages.delete(sentMessages.firstKey())
       })
