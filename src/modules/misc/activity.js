@@ -8,11 +8,23 @@ module.exports.config = {
   invisible: true
 }
 
-const statuses = ['{watching} not porn', '{listening} the moans of the dammned', '{streaming} hot, steamy, hot dogs',
-                  'with dong', '{watching} that gay shit', '{watching} you search terrible things', '{streaming} spoooooge',
-                  'I\'m gonna CUUUUUUUUUUUMMMMM', '{watching} a christian broadcast on the television', 'i scream',
-                  '{watching} the cheesegrater in fear', 'Don\'t get "watered"!', 'Yes, I am judging you.', 'with new kinkshaming AI!',
-                  'rating:e male/male', 'rating:e female/male', 'rating:e female/female', '{listening} a-ahn~!', '{watching} 👀']
+const statuses = [
+  '{watching} not porn',
+  '{listening} the moans of the dammned',
+  '{streaming} hot, steamy, hot dogs',
+  'with dong',
+  '{watching} that gay shit',
+  '{watching} you search terrible things',
+  '{watching} a christian broadcast on the television',
+  'i scream',
+  '{watching} the cheesegrater in fear',
+  'Yes, I am judging you.',
+  'with new kinkshaming AI!',
+  'rating:e male/male',
+  'rating:e female/male',
+  'rating:e female/female',
+  '{watching} 👀'
+]
 
 //strings starting with '{streaming}' will be shown as "Streaming X"
 const appendMsg = ' | b!help' //use this to keep a constant message after
