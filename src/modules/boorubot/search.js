@@ -378,7 +378,11 @@ async function postEmbed({
   )
 
   embed.setDescription(embed.description.substring(0, 2048))
-  embed.setColor(message.guild ? message.guild.me.roles.color.color : '#34363C')
+
+  const embedColor = message.guild && message.guild.me.roles.color
+    ? message.guild.me.roles.color.color
+    : '#34363C'
+  embed.setColor(embedColor)
 
   const afterPost = async msg => {
     message.channel.stopTyping()

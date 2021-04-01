@@ -38,7 +38,7 @@ module.exports.events.message = (bot, message) => {
       )
 
     if (
-      message.guild !== null &&
+      message.guild === null ||
       message.channel.permissionsFor(message.client.user).has('EMBED_LINKS')
     ) {
       let Discord = require('discord.js')
