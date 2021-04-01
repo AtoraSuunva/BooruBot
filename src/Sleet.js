@@ -107,11 +107,7 @@ function startEvents() {
       }
     }
 
-    if (config.selfbot) {
-      if (message.author.id !== bot.user.id) return
-    } else {
-      if (message.author.id === bot.user.id || message.author.bot) return //Don't reply to itself or bots
-    }
+    if (message.author.id === bot.user.id || message.author.bot) return
 
     for (let module in modules) {
       if (
@@ -740,7 +736,7 @@ function reportError(err, errType) {
   let errID = Math.floor(Math.random() * 1000000).toString(16)
   let errMsg = `Error: ${errType}\nID: ${errID}\n\`\`\`js\n${err.toString()}\n\`\`\``
 
-  if (!config.selfbot && config.owner) {
+  if (config.owner) {
     const owner = bot.users.cache.get(config.owner.id)
     if (owner)
       owner.send(errMsg, { split: { prepend: '```js\n', append: '\n```' } })
@@ -792,7 +788,24 @@ function saveAndExit() {
 }
 module.exports.saveAndExit = saveAndExit
 
-bot = new Discord.Client({ disableMentions: 'everyone' })
+const wsOptions = {
+  intents: config.intents,
+}
+
+const initPresence = {
+  status: 'dnd',
+  activity: {
+    name: 'for ready event...',
+    type: 'WATCHING',
+  },
+}
+
+bot = new Discord.Client({
+  disableMentions: 'everyone',
+  presence: initPresence,
+  ws: wsOptions,
+})
+
 bot.sleet = module.exports
 let modules = {}
 let moduleErrors = []
@@ -839,8 +852,8 @@ bot.login(process.env.BOT_TOKEN || config.token).then(async () => {
   }
 })
 
-bot.on('disconnect', reason => {
-  logger.warn(reason)
+bot.on('shardDisconnect', (reason, shardID) => {
+  logger.warn(shardID, reason)
   saveAndExit()
 })
 
