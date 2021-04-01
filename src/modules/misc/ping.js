@@ -3,29 +3,35 @@ module.exports.config = {
   name: 'ping',
   invokers: ['ping', 'table'],
   help: 'pong',
-  expandedHelp: 'Tests the bot\'s ping.',
-  usage: ['pong', 'ping']
+  expandedHelp: "Tests the bot's ping.",
+  usage: ['pong', 'ping'],
 }
 
 module.exports.events = {}
 module.exports.events.message = (bot, message) => {
   const [cmd] = bot.sleet.shlex(message)
-  let score = [randInt(0,8), randInt(0,8)]
+  let score = [randInt(0, 8), randInt(0, 8)]
 
   try {
-    message.channel.send(dedent`
+    message.channel
+      .send(
+        dedent`
       \`\`\`xl
      ─────┬───── atlas sucks
      |   ${score[0]}░${score[1]}
      ·    ░   |
      ─────┴─────
-     \`\`\``).then(newMsg => {
+     \`\`\``,
+      )
+      .then(newMsg => {
         newMsg.edit(dedent`
          \`\`\`xl
-         ─────┬───── ${cmd.toLowerCase() == 'ping' ? 'Pong' : 'Tennis'}! ${newMsg.createdTimestamp - message.createdTimestamp}ms
-         |   ${score[0]}░${score[1]+1}
+         ─────┬───── ${cmd.toLowerCase() == 'ping' ? 'Pong' : 'Tennis'}! ${
+          newMsg.createdTimestamp - message.createdTimestamp
+        }ms
+         |   ${score[0]}░${score[1] + 1}
          .    ░   |
-         ─────┴───── Heartbeat: ${bot.pings} => ${bot.ping.toFixed(2)}ms
+         ─────┴───── Heartbeat: ${bot.ws.pings} => ${bot.ws.ping.toFixed(2)}ms
          \`\`\``)
       })
   } catch (e) {}
@@ -45,23 +51,21 @@ function dedent(callSite, ...args) {
   function format(str) {
     let size = -1
     return str.replace(/\n(\s+)/g, (m, m1) => {
-      if (size < 0)
-          size = m1.replace(/\t/g, "    ").length
+      if (size < 0) size = m1.replace(/\t/g, '    ').length
 
-      return "\n" + m1.slice(Math.min(m1.length, size))
+      return '\n' + m1.slice(Math.min(m1.length, size))
     })
   }
 
-  if (typeof callSite === "string")
-    return format(callSite)
+  if (typeof callSite === 'string') return format(callSite)
 
-  if (typeof callSite === "function")
+  if (typeof callSite === 'function')
     return (...args) => format(callSite(...args))
 
   let output = callSite
     .slice(0, args.length + 1)
-    .map((text, i) => (i === 0 ? "" : args[i - 1]) + text)
-    .join("")
+    .map((text, i) => (i === 0 ? '' : args[i - 1]) + text)
+    .join('')
 
   return format(output)
 }

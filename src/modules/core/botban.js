@@ -44,7 +44,7 @@ module.exports.events.message = (bot, message) => {
   //unbotban id/name/discriminator thething
 
   bot
-    .fetchUser(user)
+    .users.fetch(user)
     .then(user => {
       let msg = ''
       if (cmd === 'botban') {

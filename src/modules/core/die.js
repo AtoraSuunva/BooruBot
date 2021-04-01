@@ -20,19 +20,19 @@ module.exports.events.message = (bot, message) => {
     ) {
       message.channel
         .send('no u')
-        .then(msg => modules.saveAndExit())
+        .then(_ => modules.saveAndExit())
         .catch(err => {
           modules.reportError(err, 'Exit Err')
           message.channel.send(`...I didn't die`)
         })
     } else {
-      bot.users
+      bot.users.cache
         .get(config.owner.id)
         .send('im ded')
-        .then(msg => modules.saveAndExit())
+        .then(_ => modules.saveAndExit())
         .catch(err => {
           modules.reportError(err, 'Exit Err')
-          bot.users.get(config.owner.id).send(`...I didn't die`)
+          bot.users.cache.get(config.owner.id).send(`...I didn't die`)
         })
     }
   }

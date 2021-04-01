@@ -320,7 +320,7 @@ async function postEmbed({
     user: message.author.id,
   }
 
-  let embed = new Discord.RichEmbed({
+  let embed = new Discord.MessageEmbed({
     author: {
       name: `Post ${img.id}`,
       url: img.postView, // link directly to the post
@@ -377,11 +377,7 @@ async function postEmbed({
   )
 
   embed.setDescription(embed.description.substring(0, 2048))
-  embed.setColor(
-    message.guild
-      ? message.guild.members.get(message.client.user.id).highestRole.color
-      : '#34363C',
-  )
+  embed.setColor(message.guild ? message.guild.me.roles.color : '#34363C')
 
   const afterPost = async msg => {
     message.channel.stopTyping()
@@ -396,9 +392,11 @@ async function postEmbed({
           if (
             (!message.guild ||
               message.guild.me.permissions.has('USE_EXTERNAL_EMOJIS')) &&
-            message.client.emojis.get('318296455280459777')
+            message.client.emojis.cache.get('318296455280459777')
           )
-            await msg.react(message.client.emojis.get('318296455280459777'))
+            await msg.react(
+              message.client.emojis.cache.get('318296455280459777'),
+            )
           else if (
             message.guild &&
             message.channel
@@ -410,7 +408,8 @@ async function postEmbed({
 
         if (imageNumber !== numImages && !settings.disableNextImage) {
           await msg.react(nextImgEmoji).then(r => {
-            // I tried to use awaitReactions or createReactionCollector instead, but they both acted buggy and often wouldn't catch new reacts
+            // I tried to use awaitReactions or createReactionCollector instead,
+            // but they both acted buggy and often wouldn't catch new reacts
             // And in the end they stopped adding reacts completely
             let timeout = setTimeout(
               () =>
@@ -431,7 +430,7 @@ async function postEmbed({
           })
         }
       } catch (e) {
-        ;('do nothing')
+        // do nothing
       }
     }
   }
@@ -486,18 +485,19 @@ module.exports.events.messageReactionAdd = async (bot, react, user) => {
   if (
     react.message.channel.type !== 'dm' &&
     react.message.channel.permissionsFor(bot.user).has('MANAGE_MESSAGES')
-  )
-    react.remove(user)
+  ) {
+    react.users.remove(user)
+  }
 
   // If there's no more images
-  if (imageNumber + 1 === numImages) return react.remove(bot.user)
+  if (imageNumber + 1 === numImages) return react.users.remove(bot.user)
 
   clearTimeout(timeout)
   timeout = setTimeout(
     () =>
       prevImgs.has(react.message.id) &&
       prevImgs.delete(react.message.id) &&
-      react.remove().catch(() => {}),
+      react.users.remove(user).catch(() => {}),
     nextImgTimeout,
   )
 

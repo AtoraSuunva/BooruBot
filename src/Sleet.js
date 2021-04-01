@@ -27,7 +27,10 @@ const metrics = {
   ping: pmx.probe().histogram({ name: 'Ping', measurement: 'mean' }),
 }
 
-setInterval(() => metrics.ping.update(bot.ping), 3000)
+setInterval(() => {
+  metrics.ping.update(bot.ws.ping)
+  metrics.guilds.set(bot.guilds.cache.size)
+}, 3000)
 
 const rootDir = path.join(__dirname)
 const configPath = path.join(rootDir, '../config.json')
@@ -80,7 +83,6 @@ function startEvents() {
   //Also I need to do some extra checks anyways
   bot.on('message', m => {
     metrics.messages_seen.inc()
-    metrics.guilds.set(bot.guilds.size)
     processMessage(m)
   })
 
@@ -387,7 +389,7 @@ async function extractMembers(
 
   const users = []
 
-  await guild.fetchMembers()
+  await guild.members.fetch()
 
   for (let a of arr) {
     let match
@@ -403,7 +405,7 @@ async function extractMembers(
     } else if ((match = uReg.full.exec(a))) {
       u = guild.members.find(m => m.user.tag === match[1])
     } else if ((match = uReg.id.exec(a))) {
-      u = guild.members.get(match[1]) || (keepIds ? match[1] : undefined)
+      u = guild.members.cache.get(match[1]) || (keepIds ? match[1] : undefined)
     } else if (message && guild) {
       u = await interactiveFuzzyMatchMembers(message, la)
     }
@@ -739,7 +741,7 @@ function reportError(err, errType) {
   let errMsg = `Error: ${errType}\nID: ${errID}\n\`\`\`js\n${err.toString()}\n\`\`\``
 
   if (!config.selfbot && config.owner) {
-    const owner = bot.users.get(config.owner.id)
+    const owner = bot.users.cache.get(config.owner.id)
     if (owner)
       owner.send(errMsg, { split: { prepend: '```js\n', append: '\n```' } })
   }

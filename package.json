@@ -20,7 +20,7 @@
   "dependencies": {
     "@discordjs/uws": "^10.149.0",
     "booru": "^2.4.0",
-    "discord.js": "^11.6.4",
+    "discord.js": "^12.5.2",
     "node-fetch": "^2.6.1",
     "pg-promise": "^10.8.7",
     "pmx": "^1.6.7",

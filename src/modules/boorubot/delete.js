@@ -47,7 +47,7 @@ module.exports.events.message = (bot, message) => {
       'Whoa there, users without "Manage Messages" can only delete max 5 images at a time',
     )
   } else {
-    message.channel.fetchMessages({ limit: 50 }).then(msgs => {
+    message.channel.messages.fetch({ limit: 50 }).then(msgs => {
       let delMsgs = msgs
         .filter(msg => {
           return msg.author.equals(bot.user) && msg.embeds[0] !== undefined
@@ -104,7 +104,7 @@ module.exports.events.messageReactionAdd = async (bot, react, user) => {
     !react.message.embeds[0].description.endsWith('[](META-DELETED)') &&
     hasPerms
   ) {
-    let embed = new Discord.RichEmbed()
+    let embed = new Discord.MessageEmbed()
       .setAuthor(
         `Message deleted by ${user.username}#${user.discriminator} (Click for image)`,
         react.message.embeds[0].url,

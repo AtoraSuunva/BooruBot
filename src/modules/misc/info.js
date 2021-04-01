@@ -42,8 +42,8 @@ module.exports.events.message = (bot, message) => {
       message.channel.permissionsFor(message.client.user).has('EMBED_LINKS')
     ) {
       let Discord = require('discord.js')
-      let embed = new Discord.RichEmbed()
-        .setAuthor(bot.user.username, bot.user.avatarURL)
+      let embed = new Discord.MessageEmbed()
+        .setAuthor(bot.user.username, bot.user.avatarURL())
         .setFooter('Use b!stats for stats!')
 
       for (let [title, val] of fields) {

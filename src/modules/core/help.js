@@ -25,7 +25,7 @@ module.exports.events.message = (bot, message) => {
   })
   helpFor = helpFor.join(' ')
 
-  let embed = new Discord.RichEmbed()
+  let embed = new Discord.MessageEmbed()
   let mod = 'Commands: ',
     msg,
     cmds,

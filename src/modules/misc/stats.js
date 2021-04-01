@@ -1,5 +1,7 @@
 //Disply some stats
 
+const Discord = require('discord.js')
+
 module.exports.config = {
   name: 'stats',
   invokers: ['stats'],
@@ -10,41 +12,40 @@ module.exports.config = {
 
 module.exports.events = {}
 module.exports.events.message = (bot, message) => {
-  let fields = new Map()
-    .set('Guilds:', bot.guilds.size)
-    .set(
-      'Channels:',
-      bot.channels.filter(c => {
-        return c.type === 'text'
-      }).size,
-    )
-    .set('Users:', bot.users.size)
-    .set(
-      'DMs:',
-      bot.channels.filter(c => {
-        return c.type === 'dm'
-      }).size,
-    )
+  const guildCount = bot.guilds.cache.size
+  const channelCount = bot.channels.cache.filter(c => {
+    return c.type === 'text'
+  }).size
+  const userCount = bot.guilds.cache
+    .values()
+    .map(g => g.memberCount)
+    .reduce((a, b) => a + b)
+  const dmCount = bot.channels.cache.filter(c => {
+    return c.type === 'dm'
+  }).size
+  const existence = formatTimeToString(
+    new Date().getTime() - bot.user.createdTimestamp,
+    '{w} {week} {d} {day} {hh}:{mm}:{ss}',
+  )
+  const uptime = formatTimeToString(
+    bot.uptime,
+    '{w} {week} {d} {day} {hh}:{mm}:{ss}',
+  )
 
-    .set(
-      "I've existed for:",
-      shittyMStoTime(
-        new Date().getTime() - bot.user.createdTimestamp,
-        '{w} {week} {d} {day} {hh}:{mm}:{ss}',
-      ),
-    )
-    .set(
-      'Up for:',
-      shittyMStoTime(bot.uptime, '{w} {week} {d} {day} {hh}:{mm}:{ss}'),
-    )
+  const fields = new Map()
+    .set('Guilds:', guildCount)
+    .set('Channels:', channelCount)
+    .set('Users:', userCount)
+    .set('DMs:', dmCount)
+    .set("I've existed for:", existence)
+    .set('Up for:', uptime)
 
   if (
     message.guild !== null &&
     message.channel.permissionsFor(message.client.user).has('EMBED_LINKS')
   ) {
-    let Discord = require('discord.js')
-    let embed = new Discord.RichEmbed()
-      .setThumbnail(bot.user.avatarURL)
+    const embed = new Discord.MessageEmbed()
+      .setThumbnail(bot.user.avatarURL())
       .setFooter('Use b!info for info!')
 
     for (let [title, val] of fields) {
@@ -64,16 +65,21 @@ module.exports.events.message = (bot, message) => {
 }
 
 module.exports.events.ready = bot => {
+  const userCount = bot.guilds.cache
+    .values()
+    .map(g => g.memberCount)
+    .reduce((a, b) => a + b)
+
   bot.sleet.logger.log(
     `
 Logged in as ${bot.user.username}#${bot.user.discriminator}
-Currently in: ${bot.guilds.size} guilds, ${bot.channels.size} channels
-Serving ${bot.users.size} users
+Currently in: ${bot.guilds.cache.size} guilds, ${bot.channels.cache.size} channels
+Serving ${userCount} users
 `,
   )
 }
 
-function shittyMStoTime(time, text) {
+function formatTimeToString(time, text) {
   let rep = new Map()
   rep
     .set('w', time / 604800000)
