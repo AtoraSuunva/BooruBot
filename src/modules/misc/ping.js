@@ -31,7 +31,7 @@ module.exports.events.message = (bot, message) => {
         }ms
          |   ${score[0]}░${score[1] + 1}
          .    ░   |
-         ─────┴───── Heartbeat: ${bot.ws.pings} => ${bot.ws.ping.toFixed(2)}ms
+         ─────┴───── Websocket Ping: ${bot.ws.ping.toFixed(2)}ms
          \`\`\``)
       })
   } catch (e) {}

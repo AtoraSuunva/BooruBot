@@ -66,7 +66,6 @@ module.exports.events.message = (bot, message) => {
 
 module.exports.events.ready = bot => {
   const userCount = bot.guilds.cache
-    .values()
     .map(g => g.memberCount)
     .reduce((a, b) => a + b)
 
