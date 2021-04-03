@@ -2,12 +2,14 @@
 
 module.exports.config = {
   name: 'eval',
-  invokers: ['eval', 'eval!', 'eval?'],
+  invokers: ['eval'],
   help: 'Evals stuff',
   expandedHelp:
     "Evals stuff for testing reasons.\nIf you try to use my eval I'll kinkshame you.",
   invisible: true,
 }
+
+const util = require('util')
 
 module.exports.events = {}
 module.exports.events.message = async (bot, message) => {
@@ -27,9 +29,6 @@ module.exports.events.message = async (bot, message) => {
   let output = 'aaa'
   let msg
 
-  console.log(message.content)
-  console.log(args)
-
   bot.sleet.logger.log(evalMsg)
 
   try {
@@ -40,40 +39,26 @@ module.exports.events.message = async (bot, message) => {
       output = await output
     }
 
-    if (args[0] === 'eval?') bot.sleet.logger.log(msg)
-    let length = require('util').inspect(output, { depth: 2 }).length
+    const inspect = util.inspect(output, { depth: 1 })
 
-    if (length > 2000 && args[0] !== 'eval!' && args[0] !== 'eval...')
-      return condEdit(
-        message,
-        msg,
-        `Message is ${length} chars long, use \`eval!\` to dump anyways.`,
-      )
-    else
-      output =
-        '```js\n' +
-        require('util')
-          .inspect(output, { depth: 2 })
-          .replace(
-            bot.token,
-            '[ ACCORDING TO ALL KNOWN LAWS OF DISCORD, THERE IS NO WAY AN EVAL SHOULD BE ABLE TO SHOW YOUR TOKEN ]',
-          ) +
-        '\n```'
+    if (inspect.length > 2000) {
+      return condEdit(message, msg, `Output is ${inspect.length} characters long.`)
+    }
 
-    if (args[0] !== 'eval...') condEdit(message, msg, output)
+    output =
+      '```js\n' +
+      inspect
+        .replace(
+          bot.token,
+          '[ ACCORDING TO ALL KNOWN LAWS OF DISCORD, THERE IS NO WAY AN EVAL SHOULD BE ABLE TO SHOW YOUR TOKEN ]',
+        ) +
+      '\n```'
+
+    condEdit(message, msg, output)
   } catch (e) {
     bot.sleet.logger.warn(e)
     e.message = e.message.replace(bot.token, '[no token for you]')
-
-    let length = e.message.length
-    if (length > 2000 && args[0] !== 'eval!')
-      return condEdit(
-        message,
-        msg,
-        `Error over 2k characters (congrats on ${length} chars), use \`eval!\` to dump everything.`,
-      )
-    else output = '```js\n' + e + '\n```'
-
+    output = '```js\n' + e + '\n```'
     condEdit(message, msg, output)
   }
 }
@@ -81,7 +66,5 @@ module.exports.events.message = async (bot, message) => {
 function condEdit(message, msg, content) {
   if (msg) msg.edit(content)
   else
-    return message.channel.send(content, {
-      split: { prepend: '```', append: '```' },
-    })
+    return message.channel.send(content, { _ext: 'js' })
 }
