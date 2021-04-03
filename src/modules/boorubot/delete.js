@@ -42,6 +42,7 @@ module.exports.events.message = (bot, message) => {
       )
   } else if (
     msgsToDelete > 5 &&
+    message.guild &&
     !message.channel.permissionsFor(message.author).has('MANAGE_MESSAGES')
   ) {
     message.channel.send(
