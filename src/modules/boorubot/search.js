@@ -73,8 +73,7 @@ module.exports.events.message = async (bot, message) => {
     settings.topicEnable &&
     message.channel.topic !== null &&
     !message.channel.topic.includes('bb=true') &&
-    !message.isMentioned(bot.user) &&
-    !message.isLink
+    !message.mentions.users.has(bot.user)
   )
     return message.channel.send(
       'You need to enable searching in this channel by putting `bb=true` in the topic first (Set `topicEnable` to false to disable this).',
