@@ -422,9 +422,9 @@ async function extractMembers(
     } else if (['you', 'yourself'].includes(la)) {
       u = guild.me
     } else if (['random', 'someone'].includes(la)) {
-      u = guild.members.random()
+      u = guild.members.cache.random()
     } else if ((match = uReg.full.exec(a))) {
-      u = guild.members.find(m => m.user.tag === match[1])
+      u = guild.members.cache.find(m => m.user.tag === match[1])
     } else if ((match = uReg.id.exec(a))) {
       u = guild.members.cache.get(match[1]) || (keepIds ? match[1] : undefined)
     } else if (message && guild) {
