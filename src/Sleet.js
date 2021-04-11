@@ -152,8 +152,8 @@ function startEvents() {
 
   function deleteMessage(message) {
     if (sentMessages.has(message.id)) {
-      sentMessages.get(message.id).delete()
-      return sentMessages.delete(message.id).catch(_ => {})
+      sentMessages.get(message.id).delete().catch(_ => {})
+      return sentMessages.delete(message.id)
     }
   }
 
