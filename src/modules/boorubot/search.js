@@ -107,7 +107,13 @@ module.exports.events.message = async (bot, message) => {
   if (settings.sites.length === Object.keys(booru.sites).length)
     return message.channel.send('All sites are blacklisted...')
 
-  if (settings.sites.includes(booru.resolveSite(args[1])))
+  const resolvedSite = booru.resolveSite(args[1])
+
+  if (resolvedSite === 'danbooru.donmai.us' && tags.length > 2) {
+    return message.channel.send('Sorry, but Danbooru only lets you search for 2 tags at a time.')
+  }
+
+  if (settings.sites.includes(resolvedSite))
     return message.channel.send(
       `The site \`${booru.resolveSite(args[1])}\` is blacklisted here.`,
     )
@@ -121,7 +127,7 @@ module.exports.events.message = async (bot, message) => {
 
   if (['r', 'rand', 'random'].includes(args[1])) {
     message.channel.startTyping()
-    randSearch(args.slice(2), settings, message)
+    randSearch(tags, settings, message)
       .then(r => postEmbed({ ...r, settings }))
       .catch(() => {
         message.channel.stopTyping()
@@ -129,7 +135,7 @@ module.exports.events.message = async (bot, message) => {
       })
   } else {
     message.channel.startTyping()
-    search(args[1], args.slice(2), settings, message)
+    search(resolvedSite, tags, settings, message)
       .then(r => postEmbed({ ...r, settings }))
       .catch(e => {
         message.channel.stopTyping()
@@ -146,12 +152,6 @@ module.exports.events.message = async (bot, message) => {
               `${logE.request.res.statusCode}: ${logE.request.res.statusMessage}` +
               (extra ? `\n${extra}` : '') +
               '\n```',
-          )
-        } else if (
-          e.message === 'You cannot search for more than 2 tags at a time'
-        ) {
-          message.channel.send(
-            'I cannot search more than 1 tag on Danbooru, since `order:random` takes up one tag. I would need to pay $20/$40 for 6/12 tags :(',
           )
         } else if (e.message.startsWith('Internal Error:')) {
           message.channel.send(
@@ -180,7 +180,8 @@ function search(site, tags, settings, message) {
     if (message.guild && !message.channel.nsfw && !settings.nsfwServer)
       nsfw = false
 
-    const random = !tags.some(t => t.toLowerCase().startsWith('order:'))
+    const tagLimit = booru.resolveSite(site) === 'danbooru.donmai.us' && tags.length > 1
+    const random = !tags.some(t => t.toLowerCase().startsWith('order:')) && !tagLimit
 
     booru
       .search(site, tags, { limit: 100, random })
