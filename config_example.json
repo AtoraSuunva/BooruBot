@@ -1,0 +1,19 @@
+{
+    "owner": null,
+    "moduleDir": "modules",
+    "invokers": [
+        "b!",
+        "booru!",
+        "hey booru",
+        "booru "
+    ],
+    "botbans": [],
+    "debug": true,
+    "intents": [
+      "GUILDS",
+      "GUILD_MESSAGES",
+      "GUILD_MESSAGE_REACTIONS",
+      "DIRECT_MESSAGES",
+      "DIRECT_MESSAGE_REACTIONS"
+    ]
+}
