@@ -21,7 +21,6 @@
     "booru": "^2.4.0",
     "bufferutil": "^4.0.3",
     "discord.js": "^12.5.2",
-    "erlpack": "github:discord/erlpack",
     "node-fetch": "^2.6.1",
     "pg-promise": "^10.9.5",
     "pmx": "^1.6.7",
