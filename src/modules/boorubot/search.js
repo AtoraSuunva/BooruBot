@@ -126,19 +126,19 @@ module.exports.events.message = async (bot, message) => {
   message.botClient = bot
 
   if (['r', 'rand', 'random'].includes(args[1])) {
-    message.channel.startTyping()
+    message.channel.startTyping().catch(() => {})
     randSearch(tags, settings, message)
       .then(r => postEmbed({ ...r, settings }))
       .catch(() => {
-        message.channel.stopTyping()
+        message.channel.stopTyping().catch(() => {})
         message.channel.send('Found no images anywhere...')
       })
   } else {
-    message.channel.startTyping()
+    message.channel.startTyping().catch(() => {})
     search(resolvedSite, tags, settings, message)
       .then(r => postEmbed({ ...r, settings }))
       .catch(e => {
-        message.channel.stopTyping()
+        message.channel.stopTyping().catch(() => {})
         const logE = e.innerErr || e
 
         if (e.message === "You didn't give any images") {
@@ -237,7 +237,7 @@ function randSearch(tags, settings, message) {
     for (let site of randSites) {
       if (settings.sites.includes(site)) continue
 
-      // let searchTimeout = setTimeout(()=>{message.botClient.modules.logger.log(`Timed out ${site}`)}, maxTime)
+      // let searchTimeout = setTimeout(()=>{message.botClient.sleet.logger.log(`Timed out ${site}`)}, maxTime)
 
       try {
         result = await search(site, tags, settings, message)
@@ -385,7 +385,7 @@ async function postEmbed({
   embed.setColor(embedColor)
 
   const afterPost = async msg => {
-    message.channel.stopTyping()
+    message.channel.stopTyping().catch(() => {})
     message.channel.lastImagePosted = msg // Lazy way to easily delete the last image posted, see `delete.js`
 
     if (
@@ -440,7 +440,7 @@ async function postEmbed({
   message.channel
     .send(content, { embed })
     .then(afterPost)
-    .catch(e => message.botClient.logger.error('Failed to send post', e, embed))
+    .catch(e => message.botClient.sleet.logger.error('Failed to send post', e, embed))
 }
 
 module.exports.events.messageReactionAdd = async (bot, react, user) => {
