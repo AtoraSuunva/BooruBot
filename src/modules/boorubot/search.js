@@ -126,19 +126,19 @@ module.exports.events.message = async (bot, message) => {
   message.botClient = bot
 
   if (['r', 'rand', 'random'].includes(args[1])) {
-    message.channel.startTyping().catch(() => {})
+    message.channel.startTyping()
     randSearch(tags, settings, message)
       .then(r => postEmbed({ ...r, settings }))
       .catch(() => {
-        message.channel.stopTyping().catch(() => {})
+        message.channel.stopTyping()
         message.channel.send('Found no images anywhere...')
       })
   } else {
-    message.channel.startTyping().catch(() => {})
+    message.channel.startTyping()
     search(resolvedSite, tags, settings, message)
       .then(r => postEmbed({ ...r, settings }))
       .catch(e => {
-        message.channel.stopTyping().catch(() => {})
+        message.channel.stopTyping()
         const logE = e.innerErr || e
 
         if (e.message === "You didn't give any images") {
@@ -385,7 +385,7 @@ async function postEmbed({
   embed.setColor(embedColor)
 
   const afterPost = async msg => {
-    message.channel.stopTyping().catch(() => {})
+    message.channel.stopTyping()
     message.channel.lastImagePosted = msg // Lazy way to easily delete the last image posted, see `delete.js`
 
     if (
