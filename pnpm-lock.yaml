@@ -1,7 +1,7 @@
 lockfileVersion: 5.3
 
 specifiers:
-  booru: ^2.4.0
+  booru: 2.5.2
   bufferutil: ^4.0.3
   discord.js: ^12.5.2
   node-fetch: ^2.6.1
@@ -12,7 +12,7 @@ specifiers:
   zlib-sync: ^0.1.7
 
 dependencies:
-  booru: 2.4.0
+  booru: 2.5.2
   bufferutil: 4.0.3
   discord.js: 12.5.3_72ef9f06cb99540da679cbf1bf7a3256
   node-fetch: 2.6.1
@@ -61,8 +61,8 @@ packages:
     resolution: {integrity: sha1-x57Zf380y48robyXkLzDZkdLS3k=}
     dev: false
 
-  /booru/2.4.0:
-    resolution: {integrity: sha512-CYawPyAd4l7JA5tq4HmTbu9xAB146aFyQ2xfhU+lHvg28+fsIP8XD2Al/VY9rgQqdE78EvaR2Lvc1AhbsSdSbA==}
+  /booru/2.5.2:
+    resolution: {integrity: sha512-x+/yLp9cKujnWLD2GAoGqHHFpe33NHbMomQEmCfPf+upO/AwC35lKGsUbbHVTjtgD/IMKBBOQeJJEha797PoTQ==}
     engines: {node: '>=10.0.0'}
     dependencies:
       fast-xml-parser: 3.19.0
