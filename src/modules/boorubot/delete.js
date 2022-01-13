@@ -86,33 +86,26 @@ module.exports.events.message = (bot, message) => {
 
 module.exports.events.messageReactionAdd = async (bot, react, user) => {
   if (
-    react.users.size < 2 ||
+    react.me ||
+    react.count < 2 ||
     !react.message.embeds[0] ||
     react.emoji.name !== deleteImgEmoji
   ) {
     return
   }
 
-  // react.message.channel.send(`**count**: ${react.count}\n**users**: ${[...react.users.keys()].join(', ')}\n**users.size**: ${react.users.size}`)
+  const hasPerms =
+    !react.message.guild ||
+    react.message.channel.permissionsFor(user).has('MANAGE_MESSAGES')
 
-  const hasPerms = !react.message.guild
-    ? true
-    : react.message.author.id === user.id ||
-      react.message.channel.permissionsFor(user).has('MANAGE_MESSAGES')
-
-  if (
-    react.me &&
-    react.users.size >= 2 &&
-    !react.message.embeds[0].description.endsWith('[](META-DELETED)') &&
-    hasPerms
-  ) {
+  if (hasPerms) {
     let embed = new Discord.MessageEmbed()
       .setAuthor(
-        `Message deleted by ${user.username}#${user.discriminator} (Click for image)`,
+        `Embed removed by ${user.username}#${user.discriminator} (Click for image)`,
         react.message.embeds[0].url,
         react.message.embeds[0].url,
       )
-      .setDescription('Use `b!del` to remove this completely. [](META-DELETED)')
+      .setDescription('Use `b!del` to remove this completely.')
 
     react.message.edit({ embed })
   }

@@ -44,6 +44,8 @@ module.exports.events.raw = (bot, packet) => {
 module.exports.events.message = async (bot, message) => {
   let args = bot.sleet.shlex(message.content).map(_ => _.toLowerCase())
 
+  bot.sleet.logger.debug('Search args:', args)
+
   // b!s sb cat cute
   // ['s', 'sb', 'cat', 'cute']
   //  0    1     2      3
@@ -110,7 +112,9 @@ module.exports.events.message = async (bot, message) => {
   const resolvedSite = booru.resolveSite(args[1])
 
   if (resolvedSite === 'danbooru.donmai.us' && tags.length > 2) {
-    return message.channel.send('Sorry, but Danbooru only lets you search for 2 tags at a time.')
+    return message.channel.send(
+      'Sorry, but Danbooru only lets you search for 2 tags at a time.',
+    )
   }
 
   if (settings.sites.includes(resolvedSite))
@@ -170,6 +174,13 @@ module.exports.events.message = async (bot, message) => {
   }
 }
 
+const orderTags = ['order:', 'sort:']
+
+function isOrderTag(tag) {
+  const t = tag.toLowerCase()
+  return orderTags.some(ot => t.startsWith(ot))
+}
+
 //Search a single booru
 function search(site, tags, settings, message) {
   return new Promise((resolve, reject) => {
@@ -180,9 +191,11 @@ function search(site, tags, settings, message) {
     if (message.guild && !message.channel.nsfw && !settings.nsfwServer)
       nsfw = false
 
-    const tagLimit = booru.resolveSite(site) === 'danbooru.donmai.us' && tags.length > 1
-    const random = !tags.some(t => t.toLowerCase().startsWith('order:')) && !tagLimit
+    const tagLimit =
+      booru.resolveSite(site) === 'danbooru.donmai.us' && tags.length > 1
+    const random = !tags.some(isOrderTag) && !tagLimit
 
+    console.log('Searching site', site, tags)
     booru
       .search(site, tags, { limit: 100, random })
       .then(imgs => {
@@ -201,14 +214,17 @@ function search(site, tags, settings, message) {
               validImgs.push(img)
           }
 
-          if (validImgs[0] !== undefined)
+          if (validImgs[0] !== undefined) {
+            console.log('Received results for', site, tags)
             resolve({
               imgs: validImgs,
               siteUrl: booru.resolveSite(site),
               searchTime: process.hrtime(searchStart),
               message,
             })
-          else reject(new SearchError('All found images are blacklisted.'))
+          } else {
+            reject(new SearchError('All found images are blacklisted.'))
+          }
         } else {
           reject(new SearchError('No images found.'))
         }
@@ -341,8 +357,9 @@ async function postEmbed({
     img.tags.join(', ').length < 50
       ? Discord.Util.escapeMarkdown(img.tags.join(', '))
       : Discord.Util.escapeMarkdown(img.tags.join(', ').substr(0, 50)) +
-        `... [See All](https://giraffeduck.com/api/echo/?w=${Discord.Util
-          .escapeMarkdown(img.tags.join(',').replace(/(%20)/g, '_'))
+        `... [See All](https://giraffeduck.com/api/echo/?w=${Discord.Util.escapeMarkdown(
+          img.tags.join(',').replace(/(%20)/g, '_'),
+        )
           .replace(/([()])/g, '\\$1')
           .substring(0, 1200)})`
 
@@ -379,9 +396,10 @@ async function postEmbed({
 
   embed.setDescription(embed.description.substring(0, 2048))
 
-  const embedColor = message.guild && message.guild.me.roles.color
-    ? message.guild.me.roles.color.color
-    : '#34363C'
+  const embedColor =
+    message.guild && message.guild.me.roles.color
+      ? message.guild.me.roles.color.color
+      : '#34363C'
   embed.setColor(embedColor)
 
   const afterPost = async msg => {
@@ -394,14 +412,14 @@ async function postEmbed({
     ) {
       try {
         const shouldReact =
-          msg.reacts === undefined && (
-            !message.guild ||
-            message.channel.permissionsFor(message.client.user)
-                .has('ADD_REACTIONS')
-          )
+          msg.reacts === undefined &&
+          (!message.guild ||
+            message.channel
+              .permissionsFor(message.client.user)
+              .has('ADD_REACTIONS'))
 
         if (shouldReact) {
-           await msg.react(deleteImgEmoji)
+          await msg.react(deleteImgEmoji)
         }
 
         if (imageNumber !== numImages && !settings.disableNextImage) {
@@ -433,14 +451,18 @@ async function postEmbed({
     }
   }
 
-  const content = `${escapeMarkdown(message.author.username)}, result for \`${escapeMarkdown(message.content)}\`\n${img.postView}`
+  const content = `${escapeMarkdown(
+    message.author.username,
+  )}, result for \`${escapeMarkdown(message.content)}\`\n${img.postView}`
 
-  if (oldMessage) return oldMessage.edit(content, { embed })
+  if (oldMessage) return oldMessage.edit(content, { embed }).catch(_ => {})
 
   message.channel
     .send(content, { embed })
     .then(afterPost)
-    .catch(e => message.botClient.sleet.logger.error('Failed to send post', e, embed))
+    .catch(e =>
+      message.botClient.sleet.logger.error('Failed to send post', e, embed),
+    )
 }
 
 module.exports.events.messageReactionAdd = async (bot, react, user) => {
@@ -452,15 +474,8 @@ module.exports.events.messageReactionAdd = async (bot, react, user) => {
     return
   if (!prevImgs.has(react.message.id)) return
 
-  let {
-    imgs,
-    siteUrl,
-    searchTime,
-    message,
-    imageNumber,
-    numImages,
-    timeout,
-  } = prevImgs.get(react.message.id)
+  let { imgs, siteUrl, searchTime, message, imageNumber, numImages, timeout } =
+    prevImgs.get(react.message.id)
 
   if (user.id !== message.author.id) return
 
