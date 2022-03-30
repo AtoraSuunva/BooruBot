@@ -86,10 +86,11 @@ module.exports.events.message = (bot, message) => {
 
 module.exports.events.messageReactionAdd = async (bot, react, user) => {
   if (
-    react.me ||
+    !react.me ||
     react.count < 2 ||
     !react.message.embeds[0] ||
-    react.emoji.name !== deleteImgEmoji
+    react.emoji.name !== deleteImgEmoji ||
+    !react.message.editable
   ) {
     return
   }

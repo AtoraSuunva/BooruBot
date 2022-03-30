@@ -454,7 +454,9 @@ async function postEmbed({
     message.author.username,
   )}, result for \`${escapeMarkdown(message.content)}\`\n${img.postView}`
 
-  if (oldMessage) return oldMessage.edit(content, { embed }).catch(_ => {})
+  if (oldMessage && oldMessage.editable) {
+    return oldMessage.edit(content, { embed }).catch(_ => {})
+  }
 
   message.channel
     .send(content, { embed })
