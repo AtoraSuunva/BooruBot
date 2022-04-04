@@ -16,7 +16,8 @@ module.exports.config = {
 const booru = require('booru')
 const Discord = require('discord.js')
 const search = require('./search.js')
-const urlReg = /((?:https?:\/\/)?(www\.)?([-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b)([-a-zA-Z0-9@:%_+.~#?&\/\/=]*))/
+const urlReg =
+  /((?:https?:\/\/)?(www\.)?([-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b)([-a-zA-Z0-9@:%_+.~#?&\/\/=]*))/
 
 module.exports.events = {}
 module.exports.events.message = (bot, message) => {
@@ -33,11 +34,13 @@ module.exports.events.message = (bot, message) => {
   if (booruInfo === undefined)
     return message.channel.send('That site is not supported.')
 
-  if (!url.includes(booruInfo.postView))
+  if (!url.includes(booruInfo.api.postView))
     return message.channel.send(`Doesn't seem like that's a link to a post.`)
 
   id = url
-    .substring(url.indexOf(booruInfo.postView) + booruInfo.postView.length)
+    .substring(
+      url.indexOf(booruInfo.api.postView) + booruInfo.api.postView.length,
+    )
     .split('/')[0]
 
   let dummyMessage = Discord.Util.cloneObject(message)
