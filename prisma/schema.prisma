@@ -22,13 +22,13 @@ model BooruConfig {
 model Tag {
   referenceId String @map("reference_id")
   name String
-  config BooruConfig @relation(fields: [referenceId], references: [referenceId])
+  config BooruConfig @relation(fields: [referenceId], references: [referenceId], onDelete: Cascade)
   @@id([referenceId, name])
 }
 
 model Site {
   referenceId String @map("reference_id")
   name String
-  config BooruConfig @relation(fields: [referenceId], references: [referenceId])
+  config BooruConfig @relation(fields: [referenceId], references: [referenceId], onDelete: Cascade)
   @@id([referenceId, name])
 }

@@ -8,6 +8,7 @@ import { stats } from './misc/stats.js'
 import { autoreply } from './misc/autoreply.js'
 import { ping } from './misc/ping.js'
 import { blacklist } from './boorubot/blacklist/index.js'
+import { config } from './boorubot/config/index.js'
 
 const TOKEN = env.get('TOKEN').required().asString()
 const APPLICATION_ID = env.get('APPLICATION_ID').required().asString()
@@ -38,6 +39,8 @@ const sleetClient = new SleetClient({
 sleetClient.addModules([
   // booru
   blacklist,
+  config,
+
   // misc
   activity,
   autoreply,
