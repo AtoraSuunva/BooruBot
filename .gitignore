@@ -1,19 +1,7 @@
-# Basic stuff
-.git/
-node_modules/
-
-# Don't commit the token me
-config.json
-
-# Probably best not to
-err.log
-
-# Yarn
-yarn.lock
-.yarnclean
-
-# Keep the folder, get rid of everything else
-settings/*
-!settings/.gitkeep
-ecosystem.config.js
-src/modules/secret
+node_modules
+.tsbuildinfo
+.env
+.vscode
+.swc
+dist/
+prisma/dev.db

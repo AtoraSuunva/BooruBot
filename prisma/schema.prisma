@@ -1,0 +1,34 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model BooruConfig {
+  // Reference Id is either: guild id or user id, for use in guilds or DMs respectively
+  // potentially also per-channel configs later?
+  referenceId String @id @map("reference_id")
+  tags Tag[]
+  sites Site[]
+  minScore Int? @map("min_score")
+}
+
+model Tag {
+  referenceId String @map("reference_id")
+  name String
+  config BooruConfig @relation(fields: [referenceId], references: [referenceId])
+  @@id([referenceId, name])
+}
+
+model Site {
+  referenceId String @map("reference_id")
+  name String
+  config BooruConfig @relation(fields: [referenceId], references: [referenceId])
+  @@id([referenceId, name])
+}
