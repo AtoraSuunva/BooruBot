@@ -5,12 +5,8 @@ import {
 } from 'discord.js'
 import { AutocompleteHandler, SleetSlashSubcommand } from 'sleetcord'
 import { database } from '../../util/db.js'
-import {
-  ensureConfigFor,
-  formatBlacklist,
-  getBlacklistFor,
-  getReferenceIdFor,
-} from '../utils.js'
+import { ensureConfigFor, getReferenceIdFor } from '../utils.js'
+import { formatBlacklist, getBlacklistFor } from './utils.js'
 
 const siteInfo = Object.values(booru.sites)
 

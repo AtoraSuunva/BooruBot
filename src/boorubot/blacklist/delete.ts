@@ -10,24 +10,24 @@ import { SleetSlashSubcommand } from 'sleetcord'
 import { database } from '../../util/db.js'
 import { getReferenceIdFor } from '../utils.js'
 
-export const blacklistClear = new SleetSlashSubcommand(
+export const blacklistDelete = new SleetSlashSubcommand(
   {
-    name: 'clear',
-    description: 'Clear the blacklist',
+    name: 'delete',
+    description: 'Delete the blacklist',
     options: [
       {
         name: 'confirm',
-        description: 'Confirm the clear, bypassing the confirmation prompt',
+        description: 'Confirm the delete, bypassing the confirmation prompt',
         type: ApplicationCommandOptionType.Boolean,
       },
     ],
   },
   {
-    run: runClear,
+    run: runDelete,
   },
 )
 
-async function runClear(interaction: ChatInputCommandInteraction) {
+async function runDelete(interaction: ChatInputCommandInteraction) {
   const defer = interaction.deferReply({ fetchReply: true })
 
   const confirm = interaction.options.getBoolean('confirm', false)
@@ -39,19 +39,19 @@ async function runClear(interaction: ChatInputCommandInteraction) {
   const message = await defer
 
   if (!config) {
-    interaction.editReply('No Booru config found, so no blacklist to clear.')
+    interaction.editReply('No Booru config found, so no blacklist to delete.')
     return
   }
 
   if (confirm === true) {
-    await clearBlacklist(referenceId)
-    interaction.editReply('Blacklist cleared.')
+    await deleteBlacklist(referenceId)
+    interaction.editReply('Blacklist deleted.')
     return
   }
 
   const deleteButton = new ButtonBuilder()
     .setStyle(ButtonStyle.Danger)
-    .setCustomId(`blacklist/clear:${referenceId},${interaction.user.id}`)
+    .setCustomId(`blacklist/delete:${referenceId},${interaction.user.id}`)
     .setLabel('Confirm Delete')
 
   const row = new ActionRowBuilder<ButtonBuilder>().addComponents(deleteButton)
@@ -70,15 +70,15 @@ async function runClear(interaction: ChatInputCommandInteraction) {
     if (i.user.id === interaction.user.id) {
       const defer = i.deferReply({ ephemeral: true })
 
-      await clearBlacklist(referenceId)
+      await deleteBlacklist(referenceId)
 
       interaction.editReply({
-        content: `Welcome config deleted. Requested by ${interaction.user}`,
+        content: `Blacklist deleted. Requested by ${interaction.user}`,
         components: [],
       })
 
       await defer
-      i.editReply('Blacklist cleared.')
+      i.editReply('Blacklist deleted.')
 
       collector.stop()
     } else {
@@ -99,7 +99,7 @@ async function runClear(interaction: ChatInputCommandInteraction) {
   })
 }
 
-function clearBlacklist(referenceId: string) {
+function deleteBlacklist(referenceId: string) {
   return Promise.all([
     database.tag.deleteMany({ where: { referenceId } }),
     database.site.deleteMany({ where: { referenceId } }),

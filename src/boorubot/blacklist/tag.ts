@@ -4,13 +4,8 @@ import {
 } from 'discord.js'
 import { SleetSlashSubcommand } from 'sleetcord'
 import { database } from '../../util/db.js'
-import {
-  ensureConfigFor,
-  formatBlacklist,
-  getBlacklistFor,
-  getItemsFrom,
-  getReferenceIdFor,
-} from '../utils.js'
+import { ensureConfigFor, getItemsFrom, getReferenceIdFor } from '../utils.js'
+import { formatBlacklist, getBlacklistFor } from './utils.js'
 
 export const blacklistAddTags = new SleetSlashSubcommand(
   {

@@ -1,10 +1,7 @@
 import { ChatInputCommandInteraction } from 'discord.js'
 import { SleetSlashSubcommand } from 'sleetcord'
-import {
-  formatBlacklist,
-  getBlacklistFor,
-  getReferenceIdFor,
-} from '../utils.js'
+import { getReferenceIdFor } from '../utils.js'
+import { formatBlacklist, getBlacklistFor } from './utils.js'
 
 export const blacklistList = new SleetSlashSubcommand(
   {
