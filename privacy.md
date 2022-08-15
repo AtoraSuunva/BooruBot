@@ -7,10 +7,10 @@ For Discord Bot: BooruBot#9381 (204722411403345920)
 ---
 
 BooruBot stores the following data, for the following reasons:
-  - `guild_id`: To know which guild settings applies to
+  - `reference_id`: Either a guild ID (when used in guilds) or a user ID (when used in DMs), used to track which config belongs to who
   - `tags`: To know which tags have been blacklisted
   - `sites`: To know which sites have been blacklisted
-  - `minScore`: To know the minimum score posts need to be posted
+  - `min_score`: To know the minimum score posts need to be posted
   - ... more?
 
 All data stored by BooruBot can be deleted by running `/config delete` on Discord and confirming the deletion in-guild by someone with `Manage Server` permissions.
