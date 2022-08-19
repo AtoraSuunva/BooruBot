@@ -44,6 +44,7 @@ export const activity = new SleetSlashCommand(
   {
     name: 'activity',
     description: 'Allow to randomly/manually set a new activity',
+    registerOnlyInGuilds: [],
     options: [
       {
         name: 'name',
