@@ -1,7 +1,6 @@
-node_modules
+node_modules/
+dist/
+prisma/db/
 .tsbuildinfo
 .env
 .vscode
-.swc
-dist/
-prisma/dev.db
