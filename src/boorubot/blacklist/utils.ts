@@ -1,5 +1,6 @@
 import { escapeCodeBlock, bold } from 'discord.js'
 import { database } from '../../util/db.js'
+import { settingsCache } from '../SettingsCache.js'
 
 export interface Blacklist {
   tags: string[]
@@ -40,8 +41,8 @@ function formatBlacklistArray(items: string[], highlight: string[]): string {
     .join(', ')
 }
 
-export function getBlacklistFor(referenceId: string): Promise<Blacklist> {
-  return database.booruConfig
+export async function getBlacklistFor(referenceId: string): Promise<Blacklist> {
+  const blacklist = await database.booruConfig
     .findFirst({
       where: {
         referenceId,
@@ -70,4 +71,9 @@ export function getBlacklistFor(referenceId: string): Promise<Blacklist> {
             sites: [],
           },
     )
+
+  settingsCache.setTags(referenceId, blacklist.tags)
+  settingsCache.setSites(referenceId, blacklist.sites)
+
+  return blacklist
 }

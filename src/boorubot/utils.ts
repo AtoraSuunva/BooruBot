@@ -1,8 +1,10 @@
 import { BooruConfig } from '@prisma/client'
-import { CommandInteraction } from 'discord.js'
+import { BaseInteraction } from 'discord.js'
 import { database } from '../util/db.js'
+import booru from 'booru'
+import { AutocompleteHandler, makeChoices } from 'sleetcord'
 
-export function getReferenceIdFor(interaction: CommandInteraction): string {
+export function getReferenceIdFor(interaction: BaseInteraction): string {
   return interaction.guild?.id || interaction.user.id
 }
 
@@ -37,3 +39,23 @@ export function getItemsFrom(commaString: string): string[] {
     .map((tag) => tag.trim())
     .filter((tag) => tag !== '')
 }
+
+const siteInfo = Object.values(booru.sites)
+
+export function getMatchingSitesFor(value: string) {
+  const lowerValue = value.toLowerCase()
+  return siteInfo.filter(
+    (site) =>
+      site.domain.toLowerCase().includes(lowerValue) ||
+      site.aliases.some((alias) => alias.toLowerCase().includes(lowerValue)),
+  )
+}
+
+export const autocompleteSite: AutocompleteHandler<string> = ({ value }) => {
+  return getMatchingSitesFor(value).map((site) => ({
+    name: site.domain,
+    value: site.domain,
+  }))
+}
+
+export const siteChoices = makeChoices(siteInfo.map((site) => site.domain))

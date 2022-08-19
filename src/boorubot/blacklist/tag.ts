@@ -4,6 +4,7 @@ import {
 } from 'discord.js'
 import { SleetSlashSubcommand } from 'sleetcord'
 import { database } from '../../util/db.js'
+import { settingsCache } from '../SettingsCache.js'
 import { ensureConfigFor, getItemsFrom, getReferenceIdFor } from '../utils.js'
 import { formatBlacklist, getBlacklistFor } from './utils.js'
 
@@ -88,6 +89,8 @@ async function addTags(referenceId: string, tags: string[]) {
       update: tag,
     })
   }
+
+  settingsCache.deleteTags(referenceId)
 }
 
 async function removeTags(referenceId: string, tags: string[]) {
@@ -96,4 +99,6 @@ async function removeTags(referenceId: string, tags: string[]) {
   await database.tag.deleteMany({
     where: { name: { in: tags } },
   })
+
+  settingsCache.deleteTags(referenceId)
 }

@@ -4,6 +4,7 @@ import {
 } from 'discord.js'
 import { SleetSlashCommandGroup, SleetSlashSubcommand } from 'sleetcord'
 import { database } from '../../util/db.js'
+import { settingsCache } from '../SettingsCache.js'
 import { getReferenceIdFor } from '../utils.js'
 import { createConfigView } from './view.js'
 
@@ -35,6 +36,8 @@ async function runSetMinScore(interaction: ChatInputCommandInteraction) {
     create: { referenceId, minScore: score },
     update: { minScore: score },
   })
+
+  settingsCache.setConfig(referenceId, config)
 
   await defer
 

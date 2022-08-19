@@ -2,6 +2,7 @@ import { BooruConfig } from '@prisma/client'
 import { ChatInputCommandInteraction, EmbedBuilder } from 'discord.js'
 import { SleetSlashSubcommand } from 'sleetcord'
 import { database } from '../../util/db.js'
+import { settingsCache } from '../SettingsCache.js'
 import { getReferenceIdFor } from '../utils.js'
 
 export const configView = new SleetSlashSubcommand(
@@ -29,6 +30,8 @@ async function runView(interaction: ChatInputCommandInteraction) {
     interaction.editReply('No Booru config found, so no config to view.')
     return
   }
+
+  settingsCache.setConfig(referenceId, config)
 
   const view = createConfigView(config)
   interaction.editReply(view)

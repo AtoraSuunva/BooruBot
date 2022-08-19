@@ -8,6 +8,7 @@ import {
 } from 'discord.js'
 import { SleetSlashSubcommand } from 'sleetcord'
 import { database } from '../../util/db.js'
+import { settingsCache } from '../SettingsCache.js'
 import { getReferenceIdFor } from '../utils.js'
 
 export const configDelete = new SleetSlashSubcommand(
@@ -100,5 +101,10 @@ async function runDelete(interaction: ChatInputCommandInteraction) {
 }
 
 function deleteConfig(referenceId: string) {
-  return Promise.all([database.booruConfig.delete({ where: { referenceId } })])
+  // deletes should be cascaded, or at least let's make sure we have fresh data after this
+  settingsCache.deleteConfig(referenceId)
+  settingsCache.deleteTags(referenceId)
+  settingsCache.deleteSites(referenceId)
+
+  return database.booruConfig.delete({ where: { referenceId } })
 }

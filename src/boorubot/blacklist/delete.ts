@@ -8,6 +8,7 @@ import {
 } from 'discord.js'
 import { SleetSlashSubcommand } from 'sleetcord'
 import { database } from '../../util/db.js'
+import { settingsCache } from '../SettingsCache.js'
 import { getReferenceIdFor } from '../utils.js'
 
 export const blacklistDelete = new SleetSlashSubcommand(
@@ -100,6 +101,9 @@ async function runDelete(interaction: ChatInputCommandInteraction) {
 }
 
 function deleteBlacklist(referenceId: string) {
+  settingsCache.deleteTags(referenceId)
+  settingsCache.deleteSites(referenceId)
+
   return Promise.all([
     database.tag.deleteMany({ where: { referenceId } }),
     database.site.deleteMany({ where: { referenceId } }),

@@ -1,30 +1,17 @@
-import booru from 'booru'
 import {
   ApplicationCommandOptionType,
   ChatInputCommandInteraction,
 } from 'discord.js'
-import { AutocompleteHandler, SleetSlashSubcommand } from 'sleetcord'
+import { SleetSlashSubcommand } from 'sleetcord'
 import { database } from '../../util/db.js'
-import { ensureConfigFor, getReferenceIdFor } from '../utils.js'
+import { settingsCache } from '../SettingsCache.js'
+import {
+  autocompleteSite,
+  ensureConfigFor,
+  getMatchingSitesFor,
+  getReferenceIdFor,
+} from '../utils.js'
 import { formatBlacklist, getBlacklistFor } from './utils.js'
-
-const siteInfo = Object.values(booru.sites)
-
-function getMatchingSitesFor(value: string) {
-  const lowerValue = value.toLowerCase()
-  return siteInfo.filter(
-    (site) =>
-      site.domain.toLowerCase().includes(lowerValue) ||
-      site.aliases.some((alias) => alias.toLowerCase().includes(lowerValue)),
-  )
-}
-
-const autocompleteSite: AutocompleteHandler<string> = ({ value }) => {
-  return getMatchingSitesFor(value).map((site) => ({
-    name: site.domain,
-    value: site.domain,
-  }))
-}
 
 export const blacklistAddSite = new SleetSlashSubcommand(
   {
@@ -113,6 +100,8 @@ async function addSites(referenceId: string, sites: string[]) {
       update: site,
     })
   }
+
+  settingsCache.deleteSites(referenceId)
 }
 
 async function removeSites(referenceId: string, sites: string[]) {
@@ -121,4 +110,6 @@ async function removeSites(referenceId: string, sites: string[]) {
   await database.site.deleteMany({
     where: { name: { in: sites } },
   })
+
+  settingsCache.deleteSites(referenceId)
 }
