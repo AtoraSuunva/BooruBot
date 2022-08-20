@@ -17,6 +17,10 @@ model BooruConfig {
   tags Tag[]
   sites Site[]
   minScore Int? @map("min_score")
+  // default false in DM, true in guilds?
+  // true -> NSFW allowed in DMs & age-restricted channels (**ONLY** age-restricted channels)
+  // false -> NSFW not allowed anywhere at all
+  allowNSFW Boolean @default(false) @map("allow_nsfw")
 }
 
 model Tag {

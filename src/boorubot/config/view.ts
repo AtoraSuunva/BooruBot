@@ -38,10 +38,18 @@ async function runView(interaction: ChatInputCommandInteraction) {
 }
 
 export function createConfigView(config: BooruConfig) {
+  // TODO: just text, it was nicer
   const embed = new EmbedBuilder().setTitle('Booru Config').addFields([
     {
       name: 'Min Score',
-      value: String(config.minScore),
+      value:
+        config.minScore === null ? 'No Min Score' : String(config.minScore),
+      inline: true,
+    },
+    {
+      name: 'Allow NSFW',
+      value: String(config.allowNSFW),
+      inline: true,
     },
   ])
 

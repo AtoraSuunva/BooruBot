@@ -13,13 +13,11 @@
 - "Post publically" should show poster
 - "Post publically" should be disabled right after using it
 - make sure `rating:s` etc are supported
-- random!!
-- make sure to avoid posting non-`s` posts in sfw channels
 - check search tags for blacklisted tags and bail early
-- check site for blacklisted sites as well 
 - error handling on booru
 - disable `random: true` on order tags:
   - `const orderTags = ['order:', 'sort:']`
 - check blacklisted types `type:<ext>`
 - check blacklisted ratings `rating:`
 - do blacklisted checks somewhere specific? another file?
+- show # of blacklisted posts (w/ reason?)
