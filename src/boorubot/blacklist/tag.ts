@@ -15,7 +15,7 @@ export const blacklistAddTags = new SleetSlashSubcommand(
     options: [
       {
         name: 'tags',
-        description: 'The tag(s) to add, separated by a comma',
+        description: 'The tag(s) to add, separated by a space',
         type: ApplicationCommandOptionType.String,
         required: true,
       },
@@ -33,7 +33,7 @@ export const blacklistRemoveTags = new SleetSlashSubcommand(
     options: [
       {
         name: 'tags',
-        description: 'The tag(s) to remove, separated by a comma',
+        description: 'The tag(s) to remove, separated by a space',
         type: ApplicationCommandOptionType.String,
         required: true,
       },

@@ -29,14 +29,14 @@ export async function ensureConfigFor(
 }
 
 /**
- * Turns a string of comma-separated items into an array of items
- * @param commaString A comma-separated string of items
+ * Turns a string of space-separated items into an array of items
+ * @param str A space-separated string of items
  * @returns The items in the string as an array, trimmed
  */
-export function getItemsFrom(commaString: string): string[] {
-  return commaString
-    .split(',')
-    .map((tag) => tag.trim())
+export function getItemsFrom(str: string): string[] {
+  return str
+    .split(' ')
+    .map((tag) => tag.trim().toLowerCase())
     .filter((tag) => tag !== '')
 }
 
