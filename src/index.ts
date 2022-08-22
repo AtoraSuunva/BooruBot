@@ -9,7 +9,7 @@ import { autoreply } from './misc/autoreply.js'
 import { ping } from './misc/ping.js'
 import { blacklist } from './boorubot/blacklist/index.js'
 import { config } from './boorubot/config/index.js'
-import { search } from './boorubot/search.js'
+import { search } from './boorubot/search/search.js'
 
 const TOKEN = env.get('TOKEN').required().asString()
 const APPLICATION_ID = env.get('APPLICATION_ID').required().asString()
