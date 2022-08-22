@@ -32,7 +32,13 @@ const sleetClient = new SleetClient({
     applicationId: APPLICATION_ID,
   },
   client: {
-    intents: [GatewayIntentBits.Guilds],
+    intents: [
+      // Remove this once people are better aware of slash commands?
+      // I should monitor @bot mentions to see if they die out
+      GatewayIntentBits.DirectMessages,
+      GatewayIntentBits.GuildMessages,
+      GatewayIntentBits.Guilds,
+    ],
   },
   logger: loggerOptions,
 })
