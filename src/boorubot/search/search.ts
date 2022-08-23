@@ -9,7 +9,12 @@ import {
   inlineCode,
 } from 'discord.js'
 import { AutocompleteHandler, SleetSlashCommand } from 'sleetcord'
-import { getMatchingSitesFor, getReferenceIdFor } from '../utils.js'
+import {
+  getMatchingSitesFor,
+  getReferenceIdFor,
+  shuffleArray,
+  siteInfo,
+} from '../utils.js'
 import booru from 'booru'
 import { default as Post } from 'booru/dist/structures/Post.js'
 import { settingsCache } from '../SettingsCache.js'
@@ -25,6 +30,11 @@ import {
   nsfwAllowedInChannel,
 } from './searchUtils.js'
 
+const RANDOM_BOORU_VALUE = 'Random Booru'
+const RANDOM_BOORU_SITE = {
+  domain: RANDOM_BOORU_VALUE,
+}
+
 const autocompleteSiteWithBlacklist: AutocompleteHandler<string> = async ({
   interaction,
   value,
@@ -38,12 +48,21 @@ const autocompleteSiteWithBlacklist: AutocompleteHandler<string> = async ({
 
   const blacklistedSites = [...settings.sites, ...userSettings.sites]
 
-  return getMatchingSitesFor(value)
+  const sites = getMatchingSitesFor(value)
     .filter((site) => !blacklistedSites.includes(site.domain))
     .map((site) => ({
       name: site.domain,
       value: site.domain,
     }))
+
+  if (siteInfo.length - blacklistedSites.length > 1) {
+    sites.push({
+      name: RANDOM_BOORU_VALUE,
+      value: RANDOM_BOORU_VALUE,
+    })
+  }
+
+  return sites
 }
 
 export const search = new SleetSlashCommand(
@@ -92,7 +111,7 @@ async function runSearch(interaction: ChatInputCommandInteraction) {
   const booruOption = interaction.options.getString('booru', true)
   const sites = getMatchingSitesFor(booruOption)
 
-  if (sites.length !== 1) {
+  if (sites.length !== 1 && booruOption !== RANDOM_BOORU_VALUE) {
     interaction.reply({
       content: 'Could not find a single matching booru.',
     })
@@ -100,7 +119,7 @@ async function runSearch(interaction: ChatInputCommandInteraction) {
   }
 
   // Get options
-  const site = sites[0]
+  const site = booruOption === RANDOM_BOORU_VALUE ? RANDOM_BOORU_SITE : sites[0]
   const tags = (interaction.options.getString('tags') ?? '').split(' ')
   const ephemeral = interaction.options.getBoolean('ephemeral') ?? false
 
@@ -112,10 +131,11 @@ async function runSearch(interaction: ChatInputCommandInteraction) {
     settingsCache.get(userReferenceId),
   ])
 
-  // const blacklistedSites = [...settings.sites, ...userSettings.sites]
+  const blacklistedSites = [...settings.sites, ...userSettings.sites]
   const blacklistedTags = [...settings.tags, ...userSettings.tags]
 
   // Incrementally validate things to fail early when possible
+
   if (settings.sites.includes(site.domain)) {
     interaction.reply({
       content: `${site.domain} is blacklisted here.`,
@@ -167,20 +187,22 @@ async function runSearch(interaction: ChatInputCommandInteraction) {
   let results: Post[] | null = null
 
   try {
-    results = await booru
-      .search(site.domain, tags, {
-        limit: 100,
-        random: !hasOrderTag(tags),
-      })
-      // TODO: remove this once booru doesn't suck
-      .then((res) => res.posts)
+    results = await searchBooru({
+      domain: site.domain,
+      tags,
+      // allowNSFW, // later on, have some flag that's like "nsfw-alt" or "only-nsfw" on sites?
+      blacklistedSites,
+    })
   } catch (e) {
     await defer
-    interaction.editReply({
-      content: `Error searching ${inlineCode(site.domain)}:\n${codeBlock(
-        getErrorMessage(e),
-      )}`,
-    })
+    const content =
+      e instanceof SearchError
+        ? e.message
+        : `Error searching ${inlineCode(site.domain)}:\n${codeBlock(
+            getErrorMessage(e),
+          )}`
+
+    interaction.editReply({ content })
   }
 
   if (results === null) {
@@ -369,3 +391,50 @@ async function runSearch(interaction: ChatInputCommandInteraction) {
     interaction.editReply({ components: [] })
   })
 }
+
+interface SearchBooruParams {
+  domain: string
+  tags: string[]
+  blacklistedSites: string[]
+}
+
+async function searchBooru({
+  domain,
+  tags,
+  blacklistedSites,
+}: SearchBooruParams): Promise<Post[]> {
+  const random = !hasOrderTag(tags)
+
+  if (domain === RANDOM_BOORU_VALUE) {
+    // Search every available booru until we get a hit
+    const sites = shuffleArray(
+      siteInfo
+        .filter((site) => !blacklistedSites.includes(site.domain))
+        .map((site) => site.domain),
+    )
+
+    for (const site of sites) {
+      try {
+        const results = await booru
+          .search(site, tags, { limit: 100, random })
+          .then((res) => res.posts)
+        if (results.length > 0) {
+          return results
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    throw new SearchError('Failed to find any results in any booru')
+  } else {
+    return booru
+      .search(domain, tags, {
+        limit: 100,
+        random,
+      })
+      .then((res) => res.posts)
+  }
+}
+
+class SearchError extends Error {}
