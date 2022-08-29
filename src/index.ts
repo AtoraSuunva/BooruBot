@@ -10,6 +10,7 @@ import { ping } from './misc/ping.js'
 import { blacklist } from './boorubot/blacklist/index.js'
 import { config } from './boorubot/config/index.js'
 import { search } from './boorubot/search/search.js'
+import { link } from './boorubot/link.js'
 
 const TOKEN = env.get('TOKEN').required().asString()
 const APPLICATION_ID = env.get('APPLICATION_ID').required().asString()
@@ -48,6 +49,7 @@ sleetClient.addModules([
   blacklist,
   config,
   search,
+  link,
 
   // misc
   activity,
