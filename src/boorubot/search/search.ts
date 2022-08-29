@@ -152,6 +152,14 @@ async function runSearch(interaction: ChatInputCommandInteraction) {
     return
   }
 
+  if (site.domain === 'danbooru.donmai.us' && tags.length > 2) {
+    interaction.reply({
+      content: 'Sorry, but Danbooru only lets you search for 2 tags at a time.',
+      ephemeral: true,
+    })
+    return
+  }
+
   const blacklistedTagsUsed = getTagsMatchingBlacklist(tags, blacklistedTags)
 
   if (blacklistedTagsUsed.length > 0) {
@@ -203,6 +211,7 @@ async function runSearch(interaction: ChatInputCommandInteraction) {
           )}`
 
     interaction.editReply({ content })
+    return
   }
 
   if (results === null) {
@@ -218,7 +227,7 @@ async function runSearch(interaction: ChatInputCommandInteraction) {
   const posts = filterPosts(results, {
     minScore: settings.config.minScore,
     allowNSFW,
-    blacklistTags: settings.tags,
+    blacklistedTags,
   })
 
   if (posts.length === 0) {
@@ -403,7 +412,8 @@ async function searchBooru({
   tags,
   blacklistedSites,
 }: SearchBooruParams): Promise<Post[]> {
-  const random = !hasOrderTag(tags)
+  const tagLimit = domain === 'danbooru.domai.us' && tags.length > 1
+  const random = !hasOrderTag(tags) && !tagLimit
 
   if (domain === RANDOM_BOORU_VALUE) {
     // Search every available booru until we get a hit

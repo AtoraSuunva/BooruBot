@@ -113,18 +113,20 @@ export async function nsfwAllowedInChannel(
 interface ContextSettings {
   minScore: number | null
   allowNSFW: boolean
-  blacklistTags: string[]
+  blacklistedTags: string[]
 }
 
 export function filterPosts(
   posts: Post[],
-  { minScore, allowNSFW, blacklistTags }: ContextSettings,
+  { minScore, allowNSFW, blacklistedTags }: ContextSettings,
 ) {
   return posts.filter(
     (post) =>
+      post.fileUrl &&
+      post.available &&
       (minScore === null || post.score >= minScore) &&
       (allowNSFW || !isNSFWPost(post)) &&
-      !postMatchesBlacklist(post, blacklistTags),
+      !postMatchesBlacklist(post, blacklistedTags),
   )
 }
 
