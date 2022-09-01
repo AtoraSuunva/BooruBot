@@ -1,6 +1,6 @@
 # BooruBot Terms of Service
 
-Last Updated & Effective as of: [DATE]
+Last Updated & Effective as of: September 1, 2022
 
 For Discord Bot: BooruBot#9381 (204722411403345920)
 
@@ -28,6 +28,6 @@ Don't abuse BooruBot, including (but not limited to):
 
 BooruBot is run by Atlas#2564 (74768773940256768)
 
-You may contact the developer of BooruBot on the [support server](https://discord.gg/8K3uCfb) or via email (atora@giraffeduck.com)
+You may contact the developer of BooruBot on the [support server](https://discord.gg/8K3uCfb), through Discord, or via email (atora@giraffeduck.com)
 
 See also [BooruBot's Privacy Policy](./privacy.md)

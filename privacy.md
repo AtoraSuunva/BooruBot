@@ -1,6 +1,6 @@
 # BooruBot Privacy Policy
 
-Last Updated & Effective as of: [DATE]
+Last Updated & Effective as of: September 1, 2022
 
 For Discord Bot: BooruBot#9381 (204722411403345920)
 
@@ -11,7 +11,7 @@ BooruBot stores the following data, for the following reasons:
   - `tags`: To know which tags have been blacklisted
   - `sites`: To know which sites have been blacklisted
   - `min_score`: To know the minimum score posts need to be posted
-  - ... more?
+  - `allow_nsfw`: To know if NSFW can be posted in age-restricted channels or DMs
 
 All data stored by BooruBot can be deleted by running `/config delete` on Discord and confirming the deletion in-guild by someone with `Manage Server` permissions.
 
@@ -27,6 +27,6 @@ For a copy of your data, or to delete the data by request, you may contact the d
 
 BooruBot is run by Atlas#2564 (74768773940256768)
 
-You may contact the developer of BooruBot on the [support server](https://discord.gg/8K3uCfb) or via email (atora@giraffeduck.com)
+You may contact the developer of BooruBot on the [support server](https://discord.gg/8K3uCfb), through Discord, or via email (atora@giraffeduck.com)
 
 See also [BooruBot's Terms of Service](./tos.md)
