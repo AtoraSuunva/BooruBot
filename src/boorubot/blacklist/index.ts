@@ -1,6 +1,6 @@
 import { SleetSlashCommand, SleetSlashCommandGroup } from 'sleetcord'
 import { blacklistDelete } from './delete.js'
-import { blacklistList } from './list.js'
+import { blacklistView } from './view.js'
 import { blacklistAddSite, blacklistRemoveSite } from './sites.js'
 import { blacklistAddTags, blacklistRemoveTags } from './tag.js'
 
@@ -19,6 +19,6 @@ export const blacklistRemove = new SleetSlashCommandGroup({
 export const blacklist = new SleetSlashCommand({
   name: 'blacklist',
   description: 'Blacklist tags or sites from being returned by the bot',
-  options: [blacklistAdd, blacklistRemove, blacklistList, blacklistDelete],
+  options: [blacklistAdd, blacklistRemove, blacklistView, blacklistDelete],
   default_member_permissions: ['ManageMessages'],
 })

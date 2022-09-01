@@ -11,6 +11,7 @@ import { blacklist } from './boorubot/blacklist/index.js'
 import { config } from './boorubot/config/index.js'
 import { search } from './boorubot/search/search.js'
 import { link } from './boorubot/link.js'
+import { view } from './boorubot/view/index.js'
 
 const TOKEN = env.get('TOKEN').required().asString()
 const APPLICATION_ID = env.get('APPLICATION_ID').required().asString()
@@ -50,6 +51,7 @@ sleetClient.addModules([
   config,
   search,
   link,
+  view,
 
   // misc
   activity,
