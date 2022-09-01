@@ -45,15 +45,15 @@ function handleMessageCreate(message: Message): Promise<unknown> | void {
         .setStyle(ButtonStyle.Link)
         .setURL(inviteLink)
 
-      const whyButton = new ButtonBuilder()
-        .setLabel('Why')
+      const learnMoreButton = new ButtonBuilder()
+        .setLabel('Learn more')
         .setStyle(ButtonStyle.Link)
         .setURL(MORE_INFO_URL)
 
-      row.addComponents([inviteButton, whyButton])
+      row.addComponents([inviteButton, learnMoreButton])
 
       return message.reply({
-        content: `Use slash commands to interact with me, type \`/\` into your chat bar to see them.\nDon't see them? Try reinviting me.`,
+        content: `Use slash commands to interact with me, type \`/\` into your chat bar to see them.\nDon't see them? Try reinviting me!`,
         components: [row],
       })
     }
