@@ -3,7 +3,7 @@ import {
   ChatInputCommandInteraction,
 } from 'discord.js'
 import { AutocompleteHandler, SleetSlashCommand } from 'sleetcord'
-import { getMatchingSitesFor, getReferenceIdFor, siteInfo } from '../utils.js'
+import { resolveSitesFor, getReferenceIdFor, siteInfo } from '../utils.js'
 import { settingsCache } from '../SettingsCache.js'
 import {
   RANDOM_BOORU_SITE,
@@ -24,7 +24,7 @@ const autocompleteSiteWithBlacklist: AutocompleteHandler<string> = async ({
 
   const blacklistedSites = [...settings.sites, ...userSettings.sites]
 
-  const sites = getMatchingSitesFor(value)
+  const sites = resolveSitesFor(value)
     .filter((site) => !blacklistedSites.includes(site.domain))
     .map((site) => ({
       name: site.domain,
@@ -72,7 +72,7 @@ export const search = new SleetSlashCommand(
 
 async function runSearch(interaction: ChatInputCommandInteraction) {
   const booruOption = interaction.options.getString('booru', true)
-  const sites = getMatchingSitesFor(booruOption)
+  const sites = resolveSitesFor(booruOption)
 
   if (sites.length !== 1 && booruOption !== RANDOM_BOORU_VALUE) {
     interaction.reply({

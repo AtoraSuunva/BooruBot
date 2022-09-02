@@ -6,10 +6,10 @@ import { SleetSlashSubcommand } from 'sleetcord'
 import { database } from '../../util/db.js'
 import { settingsCache } from '../SettingsCache.js'
 import {
-  autocompleteSite,
   ensureConfigFor,
-  getMatchingSitesFor,
   getReferenceIdFor,
+  autocompleteSiteOrList,
+  resolveSitesAndListsFor,
 } from '../utils.js'
 import { formatBlacklist, getBlacklistFor } from './utils.js'
 
@@ -22,7 +22,7 @@ export const blacklistAddSite = new SleetSlashSubcommand(
         name: 'site',
         description: 'The site to add',
         type: ApplicationCommandOptionType.String,
-        autocomplete: autocompleteSite,
+        autocomplete: autocompleteSiteOrList,
         required: true,
       },
     ],
@@ -41,7 +41,7 @@ export const blacklistRemoveSite = new SleetSlashSubcommand(
         name: 'site',
         description: 'The site to remove',
         type: ApplicationCommandOptionType.String,
-        autocomplete: autocompleteSite,
+        autocomplete: autocompleteSiteOrList,
         required: true,
       },
     ],
@@ -56,27 +56,27 @@ type SiteAction = (referenceId: string, sites: string[]) => Promise<void>
 function makeSiteAction(siteAction: SiteAction) {
   return async function (interaction: ChatInputCommandInteraction) {
     const referenceId = getReferenceIdFor(interaction)
-    const sites = getMatchingSitesFor(
+    const sites = resolveSitesAndListsFor(
       interaction.options.getString('site', true),
     )
 
-    if (sites.length !== 1) {
+    if (sites.length < 1) {
       return interaction.reply({
         content: "Couldn't resolve a single site, try using the autocomplete",
         ephemeral: true,
       })
     }
 
-    const site = sites[0].domain
+    const flatSites = sites.flatMap((s) => s.sites)
 
     const defer = interaction.deferReply()
-    await siteAction(referenceId, [site])
+    await siteAction(referenceId, flatSites)
     await defer
 
     const formattedBlacklist = formatBlacklist(
       await getBlacklistFor(referenceId),
       {
-        highlightSites: [site],
+        highlightSites: flatSites,
       },
     )
 
