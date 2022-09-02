@@ -36,8 +36,8 @@ const SEARCH_SHOW = 'search/show'
 const SEARCH_SHOW_EMOJI = '🔎'
 const SEARCH_NEXT = 'search/next'
 const SEARCH_NEXT_EMOJI = '▶️'
-const SEARCH_POST_PUBLICALLY = 'search/post'
-const SEARCH_POST_PUBLICALLY_EMOJI = '📝'
+const SEARCH_POST_PUBLICLY = 'search/post'
+const SEARCH_POST_PUBLICLY_EMOJI = '📝'
 
 const IDLE_TIMEOUT = 5 * 60 * 1000 // 5 minutes in ms
 
@@ -199,10 +199,10 @@ export async function runBooruSearch(
     .setDisabled(posts.length < 2)
 
   const postButton = new ButtonBuilder()
-    .setCustomId(SEARCH_POST_PUBLICALLY)
+    .setCustomId(SEARCH_POST_PUBLICLY)
     .setStyle(ButtonStyle.Primary)
-    .setEmoji(SEARCH_POST_PUBLICALLY_EMOJI)
-    .setLabel('Post Publically')
+    .setEmoji(SEARCH_POST_PUBLICLY_EMOJI)
+    .setLabel('Post Publicly')
 
   const row = new ActionRowBuilder<ButtonBuilder>()
 
@@ -236,8 +236,8 @@ export async function runBooruSearch(
     components: [row],
   })
 
-  /** Posts that were already publically posted, to disable the button */
-  const publicallyPostedPosts: string[] = []
+  /** Posts that were already publicly posted, to disable the button */
+  const publiclyPostedPosts: string[] = []
 
   const collector = message.createMessageComponentCollector({
     componentType: ComponentType.Button,
@@ -255,8 +255,8 @@ export async function runBooruSearch(
       return
     }
 
-    if (i.customId === SEARCH_POST_PUBLICALLY) {
-      // Disable "Post publically" right after posting
+    if (i.customId === SEARCH_POST_PUBLICLY) {
+      // Disable "Post publicly" right after posting
       postButton.setDisabled(true)
       await i.update({
         components: [row],
@@ -267,7 +267,7 @@ export async function runBooruSearch(
         post: newPost,
         color,
       })
-      publicallyPostedPosts.push(newPost.id)
+      publiclyPostedPosts.push(newPost.id)
 
       i.followUp({
         ...newFormattedPost,
@@ -317,7 +317,7 @@ export async function runBooruSearch(
     hideButton.setCustomId(SEARCH_HIDE)
     prevButton.setDisabled(postNumber <= 1)
     nextButton.setDisabled(postNumber >= postCount)
-    postButton.setDisabled(publicallyPostedPosts.includes(newPost.id))
+    postButton.setDisabled(publiclyPostedPosts.includes(newPost.id))
 
     const newFormattedPost = formatPostToEmbed({
       post: newPost,
