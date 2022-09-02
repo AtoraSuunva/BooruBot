@@ -9,8 +9,17 @@ services:
       - .env
     environment:
       NODE_ENV: development # for now, until I have good prod logging
+      DATABASE_URL: "postgresql://${DB_USER-postgres}:${DB_PASSWORD-postgres}@localhost:5321/${DB_DATABASE-postgres}"
+
+  db:
+    image: postgres:14-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: "${DB_USER-postgres}"
+      POSTGRES_DB: "{DB_DATABASE-postgres}"
+      POSTGRES_PASSWORD: "${DB_PASSWORD-postgres}"
     volumes:
-      - db-data:/home/node/app/prisma/db
+      - db-data:/var/lib/postgresql/data
 
 volumes:
   db-data:

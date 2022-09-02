@@ -87,19 +87,15 @@ function makeSiteAction(siteAction: SiteAction) {
 async function addSites(referenceId: string, sites: string[]) {
   await ensureConfigFor(referenceId)
 
-  // TODO: createMany on non-SQLite
   const sitesToAdd = sites.map((site) => ({
     referenceId,
     name: site,
   }))
 
-  for (const site of sitesToAdd) {
-    await database.site.upsert({
-      where: { referenceId_name: site },
-      create: site,
-      update: site,
-    })
-  }
+  await database.site.createMany({
+    data: sitesToAdd,
+    skipDuplicates: true,
+  })
 
   settingsCache.deleteSites(referenceId)
 }

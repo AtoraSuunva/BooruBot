@@ -76,19 +76,15 @@ function makeTagModifier(tagAction: TagAction) {
 async function addTags(referenceId: string, tags: string[]) {
   await ensureConfigFor(referenceId)
 
-  // TODO: createMany on non-SQLite
   const tagsToAdd = tags.map((tag) => ({
     referenceId,
     name: tag,
   }))
 
-  for (const tag of tagsToAdd) {
-    await database.tag.upsert({
-      where: { referenceId_name: tag },
-      create: tag,
-      update: tag,
-    })
-  }
+  await database.tag.createMany({
+    data: tagsToAdd,
+    skipDuplicates: true,
+  })
 
   settingsCache.deleteTags(referenceId)
 }
