@@ -64,9 +64,6 @@ Sure, although you're responsible for keeping it maintained (I make no guarantee
 
 You're free to host the bot yourself, but it requires some dev knowledge:
 
-  * If you have/know docker, you can just clone the bot, setup a `.env` file, and `docker-compose up -d`
-  * This is recommended. All dependencies will be installed for you, databases will be migrated. Just use this.
-
   * I have no idea what the minimum required node.js version is, but v18.3.0 worked for me
   * You'll need a bot user set up, [see here](https://discord.com/developers/applications)
   * You'll need a postgres server set up (or any other database supported by [prisma](https://www.prisma.io/) by overriding the provider)
