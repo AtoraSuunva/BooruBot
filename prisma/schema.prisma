@@ -1,0 +1,38 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model BooruConfig {
+  // Reference Id is either: guild id or user id, for use in guilds or DMs respectively
+  // potentially also per-channel configs later?
+  referenceId String @id @map("reference_id")
+  tags Tag[]
+  sites Site[]
+  minScore Int? @map("min_score")
+  // default false in DM, true in guilds?
+  // true -> NSFW allowed in DMs & age-restricted channels (**ONLY** age-restricted channels)
+  // false -> NSFW not allowed anywhere at all
+  allowNSFW Boolean @default(false) @map("allow_nsfw")
+}
+
+model Tag {
+  referenceId String @map("reference_id")
+  name String
+  config BooruConfig @relation(fields: [referenceId], references: [referenceId], onDelete: Cascade)
+  @@id([referenceId, name])
+}
+
+model Site {
+  referenceId String @map("reference_id")
+  name String
+  config BooruConfig @relation(fields: [referenceId], references: [referenceId], onDelete: Cascade)
+  @@id([referenceId, name])
+}

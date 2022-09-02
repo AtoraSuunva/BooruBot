@@ -1,31 +1,47 @@
 {
   "name": "boorubot",
-  "version": "3.2.1",
+  "version": "4.0.0",
   "description": "A Discord bot to search boorus",
-  "main": "modules.js",
+  "type": "module",
+  "main": "dist/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start:dev": "node -r dotenv/config dist/index.js",
+    "start:prod": "npx prisma migrate deploy && node dist/index.js",
+    "build": "tsc --build",
+    "lint": "eslint src/ && prettier --check src/ && tsc --noEmit",
+    "lint:fix": "eslint src/ --fix && prettier --write src/ && tsc --noEmit"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/AtlasTheBot/Booru-Discord.git"
+    "url": "git+https://github.com/AtoraSuunva/Booru-Discord.git"
   },
   "keywords": [],
-  "author": "AtlasTheBot",
-  "license": "ISC",
+  "author": "AtoraSuunva",
+  "license": "MIT",
   "bugs": {
-    "url": "https://github.com/AtlasTheBot/Booru-Discord/issues"
+    "url": "https://github.com/AtoraSuunva/Booru-Discord/issues"
   },
-  "homepage": "https://github.com/AtlasTheBot/Booru-Discord#readme",
+  "homepage": "https://github.com/AtoraSuunva/Booru-Discord#readme",
   "dependencies": {
-    "booru": "2.5.3",
-    "bufferutil": "^4.0.3",
-    "discord.js": "^12.5.2",
-    "node-fetch": "^2.6.1",
-    "pg-promise": "^10.9.5",
-    "pmx": "^1.6.7",
-    "recursive-readdir-sync": "^1.0.6",
-    "utf-8-validate": "^5.0.4",
-    "zlib-sync": "^0.1.7"
+    "@prisma/client": "^4.2.1",
+    "booru": "^2.6.2",
+    "discord.js": "^14.2.0",
+    "dotenv": "^16.0.1",
+    "env-var": "^7.1.1",
+    "pino": "^8.4.1",
+    "sleetcord": "^0.5.0",
+    "undici": "^5.8.2"
+  },
+  "devDependencies": {
+    "@types/node": "^18.7.3",
+    "@typescript-eslint/eslint-plugin": "^5.33.0",
+    "@typescript-eslint/parser": "^5.33.0",
+    "eslint": "^8.22.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-import": "^2.26.0",
+    "pino-pretty": "^9.0.0",
+    "prettier": "^2.7.1",
+    "prisma": "^4.2.1",
+    "typescript": "^4.7.4"
   }
 }

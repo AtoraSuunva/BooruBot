@@ -1,91 +1,97 @@
-# BooruBot v3
+Search 16 different boorus directly from within Discord!
 
-A complete rewrite of BooruBot because the old code sucked.
+# [Add to Server](https://canary.discord.com/api/oauth2/authorize?client_id=204721731162734592&permissions=0&scope=bot%20applications.commands)
 
-Does the same things as the old BooruBot, but better.
+[Support Server](https://discord.gg/8K3uCfb) - [Privacy Policy](./privacy.md) - [Terms of Service](./tos.md)
 
-Detailed changelog [here](https://github.com/AtlasTheBot/Booru-Discord/issues/14)
+# **Features:**
 
-#### Features:
-* Tag/Site blacklist
-* Can be restricted to only search in certain channels
-* NSFW in nsfw channels only (Unless you mark the entire server as nsfw with `b!set nsfwServer true`)
-* Support for [16 sites](./sites.md)
-* Ability to randomly search all sites
-* Command to delete images the bot posted to shield your eyes
-* Uses fancy embeds! (With fallbacks in case embeds are disabled)
-* Some other stuff I forgot
+  - Tag/Site blacklist (server-wide and personal per-user lists)
+  - NSFW in age-restricted channels **only** (See below on how to opt-in for DMs or opt-out for servers)
+  - Support for 16 sites
+  - Ability to randomly search all sites until you get a result
+  - Configurable minimum score a post needs to be shown! Filter out posts with a negative score!
+  - Uses fancy embeds!
+  - Previous/Next buttons to look through all the results (up to 100!)
+  - "Hide post" ❌ button to hide the image if it's... not great!
+  - Search privately with ephemeral results! "Post Publicly" button once you find what you want to show everyone!
+  - Open source!
 
-# [Invite!](https://discordapp.com/oauth2/authorize?client_id=204721731162734592&scope=bot&permissions=0)
+Use `/search` for the main bot functionality, and use `/config` and `/blacklist` to manage the bot
 
----
+# **Opting into NSFW**
 
-### Commands
+By default, NSFW results (posts not rated `safe`) are *only* shown in age-restricted channels, not anywhere else (including DMs).
 
-Things in between `[]` are required, things in between `<>` are optional.
-Also don't include `[]` and `<>` in the commands themselves.
+If you want to **opt-out** of NSFW results _anywhere_ on your server, run `/config set allow_nsfw allow:False` (You will need "Manage Messages" permissions or an override)
 
-| Command | Description | Aliases |
-| ------- | ----------- | ------- |
-| `b!help <command>` | Get a list of commands or display help for a specific command | None
-| `b!search [site] <tag1> <tag2> <tagn>` | Search some boorus! Add as many (or as little) tags as you want, seperated by spaces | `s`, The name of the booru (`b!sb cat`)
-| `b!link [url]` | Takes a url to a post on a booru and creates an embed from it | `ln`
-| `b!sites` | Posts a link to all supported sites | None
-| `b!delete <x>` | Deletes the last image, or the last x images | `del`, `delet this`
-| `b!invite <"server">` | Posts an invite link for BooruBot in chat, or the link to the support server in DMs | None
-| `b!ping` | Pong! Displays BooruBot's ping | None
-| `b!stats` | Some stats about the bot | None
-| `b!info` | Some info about the bot | None
-| `b!settings <setting>` | View the current settings for this server or info about a setting | `set`, `setting`, `seting`
-| `b!blacklist` | View the current blacklist | `bl`
+If you want to **opt-in** to NSFW results _in DMs_, run `/config set allow_nsfw allow:True` in a DM with the bot
 
-`b!sites` supports `r`, `rand` or `random` as a site! It will keep searching through sites until it finds an image or runs out of sites!
+NSFW results will **never** be posted in non age-restricted channels, regardless of your settings. If you want NSFW results in a channel, mark it age-restricted.
 
-#### Mod Commands
+> ⚠️ NSFW filtering depends on the rating the booru gave the post. There is always a chance someone marked the post wrong and you get a non-safe post.
 
-These commands require special perms and are not usable by all server members.
+# **Managing the blacklist**
 
-| Command | Description | Aliases |
-| ------- | ----------- | ------- |
-| `b!settings <setting> <newValue>` | **[Manage Guild]**: Allows you to modify settings | `set`, `setting`, `seting`
-| `b!blacklist <"tag" or "site"> <thing to blacklist>` | **[Manage Messages]**: Allows you to blacklist a tag/site. You don't need to put the full site url to blacklist it, site aliases are supported | `bl`
-| `b!whitelist ["tag" or "site"] [thing to whitelist]` | **[Manage Messages]**: Allows you to remove a tag/site from the blacklist | `wl`
+> ℹ️ Running these commands in-server will manage that server's blacklist, while running them in-DM will manage your _personal_ blacklist.
+> When you search in a server, the server blacklist and your personal blacklist are merged together to filter the results
 
-Note about the blacklist:
-* Applies per server
-* Users cannot search using blacklisted tags or sites
-* `r`, `rand` and `random` won't use blacklisted sites
-* You can use `all` to blacklist all sites or whitelist all sites/tags (`b!bl sites all`, `b!wl tags all`)
-* You can replace `all` with `nsfw` or `sfw` to blacklist/whitelist all nsfw/sfw sites too
+Use the `/blacklist` command to view/edit/delete the blacklist. See the subcommands for what exactly you can do. You'll need "Manage Messages" to use these commands.
+
+Use `/view blacklist` to view the blacklist without any permissions.
 
 ---
 
 ### FAQ
 
 #### Can you add support/alias for (site)?
-Ask me, and I'll try my best. Just note that I can't get images from a booru without an api. Be sure to check the site list to see if I haven't tried to support it already.
+Booru support is done using the [booru](https://github.com/AtoraSuunva/booru) package. I maintain that package so you are welcome to suggest (or even implement yourself) sites to support. (Preferably open an [issue on booru](https://github.com/AtoraSuunva/booru/issues), but I can forward requests there as well)
 
-#### Can I use this code?
-Sure! You can either host it yourself or fork it or extend it or...
+#### I have a bug report/idea/feedback...
+Feel free to report/ask/post in the support server
+
+#### Can I use/fork this code?
+It's MIT licensed, go for it
 
 #### Can I run the bot myself?
-Feel free to, although you might run into a few issues for some manual configuration stuff (Although I tried to avoid that!)  
-Check the section below
+Sure, although you're responsible for keeping it maintained (I make no guarantees)
 
 ---
 
 ### Selfhosting
-You're free to host the bot yourself, just a few things to keep in mind:
 
-* This requires node v8 minimum (Or v7 with the `--harmony-async-await` flag)
-* You'll need to add an env var called `BOT_TOKEN` with the bot's token
-* You need to rename `config_example.json` to `config.json`
-  * `debug` mode logs more info about commands being used and such
-  * You can swap whatever invokers you want to add/remove via this config or the `invoker` command (`b!help invoker`)
-* You need to install the dependencies first, run `npm i` or `yarn` inside the bot's directory
-* The bot is easily extendable, checkout [test.js](https://gist.github.com/AtlasTheBot/ee9a1e305f530abbf0c4d43fbb058c2a). Do note that there's very little docs for it besides test.js
-* This code might break on you, in that case open up on issue here on the repo
-* You need a postgres server running, with the sql scripts setup and DB connection details as env vars (`DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_DATABASE`)
+> ⚠️ ***I make no guarantees about anything if you selfhost the bot.*** You _will_ be on your own. I might help you if you're stuck, but **I do not officially provide support for selfhosting.** Don't do this unless you know what you're doing. You revoke all right to complain if something goes wrong when you selfhost if you selfhost.
+
+You're free to host the bot yourself, but it requires some dev knowledge:
+
+  * I have no idea what the minimum required node.js version is, but v18.3.0 worked for me
+  * You'll need a bot user set up, [see here](https://discord.com/developers/applications)
+  * You'll need a postgres server set up (or any other database supported by [prisma](https://www.prisma.io/) by overriding the provider)
+  * You'll need a `.env` file:
+
+```toml
+NODE_ENV=<production | development>
+TOKEN=<bot token>
+APPLICATION_ID=<app id>
+USE_PINO_PRETTY=<true | false>
+DATABASE_URL=<database url>
+```
+
+Then:
+
+```sh
+# Install dependencies (pnpm is used, but npm/yarn also work)
+pnpm install
+
+# Build the bot
+pnpm run build
+
+# Run in dev mode (or)
+pnpm run start:dev
+
+# Run in production mode
+pnpm run start:prod
+```
 
 ---
 

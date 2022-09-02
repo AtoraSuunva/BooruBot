@@ -14,7 +14,7 @@ safebooru.org      | sb, safe, safebooru      | No
 tbib.org           | tbib, big                | No  
 xbooru.com         | xb, xbooru               | Yes  
 rule34.paheal.net  | pa, paheal               | Yes  
-derpibooru.org     | dp, derpi                | Yes  | Random is slightly weird?
+derpibooru.org     | dp, derpi                | Yes  
 
 ---
 
