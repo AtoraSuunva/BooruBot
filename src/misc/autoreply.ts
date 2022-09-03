@@ -19,7 +19,9 @@ export const autoreply = new SleetModule(
 
 let clientUserRegex: RegExp | null = null
 
-const MORE_INFO_URL =
+const CHANGELOG_URL = 'https://github.com/AtoraSuunva/booru/releases'
+const SOURCE_URL = 'https://github.com/AtoraSuunva/Booru-Discord'
+const WHY_SLASH_URL =
   'https://gist.github.com/AtoraSuunva/c55dd6c7e157eeb25c26ef09f47790d8'
 
 function handleMessageCreate(message: Message): Promise<unknown> | void {
@@ -45,15 +47,30 @@ function handleMessageCreate(message: Message): Promise<unknown> | void {
         .setStyle(ButtonStyle.Link)
         .setURL(inviteLink)
 
-      const learnMoreButton = new ButtonBuilder()
-        .setLabel('Learn more')
+      const changelogButton = new ButtonBuilder()
+        .setLabel('Changelog')
         .setStyle(ButtonStyle.Link)
-        .setURL(MORE_INFO_URL)
+        .setURL(CHANGELOG_URL)
 
-      row.addComponents([inviteButton, learnMoreButton])
+      const sourceButton = new ButtonBuilder()
+        .setLabel('More Info & Source Code')
+        .setStyle(ButtonStyle.Link)
+        .setURL(SOURCE_URL)
+
+      const whySlashButton = new ButtonBuilder()
+        .setLabel('Why Slash Commands?')
+        .setStyle(ButtonStyle.Link)
+        .setURL(WHY_SLASH_URL)
+
+      row.addComponents([
+        inviteButton,
+        changelogButton,
+        sourceButton,
+        whySlashButton,
+      ])
 
       return message.reply({
-        content: `Use slash commands to interact with me, type \`/\` into your chat bar to see them.\nDon't see them? Try reinviting me!`,
+        content: `Use slash commands to interact with me, type \`/\` into your chat bar to see them.\nDon't see them? Try reinviting me!\nWant to learn more about how to use me? Click the "More Info" button!`,
         components: [row],
       })
     }
