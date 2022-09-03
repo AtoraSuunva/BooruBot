@@ -47,6 +47,9 @@ export interface SearchSettings {
   ephemeral: boolean
 }
 
+const WHY_NO_NSFW_DM_URL =
+  ' [Opting into NSFW](https://github.com/AtoraSuunva/Booru-Discord#opting-into-nsfw)'
+
 /**
  * Run the actual search, split out so that /link can use this as well, and to split
  * the "parse params" logic and "search booru" logic
@@ -114,9 +117,12 @@ export async function runBooruSearch(
     settings.config.allowNSFW,
   )
 
+  const noNSFWMessage =
+    !reference.isGuild && !allowNSFW ? WHY_NO_NSFW_DM_URL : ''
+
   if (!allowNSFW && getTagsMatchingBlacklist(tags, NSFW_RATINGS).length > 0) {
     interaction.reply({
-      content: 'NSFW is not allowed in this channel.',
+      content: `NSFW is not allowed in this channel.${noNSFWMessage}`,
       ephemeral: true,
     })
     return
@@ -172,7 +178,7 @@ export async function runBooruSearch(
       interaction.editReply('No results found.')
     } else {
       interaction.editReply(
-        `${unfilteredPosts.length} results found, but were all filtered.`,
+        `${unfilteredPosts.length} results found, but were all filtered.${noNSFWMessage}`,
       )
     }
 
@@ -326,6 +332,7 @@ export async function runBooruSearch(
       postCount,
       hiddenPostsCount,
       timeTaken,
+      appendContent: noNSFWMessage,
     })
 
     i.update({

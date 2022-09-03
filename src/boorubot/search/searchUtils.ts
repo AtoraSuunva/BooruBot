@@ -232,6 +232,7 @@ interface PostFormatOptions {
   postNumber?: number
   postCount?: number
   hiddenPostsCount?: number
+  appendContent?: string
 }
 
 interface FormattedPost {
@@ -246,6 +247,7 @@ export function formatPostToEmbed({
   postNumber,
   postCount,
   hiddenPostsCount = 0,
+  appendContent = '',
 }: PostFormatOptions): FormattedPost {
   const ext = extname(post.fileUrl ?? '').toLowerCase()
 
@@ -290,10 +292,10 @@ export function formatPostToEmbed({
   const content =
     hiddenPostsCount > 0
       ? `${hiddenPostsCount} hidden ${pluralize('post', hiddenPostsCount)}.`
-      : null
+      : ''
 
   return {
-    content,
+    content: `${content}${appendContent}`.trim(),
     embeds: [embed],
   }
 }
