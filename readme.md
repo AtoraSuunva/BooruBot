@@ -1,4 +1,4 @@
-Search 16 different boorus directly from within Discord!
+Search 15 different boorus directly from within Discord!
 
 # [Add to Server](https://canary.discord.com/api/oauth2/authorize?client_id=204721731162734592&permissions=0&scope=bot%20applications.commands)
 
@@ -8,7 +8,7 @@ Search 16 different boorus directly from within Discord!
 
   - Tag/Site blacklist (server-wide and personal per-user lists)
   - NSFW in age-restricted channels **only** (See below on how to opt-in for DMs or opt-out for servers)
-  - Support for 16 sites
+  - Support for 15 sites
   - Ability to randomly search all sites until you get a result
   - Configurable minimum score a post needs to be shown! Filter out posts with a negative score!
   - Uses fancy embeds!

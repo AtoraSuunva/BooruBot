@@ -4,4 +4,4 @@ prisma/db/
 .tsbuildinfo
 .env
 .vscode
-ecosystem.config.js
+ecosystem.config.cjs
