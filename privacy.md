@@ -1,6 +1,6 @@
 # BooruBot Privacy Policy
 
-Last Updated & Effective as of: September 1, 2022
+Last Updated & Effective as of: September 2, 2022
 
 For Discord Bot: BooruBot#9381 (204722411403345920)
 
@@ -18,6 +18,12 @@ All data stored by BooruBot can be deleted by running `/config delete` on Discor
 Config data for a guild is stored for 10 days after BooruBot is removed from a guild, unless the bot is re-invited.
 
 Data deleted manually (via `/config delete`) or automatically (after 10 days of not being in the guild) is deleted permanently.
+
+[Rollbar](https://rollbar.com) is used for error tracking. Data collected when an error occurs:
+  - `error`: The error message and stack trace
+  - `interaction`: The interaction + options used (ie. `/search [site<string>: example.com] [tags<string>: foo bar]`)
+
+Errors reported to Rollbar are deleted after 30 days.
 
 For a copy of your data, or to delete the data by request, you may contact the developer. Please note that you may be required to verify your identity and/or your permissions on a server before requests can be completed, to avoid unauthorized access or deletion of data.
 

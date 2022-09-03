@@ -12,6 +12,7 @@ import { config } from './boorubot/config/index.js'
 import { search } from './boorubot/search/search.js'
 import { link } from './boorubot/link.js'
 import { view } from './boorubot/view/index.js'
+import { rollbarLogger } from './util/rollbar.js'
 
 const TOKEN = env.get('TOKEN').required().asString()
 const APPLICATION_ID = env.get('APPLICATION_ID').required().asString()
@@ -34,6 +35,7 @@ const sleetClient = new SleetClient({
     applicationId: APPLICATION_ID,
   },
   client: {
+    shards: 'auto',
     intents: [
       // Remove this once people are better aware of slash commands?
       // I should monitor @bot mentions to see if they die out
@@ -59,10 +61,10 @@ sleetClient.addModules([
   info,
   ping,
   stats,
-])
 
-// const TEST_GUILD_ID = env.get('TEST_GUILD_ID').required().asString()
-// sleetClient.putCommands({ guildId: TEST_GUILD_ID, commands: [] })
+  // error logging
+  rollbarLogger,
+])
 
 sleetClient.putCommands()
 sleetClient.login()
