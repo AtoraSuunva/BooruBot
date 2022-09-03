@@ -4,10 +4,10 @@ import {
 } from 'discord.js'
 import { SleetSlashSubcommand } from 'sleetcord'
 import { database } from '../../util/db.js'
-import { settingsCache } from '../SettingsCache.js'
+import { Reference, settingsCache } from '../SettingsCache.js'
 import {
   ensureConfigFor,
-  getReferenceIdFor,
+  getReferenceFor,
   autocompleteSiteOrList,
   resolveSitesAndListsFor,
 } from '../utils.js'
@@ -51,11 +51,11 @@ export const blacklistRemoveSite = new SleetSlashSubcommand(
   },
 )
 
-type SiteAction = (referenceId: string, sites: string[]) => Promise<void>
+type SiteAction = (reference: Reference, sites: string[]) => Promise<void>
 
 function makeSiteAction(siteAction: SiteAction) {
   return async function (interaction: ChatInputCommandInteraction) {
-    const referenceId = getReferenceIdFor(interaction)
+    const reference = getReferenceFor(interaction)
     const sites = resolveSitesAndListsFor(
       interaction.options.getString('site', true),
     )
@@ -70,11 +70,11 @@ function makeSiteAction(siteAction: SiteAction) {
     const flatSites = sites.flatMap((s) => s.sites)
 
     const defer = interaction.deferReply()
-    await siteAction(referenceId, flatSites)
+    await siteAction(reference, flatSites)
     await defer
 
     const formattedBlacklist = formatBlacklist(
-      await getBlacklistFor(referenceId),
+      await getBlacklistFor(reference.id),
       {
         highlightSites: flatSites,
       },
@@ -84,11 +84,11 @@ function makeSiteAction(siteAction: SiteAction) {
   }
 }
 
-async function addSites(referenceId: string, sites: string[]) {
-  await ensureConfigFor(referenceId)
+async function addSites(reference: Reference, sites: string[]) {
+  await ensureConfigFor(reference)
 
   const sitesToAdd = sites.map((site) => ({
-    referenceId,
+    referenceId: reference.id,
     name: site,
   }))
 
@@ -97,15 +97,15 @@ async function addSites(referenceId: string, sites: string[]) {
     skipDuplicates: true,
   })
 
-  settingsCache.deleteSites(referenceId)
+  settingsCache.deleteSites(reference.id)
 }
 
-async function removeSites(referenceId: string, sites: string[]) {
-  await ensureConfigFor(referenceId)
+async function removeSites(reference: Reference, sites: string[]) {
+  await ensureConfigFor(reference)
 
   await database.site.deleteMany({
     where: { name: { in: sites } },
   })
 
-  settingsCache.deleteSites(referenceId)
+  settingsCache.deleteSites(reference.id)
 }

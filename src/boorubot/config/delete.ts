@@ -9,7 +9,7 @@ import {
 import { SleetSlashSubcommand } from 'sleetcord'
 import { database } from '../../util/db.js'
 import { settingsCache } from '../SettingsCache.js'
-import { getReferenceIdFor } from '../utils.js'
+import { getReferenceFor } from '../utils.js'
 
 export const configDelete = new SleetSlashSubcommand(
   {
@@ -32,9 +32,9 @@ async function runDelete(interaction: ChatInputCommandInteraction) {
   const defer = interaction.deferReply({ fetchReply: true })
 
   const confirm = interaction.options.getBoolean('confirm', false)
-  const referenceId = getReferenceIdFor(interaction)
+  const reference = getReferenceFor(interaction)
   const config = database.booruConfig.findFirst({
-    where: { referenceId },
+    where: { referenceId: reference.id },
   })
 
   const message = await defer
@@ -45,14 +45,14 @@ async function runDelete(interaction: ChatInputCommandInteraction) {
   }
 
   if (confirm === true) {
-    await deleteConfig(referenceId)
+    await deleteConfig(reference.id)
     interaction.editReply('Config deleted.')
     return
   }
 
   const deleteButton = new ButtonBuilder()
     .setStyle(ButtonStyle.Danger)
-    .setCustomId(`config/delete:${referenceId},${interaction.user.id}`)
+    .setCustomId(`config/delete:${reference},${interaction.user.id}`)
     .setLabel('Confirm Delete')
 
   const row = new ActionRowBuilder<ButtonBuilder>().addComponents(deleteButton)
@@ -71,7 +71,7 @@ async function runDelete(interaction: ChatInputCommandInteraction) {
     if (i.user.id === interaction.user.id) {
       const defer = i.deferReply({ ephemeral: true })
 
-      await deleteConfig(referenceId)
+      await deleteConfig(reference.id)
 
       interaction.editReply({
         content: `Booru config deleted. Requested by ${interaction.user}`,

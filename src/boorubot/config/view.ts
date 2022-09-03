@@ -3,7 +3,7 @@ import { ChatInputCommandInteraction, EmbedBuilder } from 'discord.js'
 import { SleetSlashSubcommand } from 'sleetcord'
 import { database } from '../../util/db.js'
 import { settingsCache } from '../SettingsCache.js'
-import { getReferenceIdFor } from '../utils.js'
+import { getReferenceFor } from '../utils.js'
 
 export const configView = new SleetSlashSubcommand(
   {
@@ -16,12 +16,12 @@ export const configView = new SleetSlashSubcommand(
 )
 
 async function runView(interaction: ChatInputCommandInteraction) {
-  const referenceId = getReferenceIdFor(interaction)
+  const reference = getReferenceFor(interaction)
 
   const defer = interaction.deferReply()
 
   const config = await database.booruConfig.findFirst({
-    where: { referenceId },
+    where: { referenceId: reference.id },
   })
 
   await defer
@@ -31,7 +31,7 @@ async function runView(interaction: ChatInputCommandInteraction) {
     return
   }
 
-  settingsCache.setConfig(referenceId, config)
+  settingsCache.setConfig(reference.id, config)
 
   const view = createConfigView(config)
   interaction.editReply(view)

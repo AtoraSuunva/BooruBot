@@ -4,8 +4,8 @@ import {
 } from 'discord.js'
 import { SleetSlashSubcommand } from 'sleetcord'
 import { database } from '../../util/db.js'
-import { settingsCache } from '../SettingsCache.js'
-import { ensureConfigFor, getItemsFrom, getReferenceIdFor } from '../utils.js'
+import { Reference, settingsCache } from '../SettingsCache.js'
+import { ensureConfigFor, getItemsFrom, getReferenceFor } from '../utils.js'
 import { formatBlacklist, getBlacklistFor } from './utils.js'
 
 export const blacklistAddTags = new SleetSlashSubcommand(
@@ -44,11 +44,11 @@ export const blacklistRemoveTags = new SleetSlashSubcommand(
   },
 )
 
-type TagAction = (referenceId: string, tags: string[]) => Promise<void>
+type TagAction = (reference: Reference, tags: string[]) => Promise<void>
 
 function makeTagModifier(tagAction: TagAction) {
   return async function (interaction: ChatInputCommandInteraction) {
-    const referenceId = getReferenceIdFor(interaction)
+    const reference = getReferenceFor(interaction)
     const tags = getItemsFrom(interaction.options.getString('tags', true))
 
     if (tags.length === 0) {
@@ -59,11 +59,11 @@ function makeTagModifier(tagAction: TagAction) {
     }
 
     const defer = interaction.deferReply()
-    await tagAction(referenceId, tags)
+    await tagAction(reference, tags)
     await defer
 
     const formattedBlacklist = formatBlacklist(
-      await getBlacklistFor(referenceId),
+      await getBlacklistFor(reference.id),
       {
         highlightTags: tags,
       },
@@ -73,11 +73,11 @@ function makeTagModifier(tagAction: TagAction) {
   }
 }
 
-async function addTags(referenceId: string, tags: string[]) {
-  await ensureConfigFor(referenceId)
+async function addTags(reference: Reference, tags: string[]) {
+  await ensureConfigFor(reference)
 
   const tagsToAdd = tags.map((tag) => ({
-    referenceId,
+    referenceId: reference.id,
     name: tag,
   }))
 
@@ -86,15 +86,15 @@ async function addTags(referenceId: string, tags: string[]) {
     skipDuplicates: true,
   })
 
-  settingsCache.deleteTags(referenceId)
+  settingsCache.deleteTags(reference.id)
 }
 
-async function removeTags(referenceId: string, tags: string[]) {
-  await ensureConfigFor(referenceId)
+async function removeTags(reference: Reference, tags: string[]) {
+  await ensureConfigFor(reference)
 
   await database.tag.deleteMany({
     where: { name: { in: tags } },
   })
 
-  settingsCache.deleteTags(referenceId)
+  settingsCache.deleteTags(reference.id)
 }

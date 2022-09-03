@@ -7,7 +7,7 @@ import {
   ComponentType,
   inlineCode,
 } from 'discord.js'
-import { getReferenceIdFor, shuffleArray, siteInfo } from '../utils.js'
+import { getReferenceFor, shuffleArray, siteInfo } from '../utils.js'
 import booru from 'booru'
 import { default as Post } from 'booru/dist/structures/Post.js'
 import { settingsCache } from '../SettingsCache.js'
@@ -59,11 +59,11 @@ export async function runBooruSearch(
   { site, tags, ephemeral }: SearchSettings,
 ) {
   // Fetch settings
-  const referenceId = getReferenceIdFor(interaction)
+  const reference = getReferenceFor(interaction)
   const userReferenceId = interaction.user.id
   const [settings, userSettings] = await Promise.all([
-    settingsCache.get(referenceId),
-    settingsCache.get(userReferenceId),
+    settingsCache.get(reference),
+    settingsCache.get({ id: userReferenceId, isGuild: false }),
   ])
 
   const blacklistedSites = [...settings.sites, ...userSettings.sites]

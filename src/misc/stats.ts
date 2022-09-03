@@ -100,24 +100,24 @@ async function getCount(
 }
 
 async function getGuildCount(client: Client): Promise<number> {
-  return getCount(client, c => c.guilds.cache.size)
+  return getCount(client, (c) => c.guilds.cache.size)
 }
 
 async function getMemberCount(client: Client): Promise<number> {
   const sumMembers = (acc: number, guild: Guild) => acc + guild.memberCount
-  return getCount(client, c => c.guilds.cache.reduce(sumMembers, 0))
+  return getCount(client, (c) => c.guilds.cache.reduce(sumMembers, 0))
 }
 
 async function getUserCount(client: Client): Promise<number> {
-  return getCount(client, c => c.users.cache.size)
+  return getCount(client, (c) => c.users.cache.size)
 }
 
 async function getChannelCount(client: Client): Promise<number> {
-  return getCount(client, c => c.channels.cache.size)
+  return getCount(client, (c) => c.channels.cache.size)
 }
 
 async function getEmojiCount(client: Client): Promise<number> {
-  return getCount(client, c => c.emojis.cache.size)
+  return getCount(client, (c) => c.emojis.cache.size)
 }
 
 /**

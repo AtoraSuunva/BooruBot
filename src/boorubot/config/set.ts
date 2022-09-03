@@ -10,7 +10,7 @@ import {
 import { SleetSlashCommandGroup, SleetSlashSubcommand } from 'sleetcord'
 import { database } from '../../util/db.js'
 import { settingsCache } from '../SettingsCache.js'
-import { getReferenceIdFor } from '../utils.js'
+import { getReferenceFor } from '../utils.js'
 import { createConfigView } from './view.js'
 
 const setMinScore = new SleetSlashSubcommand(
@@ -32,17 +32,21 @@ const setMinScore = new SleetSlashSubcommand(
 
 async function runSetMinScore(interaction: ChatInputCommandInteraction) {
   const score = interaction.options.getNumber('score')
-  const referenceId = getReferenceIdFor(interaction)
+  const reference = getReferenceFor(interaction)
 
   const defer = interaction.deferReply()
 
   const config = await database.booruConfig.upsert({
-    where: { referenceId },
-    create: { referenceId, minScore: score },
+    where: { referenceId: reference.id },
+    create: {
+      referenceId: reference.id,
+      minScore: score,
+      isGuild: reference.isGuild,
+    },
     update: { minScore: score },
   })
 
-  settingsCache.setConfig(referenceId, config)
+  settingsCache.setConfig(reference.id, config)
 
   await defer
 
@@ -137,17 +141,21 @@ async function setAllowNSFWAndReply(
   interaction: ChatInputCommandInteraction | MessageComponentInteraction,
   allowNSFW: boolean,
 ) {
-  const referenceId = getReferenceIdFor(interaction)
+  const reference = getReferenceFor(interaction)
 
   const defer = interaction.deferReply()
 
   const config = await database.booruConfig.upsert({
-    where: { referenceId },
-    create: { referenceId, allowNSFW },
+    where: { referenceId: reference.id },
+    create: {
+      referenceId: reference.id,
+      allowNSFW,
+      isGuild: reference.isGuild,
+    },
     update: { allowNSFW },
   })
 
-  settingsCache.setConfig(referenceId, config)
+  settingsCache.setConfig(reference.id, config)
 
   await defer
 

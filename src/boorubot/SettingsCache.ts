@@ -7,16 +7,21 @@ export interface BooruSettings {
   sites: string[]
 }
 
+export type Reference = {
+  id: string
+  isGuild: boolean
+}
+
 class SettingsCache {
   #configCache = new Map<string, BooruConfig>()
   #tagsCache = new Map<string, string[]>()
   #sitesCache = new Map<string, string[]>()
 
-  async get(referenceId: string): Promise<BooruSettings> {
+  async get(reference: Reference): Promise<BooruSettings> {
     const [config, tags, sites] = await Promise.all([
-      this.getConfig(referenceId),
-      this.getTags(referenceId),
-      this.getSites(referenceId),
+      this.getConfig(reference),
+      this.getTags(reference.id),
+      this.getSites(reference.id),
     ])
 
     return {
@@ -26,24 +31,38 @@ class SettingsCache {
     }
   }
 
-  async getConfig(referenceId: string): Promise<BooruConfig> {
-    const cache = this.#configCache.get(referenceId)
+  async getConfig(reference: Reference): Promise<BooruConfig> {
+    const cache = this.#configCache.get(reference.id)
 
     if (cache) {
       return cache
     }
 
     let config = await database.booruConfig.findUnique({
-      where: { referenceId },
+      where: { referenceId: reference.id },
     })
 
-    if (config === null) {
-      config = await database.booruConfig.create({
-        data: { referenceId },
+    if (config && config.isGuild !== reference.isGuild) {
+      config = await database.booruConfig.update({
+        where: { referenceId: reference.id },
+        data: {
+          allowNSFW: reference.isGuild,
+          isGuild: reference.isGuild,
+        },
       })
     }
 
-    this.#configCache.set(referenceId, config)
+    if (config === null) {
+      config = await database.booruConfig.create({
+        data: {
+          referenceId: reference.id,
+          allowNSFW: reference.isGuild,
+          isGuild: reference.isGuild,
+        },
+      })
+    }
+
+    this.#configCache.set(reference.id, config)
 
     return config
   }

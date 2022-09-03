@@ -11,6 +11,7 @@ datasource db {
 }
 
 model BooruConfig {
+  @@map("booru_config")
   // Reference Id is either: guild id or user id, for use in guilds or DMs respectively
   // potentially also per-channel configs later?
   referenceId String @id @map("reference_id")
@@ -21,9 +22,11 @@ model BooruConfig {
   // true -> NSFW allowed in DMs & age-restricted channels (**ONLY** age-restricted channels)
   // false -> NSFW not allowed anywhere at all
   allowNSFW Boolean @default(false) @map("allow_nsfw")
+  isGuild Boolean @map("is_guild")
 }
 
 model Tag {
+  @@map("tag")
   referenceId String @map("reference_id")
   name String
   config BooruConfig @relation(fields: [referenceId], references: [referenceId], onDelete: Cascade)
@@ -31,6 +34,7 @@ model Tag {
 }
 
 model Site {
+  @@map("site")
   referenceId String @map("reference_id")
   name String
   config BooruConfig @relation(fields: [referenceId], references: [referenceId], onDelete: Cascade)

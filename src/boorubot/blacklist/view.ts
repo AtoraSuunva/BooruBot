@@ -3,7 +3,7 @@ import {
   ChatInputCommandInteraction,
 } from 'discord.js'
 import { SleetSlashSubcommand } from 'sleetcord'
-import { getReferenceIdFor } from '../utils.js'
+import { getReferenceFor } from '../utils.js'
 import { formatBlacklist, getBlacklistFor } from './utils.js'
 
 export const blacklistView = new SleetSlashSubcommand(
@@ -26,8 +26,8 @@ export const blacklistView = new SleetSlashSubcommand(
 
 export async function runView(interaction: ChatInputCommandInteraction) {
   const ephemeral = interaction.options.getBoolean('ephemeral') ?? false
-  const referenceId = getReferenceIdFor(interaction)
-  const blacklist = await getBlacklistFor(referenceId)
+  const reference = getReferenceFor(interaction)
+  const blacklist = await getBlacklistFor(reference.id)
   const formattedBlacklist = formatBlacklist(blacklist)
   interaction.reply({
     content: formattedBlacklist,

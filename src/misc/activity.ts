@@ -6,7 +6,7 @@ import {
   ChatInputCommandInteraction,
   Client,
 } from 'discord.js'
-import { isOwner, SleetContext, SleetSlashCommand } from 'sleetcord'
+import { isOwnerGuard, SleetContext, SleetSlashCommand } from 'sleetcord'
 
 /** Our status list needs a type and name to apply */
 type Status = Pick<ActivityOptions, 'name' | 'type'>
@@ -126,7 +126,7 @@ async function runActivity(
   this: SleetContext,
   interaction: ChatInputCommandInteraction,
 ) {
-  isOwner(interaction)
+  isOwnerGuard(interaction)
 
   if (!interaction.client.user) {
     return interaction.reply({

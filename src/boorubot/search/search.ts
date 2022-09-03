@@ -3,7 +3,7 @@ import {
   ChatInputCommandInteraction,
 } from 'discord.js'
 import { AutocompleteHandler, SleetSlashCommand } from 'sleetcord'
-import { resolveSitesFor, getReferenceIdFor, siteInfo } from '../utils.js'
+import { resolveSitesFor, getReferenceFor, siteInfo } from '../utils.js'
 import { settingsCache } from '../SettingsCache.js'
 import {
   RANDOM_BOORU_SITE,
@@ -15,11 +15,11 @@ const autocompleteSiteWithBlacklist: AutocompleteHandler<string> = async ({
   interaction,
   value,
 }) => {
-  const referenceId = getReferenceIdFor(interaction)
+  const reference = getReferenceFor(interaction)
   const userReferenceId = interaction.user.id
   const [settings, userSettings] = await Promise.all([
-    settingsCache.get(referenceId),
-    settingsCache.get(userReferenceId),
+    settingsCache.get(reference),
+    settingsCache.get({ id: userReferenceId, isGuild: false }),
   ])
 
   const blacklistedSites = [...settings.sites, ...userSettings.sites]

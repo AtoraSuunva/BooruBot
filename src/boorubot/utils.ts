@@ -3,17 +3,21 @@ import { BaseInteraction } from 'discord.js'
 import { database } from '../util/db.js'
 import booru from 'booru'
 import { AutocompleteHandler, makeChoices } from 'sleetcord'
+import { Reference } from './SettingsCache.js'
 
-export function getReferenceIdFor(interaction: BaseInteraction): string {
-  return interaction.guild?.id || interaction.user.id
+export function getReferenceFor(interaction: BaseInteraction): Reference {
+  return {
+    id: interaction.guild?.id || interaction.user.id,
+    isGuild: interaction.guild !== null,
+  }
 }
 
 export async function ensureConfigFor(
-  referenceId: string,
+  reference: Reference,
 ): Promise<BooruConfig> {
   const config = await database.booruConfig.findUnique({
     where: {
-      referenceId,
+      referenceId: reference.id,
     },
   })
 
@@ -23,7 +27,8 @@ export async function ensureConfigFor(
 
   return database.booruConfig.create({
     data: {
-      referenceId,
+      referenceId: reference.id,
+      isGuild: reference.isGuild,
     },
   })
 }

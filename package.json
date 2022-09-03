@@ -23,25 +23,26 @@
   },
   "homepage": "https://github.com/AtoraSuunva/Booru-Discord#readme",
   "dependencies": {
-    "@prisma/client": "^4.2.1",
+    "@prisma/client": "^4.3.1",
     "booru": "^2.6.2",
-    "discord.js": "^14.2.0",
-    "dotenv": "^16.0.1",
-    "env-var": "^7.1.1",
-    "pino": "^8.4.1",
-    "sleetcord": "^0.5.0",
-    "undici": "^5.8.2"
+    "discord.js": "^14.3.0",
+    "dotenv": "^16.0.2",
+    "env-var": "^7.2.0",
+    "pino": "^8.4.2",
+    "rollbar": "^2.25.1",
+    "sleetcord": "^0.6.1",
+    "undici": "^5.10.0"
   },
   "devDependencies": {
-    "@types/node": "^18.7.3",
-    "@typescript-eslint/eslint-plugin": "^5.33.0",
-    "@typescript-eslint/parser": "^5.33.0",
-    "eslint": "^8.22.0",
+    "@types/node": "^18.7.14",
+    "@typescript-eslint/eslint-plugin": "^5.36.1",
+    "@typescript-eslint/parser": "^5.36.1",
+    "eslint": "^8.23.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-import": "^2.26.0",
-    "pino-pretty": "^9.0.0",
+    "pino-pretty": "^9.1.0",
     "prettier": "^2.7.1",
-    "prisma": "^4.2.1",
-    "typescript": "^4.7.4"
+    "prisma": "^4.3.1",
+    "typescript": "^4.8.2"
   }
 }
