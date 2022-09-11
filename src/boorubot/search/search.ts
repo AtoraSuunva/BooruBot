@@ -83,7 +83,7 @@ async function runSearch(interaction: ChatInputCommandInteraction) {
 
   // Get options
   const site = booruOption === RANDOM_BOORU_VALUE ? RANDOM_BOORU_SITE : sites[0]
-  const tags = (interaction.options.getString('tags') ?? '').split(' ')
+  const tags = interaction.options.getString('tags')?.split(' ') ?? []
   const ephemeral = interaction.options.getBoolean('ephemeral') ?? false
 
   runBooruSearch(interaction, {
