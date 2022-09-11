@@ -8,8 +8,7 @@ import {
   inlineCode,
 } from 'discord.js'
 import { getReferenceFor, shuffleArray, siteInfo } from '../utils.js'
-import booru from 'booru'
-import { default as Post } from 'booru/dist/structures/Post.js'
+import booru, { Post } from 'booru'
 import { settingsCache } from '../SettingsCache.js'
 import {
   getTagsMatchingBlacklist,
@@ -39,7 +38,7 @@ const SEARCH_NEXT_EMOJI = '▶️'
 const SEARCH_POST_PUBLICLY = 'search/post'
 const SEARCH_POST_PUBLICLY_EMOJI = '📝'
 
-const IDLE_TIMEOUT = 5 * 60 * 1000 // 5 minutes in ms
+const IDLE_TIMEOUT = 10 * 60 * 1000 // 10 minutes in ms
 
 export interface SearchSettings {
   site: { domain: string }

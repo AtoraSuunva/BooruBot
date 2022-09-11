@@ -1,4 +1,4 @@
-import type { default as Post } from 'booru/dist/structures/Post.js'
+import { Post } from 'booru'
 import {
   escapeMarkdown,
   ColorResolvable,
