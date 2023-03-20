@@ -9,6 +9,7 @@ import {
   NewsChannel,
   TextBasedChannel,
   TextChannel,
+  ForumChannel,
 } from 'discord.js'
 import { extname } from 'path'
 
@@ -42,7 +43,7 @@ export async function getInteractionChannel(
  */
 export async function getParentChannel(
   thread: AnyThreadChannel,
-): Promise<NewsChannel | TextChannel> {
+): Promise<NewsChannel | TextChannel | ForumChannel> {
   if (thread.parent) {
     return thread.parent
   }
@@ -218,7 +219,7 @@ export function formatTags(tags: string[]): string {
   }
 
   const tagCutMatch = tagString.match(regexCutTags) ?? []
-  return `${escapeMarkdown(tagCutMatch[0])}...`
+  return `${escapeMarkdown(tagCutMatch[0] ?? '')}...`
 }
 
 function formatTime(time: bigint): string {
