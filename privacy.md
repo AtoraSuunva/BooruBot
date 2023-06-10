@@ -1,17 +1,18 @@
 # BooruBot Privacy Policy
 
-Last Updated & Effective as of: September 2, 2022
+Last Updated & Effective as of: June 10, 2023
 
 For Discord Bot: BooruBot#9381 (204722411403345920)
 
 ---
 
 BooruBot stores the following data, for the following reasons:
-  - `reference_id`: Either a guild ID (when used in guilds) or a user ID (when used in DMs), used to track which config belongs to who
-  - `tags`: To know which tags have been blacklisted
-  - `sites`: To know which sites have been blacklisted
-  - `min_score`: To know the minimum score posts need to be posted
-  - `allow_nsfw`: To know if NSFW can be posted in age-restricted channels or DMs
+
+- `reference_id`: Either a guild ID (when used in guilds) or a user ID (when used in DMs), used to track which config belongs to who
+- `tags`: To know which tags have been blacklisted
+- `sites`: To know which sites have been blacklisted
+- `min_score`: To know the minimum score posts need to be posted
+- `allow_nsfw`: To know if NSFW can be posted in age-restricted channels or DMs
 
 All data stored by BooruBot can be deleted by running `/config delete` on Discord and confirming the deletion in-guild by someone with `Manage Server` permissions.
 
@@ -20,8 +21,9 @@ Config data for a guild is stored for 10 days after BooruBot is removed from a g
 Data deleted manually (via `/config delete`) or automatically (after 10 days of not being in the guild) is deleted permanently.
 
 [Rollbar](https://rollbar.com) is used for error tracking. Data collected when an error occurs:
-  - `error`: The error message and stack trace
-  - `interaction`: The interaction + options used (ie. `/search [site<string>: example.com] [tags<string>: foo bar]`)
+
+- `error`: The error message and stack trace
+- `interaction`: The interaction + options used (ex. `/search [site<string>: example.com] [tags<string>: foo bar]`)
 
 Errors reported to Rollbar are deleted after 30 days.
 
@@ -31,7 +33,7 @@ For a copy of your data, or to delete the data by request, you may contact the d
 
 ---
 
-BooruBot is run by Atlas#2564 (74768773940256768)
+BooruBot is run by atorasuunva (74768773940256768)
 
 You may contact the developer of BooruBot on the [support server](https://discord.gg/8K3uCfb), through Discord, or via email (atora@giraffeduck.com)
 
