@@ -1,6 +1,6 @@
 import { BooruConfig } from '@prisma/client'
 import { BaseInteraction } from 'discord.js'
-import { database } from '../util/db.js'
+import { prisma } from '../util/db.js'
 import booru from 'booru'
 import { AutocompleteHandler, makeChoices } from 'sleetcord'
 import { Reference } from './SettingsCache.js'
@@ -15,7 +15,7 @@ export function getReferenceFor(interaction: BaseInteraction): Reference {
 export async function ensureConfigFor(
   reference: Reference,
 ): Promise<BooruConfig> {
-  const config = await database.booruConfig.findUnique({
+  const config = await prisma.booruConfig.findUnique({
     where: {
       referenceId: reference.id,
     },
@@ -25,7 +25,7 @@ export async function ensureConfigFor(
     return config
   }
 
-  return database.booruConfig.create({
+  return prisma.booruConfig.create({
     data: {
       referenceId: reference.id,
       isGuild: reference.isGuild,
@@ -46,6 +46,7 @@ export function getItemsFrom(str: string): string[] {
 }
 
 export const siteInfo = Object.values(booru.sites)
+type SiteInfo = (typeof siteInfo)[0]
 
 interface SiteListResult {
   name: string
@@ -53,7 +54,13 @@ interface SiteListResult {
   sites: string[]
 }
 
-type GetSiteList = () => SiteListResult
+type SiteInfoPredicate = Parameters<SiteInfo[]['filter']>['0']
+
+interface SiteListGetOptions {
+  filter?: SiteInfoPredicate
+}
+
+type GetSiteList = (opts?: SiteListGetOptions) => SiteListResult
 
 interface NamedSiteList {
   name: string
@@ -67,17 +74,21 @@ interface NamedSiteList {
 const siteLists: NamedSiteList[] = [
   {
     name: 'list: all sites',
-    get: () => ({
-      name: `All Sites (${siteInfo.length})`,
-      value: 'list: all sites',
-      sites: siteInfo.map((s) => s.domain),
-    }),
+    get: ({ filter = () => true }: SiteListGetOptions = {}) => {
+      const allSites = siteInfo.filter(filter)
+
+      return {
+        name: `All Sites (${allSites.length})`,
+        value: 'list: all sites',
+        sites: allSites.map((s) => s.domain),
+      }
+    },
   },
 
   {
     name: 'list: nsfw sites',
-    get: () => {
-      const nsfwSites = siteInfo.filter((s) => s.nsfw)
+    get: ({ filter = () => true }: SiteListGetOptions = {}) => {
+      const nsfwSites = siteInfo.filter((s, i, a) => s.nsfw && filter(s, i, a))
 
       return {
         name: `NSFW Sites (${nsfwSites.length})`,
@@ -89,8 +100,8 @@ const siteLists: NamedSiteList[] = [
 
   {
     name: 'list: sfw sites',
-    get: () => {
-      const sfwSites = siteInfo.filter((s) => !s.nsfw)
+    get: ({ filter = () => true }: SiteListGetOptions = {}) => {
+      const sfwSites = siteInfo.filter((s, i, a) => !s.nsfw && filter(s, i, a))
 
       return {
         name: `SFW Sites (${sfwSites.length})`,
@@ -117,11 +128,30 @@ export function resolveSitesFor(value: string) {
 }
 
 /**
+ * Try and resolve a string to a list of sites (ie. all sites, all nsfw, all sfw...)
+ * @param value The value to try and match against a special list of sites (potentially returning multiple matches)
+ * @returns The match(es) found, as an array of SiteListResults
+ */
+export function resolveListsFor(
+  value: string,
+  filter: SiteInfoPredicate = () => true,
+): SiteListResult[] {
+  const lowerValue = value.toLowerCase()
+
+  return siteLists
+    .filter((special) => special.name.includes(lowerValue))
+    .map((special) => special.get({ filter }))
+}
+
+/**
  * Try and resolve a string to a site or list of sites, using domain + aliases for single sites or a special list of sites
  * @param value The value to try and match against a single site or a list of sites (potentially retuning multiple matches)
- * @returns The match(es) found, as an array of CommandOptionChoice
+ * @returns The match(es) found, as an array of SiteListResults
  */
-export function resolveSitesAndListsFor(value: string): SiteListResult[] {
+export function resolveSitesAndListsFor(
+  value: string,
+  filter: SiteInfoPredicate = () => true,
+): SiteListResult[] {
   const lowerValue = value.toLowerCase()
 
   const sites = resolveSitesFor(lowerValue).map((s) => ({
@@ -130,9 +160,7 @@ export function resolveSitesAndListsFor(value: string): SiteListResult[] {
     sites: [s.domain],
   }))
 
-  const lists = siteLists
-    .filter((special) => special.name.includes(lowerValue))
-    .map((special) => special.get())
+  const lists = resolveListsFor(lowerValue, filter)
 
   return [...lists, ...sites]
 }

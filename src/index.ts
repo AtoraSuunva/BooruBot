@@ -1,7 +1,6 @@
 import { GatewayIntentBits, Options } from 'discord.js'
 import env from 'env-var'
 import { SleetClient } from 'sleetcord'
-import { LoggerOptions } from 'pino'
 import { activity } from './misc/activity.js'
 import { info } from './misc/info.js'
 import { stats } from './misc/stats.js'
@@ -12,22 +11,11 @@ import { config } from './boorubot/config/index.js'
 import { search } from './boorubot/search/search.js'
 import { link } from './boorubot/link.js'
 import { view } from './boorubot/view/index.js'
-import { rollbarLogger } from './util/rollbar.js'
+import { rollbarLogger } from './rollbar.js'
+import { logging } from './logging.js'
 
 const TOKEN = env.get('TOKEN').required().asString()
 const APPLICATION_ID = env.get('APPLICATION_ID').required().asString()
-const NODE_ENV = env.get('NODE_ENV').required().asString()
-const USE_PINO_PRETTY = env.get('USE_PINO_PRETTY').required().asBool()
-
-const loggerOptions: LoggerOptions = {
-  level: NODE_ENV === 'development' ? 'debug' : 'info',
-}
-
-if (USE_PINO_PRETTY) {
-  loggerOptions.transport = {
-    target: 'pino-pretty',
-  }
-}
 
 const sleetClient: SleetClient = new SleetClient({
   sleet: {
@@ -58,6 +46,21 @@ const sleetClient: SleetClient = new SleetClient({
       ReactionUserManager: 0,
       StageInstanceManager: 0,
       ThreadMemberManager: 0,
+      AutoModerationRuleManager: 0,
+      GuildForumThreadManager: {
+        maxSize: 50,
+      },
+      GuildTextThreadManager: {
+        maxSize: 50,
+      },
+      ThreadManager: {
+        maxSize: 50,
+      },
+      MessageManager: {
+        maxSize: 0,
+        keepOverLimit: (message) =>
+          message.author.id === sleetClient.client.user?.id,
+      },
       GuildMemberManager: {
         maxSize: 200,
         keepOverLimit: (member) => member.id === sleetClient.client.user?.id,
@@ -74,15 +77,14 @@ const sleetClient: SleetClient = new SleetClient({
         interval: 3600,
         lifetime: 1800,
       },
-      // Remove all bots every hour
+      // Remove all bots every 15 minutes
       users: {
-        interval: 3600,
+        interval: 900,
         filter: () => (user) =>
           user.bot && user.id !== sleetClient.client.user?.id,
       },
     },
   },
-  logger: loggerOptions,
 })
 
 sleetClient.addModules([
@@ -100,7 +102,8 @@ sleetClient.addModules([
   ping,
   stats,
 
-  // error logging
+  // logging
+  logging,
   rollbarLogger,
 ])
 

@@ -1,7 +1,7 @@
 import { BooruConfig } from '@prisma/client'
 import { ChatInputCommandInteraction, EmbedBuilder } from 'discord.js'
 import { SleetSlashSubcommand } from 'sleetcord'
-import { database } from '../../util/db.js'
+import { prisma } from '../../util/db.js'
 import { settingsCache } from '../SettingsCache.js'
 import { getReferenceFor } from '../utils.js'
 
@@ -20,7 +20,7 @@ async function runView(interaction: ChatInputCommandInteraction) {
 
   const defer = interaction.deferReply()
 
-  const config = await database.booruConfig.findFirst({
+  const config = await prisma.booruConfig.findFirst({
     where: { referenceId: reference.id },
   })
 

@@ -1,16 +1,13 @@
 import Rollbar from 'rollbar'
 import env from 'env-var'
-import {
-  ApplicationCommandOptionType,
-  AutocompleteInteraction,
-  CommandInteraction,
-} from 'discord.js'
-import { SleetModule } from 'sleetcord'
+import { AutocompleteInteraction } from 'discord.js'
+import { ApplicationInteraction, SleetModule } from 'sleetcord'
+import { interactionToString } from './logging.js'
 
 const NODE_ENV = env.get('NODE_ENV').required().asString()
 const accessToken = env.get('ROLLBAR_ACCESS_TOKEN').asString()
 
-const rollbar = new Rollbar({
+export const rollbar = new Rollbar({
   accessToken: accessToken ?? '',
   enabled: accessToken !== undefined,
   captureUncaught: true,
@@ -36,7 +33,7 @@ export const rollbarLogger = new SleetModule(
     name: 'rollbarLogger',
   },
   {
-    error: (error) => rollbar.error(error),
+    error: (error) => void rollbar.error(error),
     autocompleteInteractionError: interactionErrorHandler,
     applicationInteractionError: interactionErrorHandler,
   },
@@ -44,39 +41,11 @@ export const rollbarLogger = new SleetModule(
 
 function interactionErrorHandler(
   module: SleetModule,
-  interaction: CommandInteraction | AutocompleteInteraction,
+  interaction: ApplicationInteraction | AutocompleteInteraction,
   error: unknown,
 ) {
   rollbar.error(error as Error, {
     module: module.name,
     interaction: interactionToString(interaction),
   })
-}
-
-const optionTypeToString: Record<ApplicationCommandOptionType, string> = {
-  1: 'Subcommand',
-  2: 'SubcommandGroup',
-  3: 'String',
-  4: 'Integer',
-  5: 'Boolean',
-  6: 'User',
-  7: 'Channel',
-  8: 'Role',
-  9: 'Mentionable',
-  10: 'Number',
-  11: 'Attachment',
-}
-
-function interactionToString(
-  interaction: CommandInteraction | AutocompleteInteraction,
-): string {
-  const name = interaction.commandName
-  const options = interaction.options.data.map(
-    (opt) =>
-      `[${opt.name}${opt.focused ? '*' : ''}<${
-        optionTypeToString[opt.type]
-      }>: ${opt.value}]`,
-  )
-
-  return `/${name} ${options.join(' ')}`
 }

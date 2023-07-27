@@ -2,8 +2,8 @@ import {
   ApplicationCommandOptionType,
   ChatInputCommandInteraction,
 } from 'discord.js'
-import { SleetSlashSubcommand } from 'sleetcord'
-import { database } from '../../util/db.js'
+import { AutocompleteHandler, SleetSlashSubcommand } from 'sleetcord'
+import { prisma } from '../../util/db.js'
 import { Reference, settingsCache } from '../SettingsCache.js'
 import { ensureConfigFor, getItemsFrom, getReferenceFor } from '../utils.js'
 import { formatBlacklist, getBlacklistFor } from './utils.js'
@@ -26,6 +26,48 @@ export const blacklistAddTags = new SleetSlashSubcommand(
   },
 )
 
+const removeTagAutocomplete: AutocompleteHandler<string> = async ({
+  interaction,
+  value,
+}) => {
+  const reference = getReferenceFor(interaction)
+  const tags = await settingsCache.getTags(reference.id)
+
+  const previousTags = getItemsFrom(value)
+  const latestInput = previousTags.pop() ?? ''
+  const prevValue = previousTags.join(' ')
+
+  const possibleCompletions = tags.filter(
+    (tag) => tag.startsWith(latestInput) && !previousTags.includes(tag),
+  )
+
+  if (tags.includes(latestInput)) {
+    // Then assume that last input is a full tag and also include more tag suggestions
+    possibleCompletions.push(
+      ...tags
+        .filter((tag) => !previousTags.includes(tag) && tag !== latestInput)
+        .map((tag) => `${latestInput} ${tag}`),
+    )
+  }
+
+  if (possibleCompletions.length === 0) {
+    return [
+      {
+        name: value,
+        value: value,
+      },
+    ]
+  }
+
+  return possibleCompletions
+    .sort()
+    .slice(0, 25)
+    .map((tag) => ({
+      name: `${prevValue} ${tag}`,
+      value: `${prevValue} ${tag}`,
+    }))
+}
+
 export const blacklistRemoveTags = new SleetSlashSubcommand(
   {
     name: 'tags',
@@ -36,6 +78,7 @@ export const blacklistRemoveTags = new SleetSlashSubcommand(
         description: 'The tag(s) to remove, separated by a space',
         type: ApplicationCommandOptionType.String,
         required: true,
+        autocomplete: removeTagAutocomplete,
       },
     ],
   },
@@ -81,10 +124,20 @@ async function addTags(reference: Reference, tags: string[]) {
     name: tag,
   }))
 
-  await database.tag.createMany({
-    data: tagsToAdd,
-    skipDuplicates: true,
-  })
+  await prisma.$transaction(
+    tagsToAdd.map((data) =>
+      prisma.tag.upsert({
+        where: {
+          referenceId_name: {
+            referenceId: data.referenceId,
+            name: data.name,
+          },
+        },
+        create: data,
+        update: {},
+      }),
+    ),
+  )
 
   settingsCache.deleteTags(reference.id)
 }
@@ -92,7 +145,7 @@ async function addTags(reference: Reference, tags: string[]) {
 async function removeTags(reference: Reference, tags: string[]) {
   await ensureConfigFor(reference)
 
-  await database.tag.deleteMany({
+  await prisma.tag.deleteMany({
     where: { name: { in: tags } },
   })
 

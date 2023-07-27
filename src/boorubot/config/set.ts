@@ -8,7 +8,7 @@ import {
   MessageComponentInteraction,
 } from 'discord.js'
 import { SleetSlashCommandGroup, SleetSlashSubcommand } from 'sleetcord'
-import { database } from '../../util/db.js'
+import { prisma } from '../../util/db.js'
 import { settingsCache } from '../SettingsCache.js'
 import { getReferenceFor } from '../utils.js'
 import { createConfigView } from './view.js'
@@ -36,7 +36,7 @@ async function runSetMinScore(interaction: ChatInputCommandInteraction) {
 
   const defer = interaction.deferReply()
 
-  const config = await database.booruConfig.upsert({
+  const config = await prisma.booruConfig.upsert({
     where: { referenceId: reference.id },
     create: {
       referenceId: reference.id,
@@ -145,7 +145,7 @@ async function setAllowNSFWAndReply(
 
   const defer = interaction.deferReply()
 
-  const config = await database.booruConfig.upsert({
+  const config = await prisma.booruConfig.upsert({
     where: { referenceId: reference.id },
     create: {
       referenceId: reference.id,

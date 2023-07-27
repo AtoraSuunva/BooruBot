@@ -1,11 +1,11 @@
 {
   "name": "boorubot",
-  "version": "4.1.0",
+  "version": "4.2.0",
   "description": "A Discord bot to search boorus",
   "type": "module",
   "main": "dist/index.js",
   "scripts": {
-    "start:dev": "node -r dotenv/config dist/index.js",
+    "start:dev": "tsc --build && node -r dotenv/config --trace-warnings dist/index.js",
     "start:prod": "npx prisma migrate deploy && node dist/index.js",
     "build": "tsc --build",
     "lint": "eslint src/ && prettier --check src/ && tsc --noEmit",
@@ -23,25 +23,26 @@
   },
   "homepage": "https://github.com/AtoraSuunva/Booru-Discord#readme",
   "dependencies": {
-    "@prisma/client": "^4.11.0",
+    "@prisma/client": "^5.0.0",
     "booru": "^2.6.3",
-    "discord.js": "^14.8.0",
-    "dotenv": "^16.0.3",
-    "env-var": "^7.3.0",
-    "pino": "^8.11.0",
-    "rollbar": "^2.26.1",
-    "sleetcord": "^0.7.1"
+    "discord.js": "^14.11.0",
+    "dotenv": "^16.3.1",
+    "env-var": "^7.3.1",
+    "pino": "^8.14.1",
+    "pino-dev": "^4.0.2",
+    "rollbar": "^2.26.2",
+    "sleetcord": "^0.15.2"
   },
   "devDependencies": {
-    "@types/node": "^18.15.5",
-    "@typescript-eslint/eslint-plugin": "^5.56.0",
-    "@typescript-eslint/parser": "^5.56.0",
-    "eslint": "^8.36.0",
+    "@types/node": "^20.4.5",
+    "@typescript-eslint/eslint-plugin": "^6.2.0",
+    "@typescript-eslint/parser": "^6.2.0",
+    "eslint": "^8.45.0",
     "eslint-config-prettier": "^8.8.0",
     "eslint-plugin-import": "^2.27.5",
-    "pino-pretty": "^10.0.0",
-    "prettier": "^2.8.5",
-    "prisma": "^4.11.0",
-    "typescript": "^5.0.2"
+    "pino-pretty": "^10.2.0",
+    "prettier": "^3.0.0",
+    "prisma": "^5.0.0",
+    "typescript": "^5.1.6"
   }
 }

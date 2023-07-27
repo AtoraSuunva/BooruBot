@@ -1,5 +1,5 @@
 import { BooruConfig } from '@prisma/client'
-import { database } from '../util/db.js'
+import { prisma } from '../util/db.js'
 
 export interface BooruSettings {
   config: BooruConfig
@@ -7,7 +7,7 @@ export interface BooruSettings {
   sites: string[]
 }
 
-export type Reference = {
+export interface Reference {
   id: string
   isGuild: boolean
 }
@@ -38,12 +38,12 @@ class SettingsCache {
       return cache
     }
 
-    let config = await database.booruConfig.findUnique({
+    let config = await prisma.booruConfig.findUnique({
       where: { referenceId: reference.id },
     })
 
     if (config && config.isGuild !== reference.isGuild) {
-      config = await database.booruConfig.update({
+      config = await prisma.booruConfig.update({
         where: { referenceId: reference.id },
         data: {
           allowNSFW: reference.isGuild,
@@ -53,7 +53,7 @@ class SettingsCache {
     }
 
     if (config === null) {
-      config = await database.booruConfig.create({
+      config = await prisma.booruConfig.create({
         data: {
           referenceId: reference.id,
           allowNSFW: reference.isGuild,
@@ -82,7 +82,7 @@ class SettingsCache {
       return cache
     }
 
-    const tags = await database.tag
+    const tags = await prisma.tag
       .findMany({
         where: { referenceId },
         select: { name: true },
@@ -109,7 +109,7 @@ class SettingsCache {
       return cache
     }
 
-    const sites = await database.site
+    const sites = await prisma.site
       .findMany({
         where: { referenceId },
         select: { name: true },

@@ -7,7 +7,7 @@ import {
   ComponentType,
 } from 'discord.js'
 import { SleetSlashSubcommand } from 'sleetcord'
-import { database } from '../../util/db.js'
+import { prisma } from '../../util/db.js'
 import { settingsCache } from '../SettingsCache.js'
 import { getReferenceFor } from '../utils.js'
 
@@ -33,7 +33,7 @@ async function runDelete(interaction: ChatInputCommandInteraction) {
 
   const confirm = interaction.options.getBoolean('confirm', false)
   const reference = getReferenceFor(interaction)
-  const config = database.booruConfig.findFirst({
+  const config = prisma.booruConfig.findFirst({
     where: { referenceId: reference.id },
   })
 
@@ -106,5 +106,5 @@ function deleteConfig(referenceId: string) {
   settingsCache.deleteTags(referenceId)
   settingsCache.deleteSites(referenceId)
 
-  return database.booruConfig.delete({ where: { referenceId } })
+  return prisma.booruConfig.delete({ where: { referenceId } })
 }

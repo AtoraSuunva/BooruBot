@@ -7,7 +7,7 @@ import {
   ComponentType,
 } from 'discord.js'
 import { SleetSlashSubcommand } from 'sleetcord'
-import { database } from '../../util/db.js'
+import { prisma } from '../../util/db.js'
 import { settingsCache } from '../SettingsCache.js'
 import { getReferenceFor } from '../utils.js'
 
@@ -33,7 +33,7 @@ async function runDelete(interaction: ChatInputCommandInteraction) {
 
   const confirm = interaction.options.getBoolean('confirm', false)
   const reference = getReferenceFor(interaction)
-  const config = database.booruConfig.findFirst({
+  const config = prisma.booruConfig.findFirst({
     where: { referenceId: reference.id },
   })
 
@@ -73,17 +73,17 @@ async function runDelete(interaction: ChatInputCommandInteraction) {
 
       await deleteBlacklist(reference.id)
 
-      interaction.editReply({
+      await interaction.editReply({
         content: `Blacklist deleted. Requested by ${interaction.user}`,
         components: [],
       })
 
       await defer
-      i.editReply('Blacklist deleted.')
+      await i.editReply('Blacklist deleted.')
 
       collector.stop()
     } else {
-      i.reply({
+      await i.reply({
         ephemeral: true,
         content: `Only ${interaction.user} can confirm this deletion.`,
       })
@@ -92,7 +92,7 @@ async function runDelete(interaction: ChatInputCommandInteraction) {
 
   collector.on('end', (_collected, reason) => {
     if (reason === 'time') {
-      interaction.editReply({
+      void interaction.editReply({
         content: 'Deletion timed out',
         components: [],
       })
@@ -105,7 +105,7 @@ function deleteBlacklist(referenceId: string) {
   settingsCache.deleteSites(referenceId)
 
   return Promise.all([
-    database.tag.deleteMany({ where: { referenceId } }),
-    database.site.deleteMany({ where: { referenceId } }),
+    prisma.tag.deleteMany({ where: { referenceId } }),
+    prisma.site.deleteMany({ where: { referenceId } }),
   ])
 }

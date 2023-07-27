@@ -1,5 +1,5 @@
 import { escapeCodeBlock, bold } from 'discord.js'
-import { database } from '../../util/db.js'
+import { prisma } from '../../util/db.js'
 import { settingsCache } from '../SettingsCache.js'
 
 export interface Blacklist {
@@ -42,7 +42,7 @@ function formatBlacklistArray(items: string[], highlight: string[]): string {
 }
 
 export async function getBlacklistFor(referenceId: string): Promise<Blacklist> {
-  const blacklist = await database.booruConfig
+  const blacklist = await prisma.booruConfig
     .findFirst({
       where: {
         referenceId,
