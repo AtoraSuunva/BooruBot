@@ -16,7 +16,7 @@ const SITES_URL =
 const SITES_MESSAGE = `You can view all supported sites at ${SITES_URL}`
 
 function runViewSites(interaction: ChatInputCommandInteraction) {
-  interaction.reply({
+  return interaction.reply({
     content: SITES_MESSAGE,
     ephemeral: true,
   })

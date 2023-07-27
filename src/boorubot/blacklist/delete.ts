@@ -33,21 +33,21 @@ async function runDelete(interaction: ChatInputCommandInteraction) {
 
   const confirm = interaction.options.getBoolean('confirm', false)
   const reference = getReferenceFor(interaction)
-  const config = prisma.booruConfig.findFirst({
+  const config = await prisma.booruConfig.findFirst({
     where: { referenceId: reference.id },
   })
 
   const message = await defer
 
   if (!config) {
-    interaction.editReply('No Booru config found, so no blacklist to delete.')
-    return
+    return interaction.editReply(
+      'No Booru config found, so no blacklist to delete.',
+    )
   }
 
   if (confirm === true) {
     await deleteBlacklist(reference.id)
-    interaction.editReply('Blacklist deleted.')
-    return
+    return interaction.editReply('Blacklist deleted.')
   }
 
   const deleteButton = new ButtonBuilder()
@@ -57,7 +57,7 @@ async function runDelete(interaction: ChatInputCommandInteraction) {
 
   const row = new ActionRowBuilder<ButtonBuilder>().addComponents(deleteButton)
 
-  interaction.editReply({
+  await interaction.editReply({
     content: 'Are you sure? You **CANNOT** undo this!!!',
     components: [row],
   })
@@ -98,6 +98,8 @@ async function runDelete(interaction: ChatInputCommandInteraction) {
       })
     }
   })
+
+  return
 }
 
 function deleteBlacklist(referenceId: string) {

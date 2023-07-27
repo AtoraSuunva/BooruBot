@@ -29,7 +29,8 @@ export async function runView(interaction: ChatInputCommandInteraction) {
   const reference = getReferenceFor(interaction)
   const blacklist = await getBlacklistFor(reference.id)
   const formattedBlacklist = formatBlacklist(blacklist)
-  interaction.reply({
+
+  return interaction.reply({
     content: formattedBlacklist,
     ephemeral,
   })

@@ -75,10 +75,9 @@ async function runSearch(interaction: ChatInputCommandInteraction) {
   const sites = resolveSitesFor(booruOption)
 
   if (sites.length !== 1 && booruOption !== RANDOM_BOORU_VALUE) {
-    interaction.reply({
+    return interaction.reply({
       content: 'Could not find a single matching booru.',
     })
-    return
   }
 
   // Get options
@@ -86,7 +85,7 @@ async function runSearch(interaction: ChatInputCommandInteraction) {
   const tags = interaction.options.getString('tags')?.split(' ') ?? []
   const ephemeral = interaction.options.getBoolean('ephemeral') ?? false
 
-  runBooruSearch(interaction, {
+  return runBooruSearch(interaction, {
     site,
     tags,
     ephemeral,

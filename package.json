@@ -9,7 +9,7 @@
     "start:prod": "npx prisma migrate deploy && node dist/index.js",
     "build": "tsc --build",
     "lint": "eslint src/ && prettier --check src/ && tsc --noEmit",
-    "lint:fix": "eslint src/ --fix && prettier --write src/ && tsc --noEmit"
+    "lint:fix": "eslint src/ --fix && prettier --write src/ && pnpm prisma format && tsc --noEmit"
   },
   "repository": {
     "type": "git",
@@ -30,6 +30,7 @@
     "env-var": "^7.3.1",
     "pino": "^8.14.1",
     "pino-dev": "^4.0.2",
+    "pretty-ms": "^8.0.0",
     "rollbar": "^2.26.2",
     "sleetcord": "^0.15.2"
   },

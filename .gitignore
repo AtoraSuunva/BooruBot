@@ -1,7 +1,9 @@
-node_modules/
+node_modules
+.tsbuildinfo
+*.env
+.vscode
+.swc
 dist/
 prisma/db/
-.tsbuildinfo
-.env
-.vscode
-ecosystem.config.cjs
+prisma/**/*.db
+prisma/**/*.sqlite

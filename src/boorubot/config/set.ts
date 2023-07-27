@@ -51,7 +51,7 @@ async function runSetMinScore(interaction: ChatInputCommandInteraction) {
   await defer
 
   const view = createConfigView(config)
-  interaction.editReply(view)
+  return interaction.editReply(view)
 }
 
 // --
@@ -109,32 +109,34 @@ async function runSetAllowNSFW(interaction: ChatInputCommandInteraction) {
       idle: 5 * 60 * 1000,
     })
 
-    collector.on('collect', async (i) => {
+    collector.on('collect', (i) => {
       if (i.user.id !== interaction.user.id) {
-        i.reply({
+        return void i.reply({
           content: "You can't confirm this.",
           ephemeral: true,
         })
-        return
       }
 
       if (i.customId === ALLOW_NSFW_CONFIRM) {
-        setAllowNSFWAndReply(i, true)
+        void setAllowNSFWAndReply(i, true)
       } else {
-        i.reply({
+        void i.reply({
           content: 'You cancelled this.',
           ephemeral: true,
         })
       }
+
       collector.stop()
     })
 
     collector.on('end', () => {
-      interaction.editReply({ components: [] })
+      void interaction.editReply({ components: [] })
     })
   } else {
-    setAllowNSFWAndReply(interaction, allowNSFW)
+    return setAllowNSFWAndReply(interaction, allowNSFW)
   }
+
+  return
 }
 
 async function setAllowNSFWAndReply(
@@ -160,7 +162,7 @@ async function setAllowNSFWAndReply(
   await defer
 
   const view = createConfigView(config)
-  interaction.editReply(view)
+  return interaction.editReply(view)
 }
 
 export const configSet = new SleetSlashCommandGroup({

@@ -77,22 +77,20 @@ function runLink(interaction: ChatInputCommandInteraction) {
   try {
     parsedUrl = new URL(url)
   } catch {
-    interaction.reply({
+    return interaction.reply({
       content: 'Failed to parse url, did you enter a valid url?',
       ephemeral: true,
     })
-    return
   }
 
-  const format = siteFormats[parsedUrl.hostname]
-
-  if (!format) {
-    interaction.reply({
+  if (!(parsedUrl.hostname in siteFormats)) {
+    return interaction.reply({
       content: 'That is not a recognized site, did you enter the right url?',
       ephemeral: true,
     })
-    return
   }
+
+  const format = siteFormats[parsedUrl.hostname]
 
   const id =
     format.type === 'url'
@@ -100,15 +98,14 @@ function runLink(interaction: ChatInputCommandInteraction) {
       : getIdInQuery(parsedUrl, format)
 
   if (!isInteger(id)) {
-    interaction.reply({
+    return interaction.reply({
       content:
         'Failed to parse a post ID from that url, did you enter the right url?',
       ephemeral: true,
     })
-    return
   }
 
-  runBooruSearch(interaction, {
+  return runBooruSearch(interaction, {
     site: {
       domain: parsedUrl.hostname,
     },

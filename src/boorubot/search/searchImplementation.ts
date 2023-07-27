@@ -74,39 +74,35 @@ export async function runBooruSearch(
   // Incrementally validate things to fail early when possible
 
   if (settings.sites.includes(site.domain)) {
-    interaction.reply({
+    return interaction.reply({
       content: `${site.domain} is blacklisted here.`,
       ephemeral: true,
     })
-    return
   }
 
   if (userSettings.sites.includes(site.domain)) {
-    interaction.reply({
+    return interaction.reply({
       content: `${site.domain} is blacklisted in your settings.`,
       ephemeral: true,
     })
-    return
   }
 
   if (site.domain === 'danbooru.donmai.us' && tags.length > 2) {
-    interaction.reply({
+    return interaction.reply({
       content: 'Sorry, but Danbooru only lets you search for 2 tags at a time.',
       ephemeral: true,
     })
-    return
   }
 
   const blacklistedTagsUsed = getTagsMatchingBlacklist(tags, blacklistedTags)
 
   if (blacklistedTagsUsed.length > 0) {
-    interaction.reply({
+    return interaction.reply({
       content: `Search contains blacklisted tags: ${codeBlock(
         formatTags(blacklistedTagsUsed),
       )}`,
       ephemeral: true,
     })
-    return
   }
 
   const channel = await getInteractionChannel(interaction)
@@ -120,11 +116,10 @@ export async function runBooruSearch(
     !reference.isGuild && !allowNSFW ? WHY_NO_NSFW_DM_URL : ''
 
   if (!allowNSFW && getTagsMatchingBlacklist(tags, NSFW_RATINGS).length > 0) {
-    interaction.reply({
+    return interaction.reply({
       content: `NSFW is not allowed in this channel.${noNSFWMessage}`,
       ephemeral: true,
     })
-    return
   }
 
   // Then search
@@ -150,16 +145,7 @@ export async function runBooruSearch(
             getErrorMessage(e),
           )}`
 
-    interaction.editReply({ content })
-    return
-  }
-
-  if (unfilteredPosts === null) {
-    await defer
-    interaction.editReply({
-      content: 'Search failed for an unknown reason. This should never happen.',
-    })
-    return
+    return interaction.editReply({ content })
   }
 
   const endTime = process.hrtime.bigint()
@@ -174,14 +160,12 @@ export async function runBooruSearch(
     await defer
 
     if (unfilteredPosts.length === 0) {
-      interaction.editReply('No results found.')
+      return interaction.editReply('No results found.')
     } else {
-      interaction.editReply(
+      return interaction.editReply(
         `${unfilteredPosts.length} results found, but were all filtered.${noNSFWMessage}`,
       )
     }
-
-    return
   }
 
   const hiddenPostsCount = unfilteredPosts.length - posts.length
@@ -236,7 +220,7 @@ export async function runBooruSearch(
 
   const message = await defer
 
-  interaction.editReply({
+  await interaction.editReply({
     ...formattedPost,
     components: [row],
   })
@@ -252,12 +236,11 @@ export async function runBooruSearch(
   // this uses closures so we can't extract it out :(
   collector.on('collect', async (i) => {
     if (i.user.id !== interaction.user.id) {
-      i.reply({
+      return void i.reply({
         content:
           "You didn't initiate this search, so you can't interact with it.",
         ephemeral: true,
       })
-      return
     }
 
     if (i.customId === SEARCH_POST_PUBLICLY) {
@@ -274,32 +257,31 @@ export async function runBooruSearch(
       })
       publiclyPostedPosts.push(newPost.id)
 
-      i.followUp({
+      return void i.followUp({
         ...newFormattedPost,
         content: `Result posted by ${i.user}.`,
         allowedMentions: {
           parse: [],
         },
       })
-
-      return
     }
 
     if (i.customId === SEARCH_HIDE) {
       hideButton.setEmoji(SEARCH_SHOW_EMOJI)
       hideButton.setCustomId(SEARCH_SHOW)
-      i.update({
+      return void i.update({
         content: `Current post hidden, click ${SEARCH_SHOW_EMOJI} to reveal.`,
         embeds: [],
         components: [row],
       })
-      return
     }
 
     if (i.customId === SEARCH_PREV) {
       if (postNumber <= 1) {
-        i.reply({ content: 'There is no previous post.', ephemeral: true })
-        return
+        return void i.reply({
+          content: 'There is no previous post.',
+          ephemeral: true,
+        })
       }
 
       postNumber--
@@ -307,8 +289,10 @@ export async function runBooruSearch(
 
     if (i.customId === SEARCH_NEXT) {
       if (postNumber >= postCount) {
-        i.reply({ content: 'There is no next post.', ephemeral: true })
-        return
+        return void i.reply({
+          content: 'There is no next post.',
+          ephemeral: true,
+        })
       }
 
       postNumber++
@@ -334,15 +318,17 @@ export async function runBooruSearch(
       appendContent: noNSFWMessage,
     })
 
-    i.update({
+    await i.update({
       ...newFormattedPost,
       components: [row],
     })
   })
 
   collector.on('end', async () => {
-    interaction.editReply({ components: [] })
+    await interaction.editReply({ components: [] })
   })
+
+  return
 }
 
 interface SearchBooruParams {

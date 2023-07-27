@@ -7,9 +7,12 @@ import {
   Client,
 } from 'discord.js'
 import { isOwnerGuard, SleetContext, SleetSlashCommand } from 'sleetcord'
+import { MINUTE } from '../util/constants.js'
+import { readFile } from 'fs/promises'
+import env from 'env-var'
 
-/** Our status list needs a type and name to apply */
-type Status = Pick<ActivityOptions, 'name' | 'type'>
+/** Our activity list needs a type and name to apply */
+type Activity = Required<Pick<ActivityOptions, 'name' | 'type'>>
 
 /**
  * Valid choices for activities that bots can set
@@ -44,7 +47,6 @@ export const activity = new SleetSlashCommand(
   {
     name: 'activity',
     description: 'Allow to randomly/manually set a new activity',
-    registerOnlyInGuilds: [],
     options: [
       {
         name: 'name',
@@ -58,6 +60,7 @@ export const activity = new SleetSlashCommand(
         choices: activityChoices,
       },
     ],
+    registerOnlyInGuilds: [],
   },
   {
     ready: runReady,
@@ -65,123 +68,117 @@ export const activity = new SleetSlashCommand(
   },
 )
 
-/** These statuses will be randomly selected and shown by the bot */
-const statuses: Status[] = [
-  { type: ActivityType.Playing, name: 'with boorus!' },
-  { type: ActivityType.Streaming, name: 'christian anime!' },
-  { type: ActivityType.Playing, name: 'send nudes' },
-  { type: ActivityType.Playing, name: 'send dudes' },
-  { type: ActivityType.Streaming, name: 'handholding' },
-  { type: ActivityType.Streaming, name: 'some weeb stuff' },
-  { type: ActivityType.Streaming, name: 'some furry stuff' },
-  { type: ActivityType.Playing, name: 'alone' },
-  { type: ActivityType.Playing, name: 'with Atlas!' },
-  { type: ActivityType.Playing, name: 'with RobotOtter!' },
-  { type: ActivityType.Playing, name: 'with BulbaTrivia!' },
-  { type: ActivityType.Playing, name: 'with Scops!' },
-  { type: ActivityType.Playing, name: 'ULTRAKILL: SEX DLC' },
-  { type: ActivityType.Playing, name: 'Sex 2' },
-  { type: ActivityType.Playing, name: 'with fire.' },
-  { type: ActivityType.Streaming, name: 'the entire bee movie' },
-  { type: ActivityType.Streaming, name: 'the entire bee movie (nsfw edit)' },
-  { type: ActivityType.Streaming, name: 'nothing' },
-  { type: ActivityType.Playing, name: 'Japanese Anime Schoolgirl Sim' },
-  { type: ActivityType.Playing, name: "y'know, like, nya~~" },
-  { type: ActivityType.Playing, name: 'on the tubes of the internet' },
-  { type: ActivityType.Streaming, name: '[ASMR] cock and ball torture' },
-  { type: ActivityType.Streaming, name: 'the Twitch logout page.' },
-  { type: ActivityType.Streaming, name: 'Playing' },
-  { type: ActivityType.Playing, name: 'Streaming' },
-  { type: ActivityType.Watching, name: 'atlas cry' },
-  { type: ActivityType.Streaming, name: 'competitive sex (ranked)' },
-  { type: ActivityType.Streaming, name: 'casual sex' },
-  { type: ActivityType.Listening, name: 'the screams of the damned' },
-  { type: ActivityType.Watching, name: 'probably something dumb' },
-  { type: ActivityType.Watching, name: 'RobotOtter and Bulba fight' },
-  { type: ActivityType.Listening, name: 'the moans of the damned' },
-  { type: ActivityType.Watching, name: 'bros being bros 😳' },
-  { type: ActivityType.Watching, name: 'for big tiddy goth gf' },
-  { type: ActivityType.Playing, name: 'funny joke (i have run out of ideas)' },
-  { type: ActivityType.Competing, name: 'competitive shitposting' },
-  { type: ActivityType.Competing, name: 'ranked sex (Gold III)' },
-  { type: ActivityType.Competing, name: 'casual shitposting' },
-  { type: ActivityType.Competing, name: 'a fight to the death' },
-  { type: ActivityType.Competing, name: 'violence' },
-]
-
-/** Holds the timeout that we use to periodically change the status */
+/** Holds the timeout that we use to periodically change the activity */
 let timeout: NodeJS.Timeout
-/** Every 15m, change the current status */
-const timeoutDelay = 15 * 60 * 1000 // in ms
+/** Every 15m, change the current activity */
+const timeoutDelay = 15 * MINUTE // in ms
+/** These activities will be randomly selected and shown by the bot */
+const activities: Activity[] = []
 
-/** Run a timeout to change the bot's status on READY and every couple mins */
-async function runReady(client: Client) {
-  const status = getRandomStatus()
-  client.user?.setActivity(status)
-  timeout = setTimeout(() => runReady(client), timeoutDelay)
+const ACTIVITIES_FILE = env.get('ACTIVITIES_FILE').asString()
+
+async function loadActivities() {
+  if (!ACTIVITIES_FILE) return
+
+  const lines = await readFile(ACTIVITIES_FILE, 'utf-8').then((content) =>
+    content.trim().split('\n'),
+  )
+
+  const stats: Activity[] = lines.map((line) => {
+    const space = line.indexOf(' ') + 1
+    let [type, name] = [line.substring(0, space), line.substring(space)].map(
+      (str) => str.trim(),
+    )
+
+    type = type.replace(/{(\w+)}/, '$1')
+
+    if (!(type in ActivityType)) {
+      type = 'Playing'
+      name = line
+    }
+
+    let actType = ActivityType[type as keyof typeof ActivityType]
+
+    if (actType === ActivityType.Custom) {
+      actType = ActivityType.Playing
+    }
+
+    return {
+      type: actType,
+      name,
+    }
+  })
+
+  activities.push(...stats)
 }
 
-/** Either set a new random status, or set it to the one the user specified */
+/** Run a timeout to change the bot's activity on READY and every couple mins */
+async function runReady(client: Client) {
+  await loadActivities()
+  const activity = getRandomActivity()
+  client.user?.setActivity(activity)
+  timeout = setTimeout(() => {
+    void runReady(client)
+  }, timeoutDelay)
+}
+
+/** Either set a new random activity, or set it to the one the user specified */
 async function runActivity(
   this: SleetContext,
   interaction: ChatInputCommandInteraction,
 ) {
-  isOwnerGuard(interaction)
-
-  if (!interaction.client.user) {
-    return interaction.reply({
-      ephemeral: true,
-      content: 'The client user is not ready or available!',
-    })
-  }
+  await isOwnerGuard(interaction)
 
   const name = interaction.options.getString('name')
   const type = interaction.options.getInteger('type') as Exclude<
     ActivityOptions['type'],
     undefined
-  >
+  > | null
 
-  let activity: Status
+  let activity: Activity
   clearTimeout(timeout)
 
   if (type === null && name === null) {
     // Set a random one
-    activity = getRandomStatus()
-    timeout = setTimeout(() => runReady(interaction.client), timeoutDelay)
+    activity = getRandomActivity()
+    timeout = setTimeout(() => {
+      void runReady(interaction.client)
+    }, timeoutDelay)
   } else {
-    const act: ActivityOptions = {}
-
-    if (name !== null) act.name = name
-    if (type !== null) act.type = type
-
-    activity = act
+    const previousActivity = interaction.client.user.presence.activities[0]
+    activity = {
+      type:
+        type ??
+        (previousActivity.type as Exclude<ActivityType, ActivityType.Custom>),
+      name: name ?? previousActivity.name,
+    }
   }
 
   interaction.client.user.setActivity(activity)
   return interaction.reply({
     ephemeral: true,
-    content: `Set activity to:\n> ${formatStatus(activity)}`,
+    content: `Set activity to:\n> ${formatActivity(activity)}`,
   })
 }
 
-/** You shouldn't see this, this is just a fallback status if the random pick fails */
-const FALLBACK_STATUS: Status = {
+/** You shouldn't see this, this is just a fallback activity if the random pick fails */
+const FALLBACK_ACTIVITY: Activity = {
   type: ActivityType.Playing,
-  name: 'an error happened!!',
+  name: 'failed to load activity!',
 } as const
 
 /**
- * Get a random status from our list of statuses
- * @returns a random status from the list
+ * Get a random activity from our list of activities
+ * @returns a random activity from the list
  */
-function getRandomStatus(): Status {
-  const randomIndex = Math.floor(Math.random() * statuses.length)
-  return statuses[randomIndex] ?? FALLBACK_STATUS
+function getRandomActivity(): Activity {
+  const randomIndex = Math.floor(Math.random() * activities.length)
+  return activities[randomIndex] ?? FALLBACK_ACTIVITY
 }
 
 /** Maps from an activity ID or string to a display string */
 const reverseActivityTypesMap: Record<
-  Exclude<Status['type'], undefined>,
+  Exclude<Activity['type'], undefined>,
   string
 > = {
   [ActivityType.Playing]: 'Playing',
@@ -192,12 +189,12 @@ const reverseActivityTypesMap: Record<
 }
 
 /**
- * Formats a status object into a string
- * @param status The status object
+ * Formats an activity object into a string
+ * @param activity The activity object
  * @returns The formatted string
  */
-function formatStatus(status: Status): string {
-  const activityType = reverseActivityTypesMap[status.type ?? 0]
-  const activity = activityType ? `**${activityType}** ` : ''
-  return `${activity}${status.name}`
+function formatActivity(activity: Activity): string {
+  const activityType = reverseActivityTypesMap[activity.type]
+  const formattedType = activityType ? `**${activityType}** ` : ''
+  return `${formattedType}${activity.name}`
 }

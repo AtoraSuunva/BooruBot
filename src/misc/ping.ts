@@ -15,7 +15,7 @@ export const ping = new SleetSlashCommand(
       const wsPing = this.client.ws.ping
       const apiPing = reply.createdTimestamp - interaction.createdTimestamp
       const content = `Pong! **WS**: ${wsPing}ms, **API**: ${apiPing}ms`
-      interaction.editReply(content)
+      await interaction.editReply(content)
     },
   },
 )

@@ -3,8 +3,10 @@ import {
   Guild,
   EmbedBuilder,
   ChatInputCommandInteraction,
+  time,
 } from 'discord.js'
-import { SleetSlashCommand, SleetContext } from 'sleetcord'
+import prettyMilliseconds from 'pretty-ms'
+import { SleetSlashCommand, SleetContext, formatUser } from 'sleetcord'
 
 /**
  * Get some stats about the bot, for now this includes:
@@ -46,28 +48,34 @@ async function runStats(
 
   const modules = this.sleet.modules.size
   const uptime = client.readyAt
-  const created = client.user?.createdAt ?? null
+  const created = client.user.createdAt
 
-  const embed = new EmbedBuilder().setTitle('Stats').addFields([
-    { name: 'Guilds:', value: String(guildCount), inline: true },
-    { name: 'Members:', value: String(memberCount), inline: true },
-    { name: 'Users Cached:', value: String(userCount), inline: true },
-    { name: 'Channels:', value: String(channelCount), inline: true },
-    { name: 'Emojis Cached:', value: String(emojis), inline: true },
-    { name: 'Modules Loaded:', value: String(modules), inline: true },
-    { name: 'Uptime:', value: createTimestamps(uptime), inline: true },
-    { name: 'Created:', value: createTimestamps(created), inline: true },
-  ])
-
-  if (client.user) {
-    embed.setAuthor({
-      name: client.user.tag,
+  const embed = new EmbedBuilder()
+    .setTitle('Stats')
+    .addFields([
+      { name: 'Guilds:', value: guildCount.toLocaleString(), inline: true },
+      { name: 'Members:', value: memberCount.toLocaleString(), inline: true },
+      {
+        name: 'Users Cached:',
+        value: userCount.toLocaleString(),
+        inline: true,
+      },
+      { name: 'Channels:', value: channelCount.toLocaleString(), inline: true },
+      { name: 'Emojis Cached:', value: emojis.toLocaleString(), inline: true },
+      {
+        name: 'Modules Loaded:',
+        value: modules.toLocaleString(),
+        inline: true,
+      },
+      { name: 'Uptime:', value: createTimestamps(uptime), inline: true },
+      { name: 'Created:', value: createTimestamps(created), inline: true },
+    ])
+    .setAuthor({
+      name: formatUser(client.user, { markdown: false, escape: false }),
     })
+    .setThumbnail(client.user.displayAvatarURL())
 
-    embed.setThumbnail(client.user.displayAvatarURL())
-  }
-
-  interaction.reply({ embeds: [embed] })
+  await interaction.reply({ embeds: [embed] })
 }
 
 /**
@@ -122,64 +130,15 @@ async function getEmojiCount(client: Client): Promise<number> {
 
 /**
  * Formats a date into a few timestamp formats for display
- * @param time The time to create a timestamp for
+ * @param date The time to create a timestamp for
  * @returns An "x since" formatted string, absolute discord timestamp, relative discord timestamp
  */
-function createTimestamps(time: Date | null): string {
-  if (!time) return 'Never'
+function createTimestamps(date: Date | null): string {
+  if (!date) return 'Never'
 
-  const ms = time.getTime()
-  const unixSeconds = Math.floor(ms / 1000)
-  const formatted = formatTimeToString(ms, TIME_FORMAT)
-  const absTime = `<t:${unixSeconds}>`
-  const relTime = `<t:${unixSeconds}:R>`
+  const formatted = prettyMilliseconds(Date.now() - date.getTime(), {
+    verbose: true,
+  })
 
-  return `${formatted}\n${absTime}\n${relTime}`
-}
-
-const TIME_FORMAT = '{w} {week} {d} {day} {hh}:{mm}:{ss}'
-
-// TODO: global time util
-/* eslint-disable no-cond-assign */
-function formatTimeToString(time: number, text: string): string {
-  const rep = new Map()
-
-  rep
-    .set('w', time / 604800000)
-    .set('week', rep.get('w') === 1 ? 'week' : 'weeks')
-    .set('d', (time %= 604800000) ? time / 86400000 : 0)
-    .set('day', rep.get('d') === 1 ? 'day' : 'days')
-    .set('h', (time %= 86400000) ? time / 3600000 : 0)
-    .set(
-      'hh',
-      Math.floor(rep.get('h')) < 10
-        ? `0${Math.floor(rep.get('h'))}`
-        : `${Math.floor(rep.get('h'))}`,
-    )
-    .set('hour', rep.get('h') === 1 ? 'hour' : 'hours')
-    .set('m', (time %= 3600000) ? time / 60000 : 0)
-    .set(
-      'mm',
-      Math.floor(rep.get('m')) < 10
-        ? `0${Math.floor(rep.get('m'))}`
-        : `${Math.floor(rep.get('m'))}`,
-    )
-    .set('minute', rep.get('m') === 1 ? 'minute' : 'minutes')
-    .set('s', (time %= 60000) ? time / 1000 : 0)
-    .set(
-      'ss',
-      Math.floor(rep.get('s')) < 10
-        ? `0${Math.floor(rep.get('s'))}`
-        : `${Math.floor(rep.get('s'))}`,
-    )
-    .set('second', rep.get('s') === 1 ? 'second' : 'seconds')
-
-  for (const [format, val] of rep) {
-    text = text.replace(
-      new RegExp(`{${format}}`, 'g'),
-      typeof val === 'number' ? Math.floor(val) : val,
-    )
-  }
-
-  return text
+  return `${formatted}\n${time(date)}\n${time(date, 'R')}`
 }

@@ -1,12 +1,12 @@
 import {
   ChatInputCommandInteraction,
-  CommandInteraction,
+  Client,
   EmbedBuilder,
   Team,
   User,
   version as discordJSVersion,
 } from 'discord.js'
-import { SleetSlashCommand } from 'sleetcord'
+import { SleetSlashCommand, formatUser } from 'sleetcord'
 import * as os from 'node:os'
 
 /**
@@ -26,22 +26,26 @@ export const info = new SleetSlashCommand(
   },
 )
 
+/** os.loadavg() "Returns an array containing the 1, 5, and 15 minute load averages." */
+const cpuLoadIntervals = [1, 5, 15]
+
 /** Get the info! */
 async function runInfo(interaction: ChatInputCommandInteraction) {
   const embed = new EmbedBuilder()
-
-  if (interaction.client.user) {
-    embed.setAuthor({
-      name: interaction.client.user.tag,
+    .setAuthor({
+      name: formatUser(interaction.client.user, {
+        markdown: false,
+        escape: false,
+      }),
     })
+    .setThumbnail(interaction.client.user.displayAvatarURL())
 
-    embed.setThumbnail(interaction.client.user.displayAvatarURL())
-  }
-
-  const owner = getOwner(interaction)
-  const ownerString = formatOwner(owner)
+  const owner = formatOwner(interaction.client)
   const versionInfo = `Node ${process.version}\ndiscord.js v${discordJSVersion}`
-  const cpuString = os.loadavg().join(', ')
+  const cpuString = os
+    .loadavg()
+    .map((v, i) => `${cpuLoadIntervals[i]}m: ${v.toFixed(2)}%`)
+    .join(', ')
 
   const totalMem = os.totalmem()
   const usedMem = os.totalmem() - os.freemem()
@@ -51,13 +55,13 @@ async function runInfo(interaction: ChatInputCommandInteraction) {
   )} (${usedMemPercent}%)`
 
   embed.addFields([
-    { name: 'Owner', value: ownerString, inline: true },
+    { name: 'Owner', value: owner, inline: true },
     { name: 'Using', value: versionInfo, inline: true },
     { name: 'CPU Load Average', value: cpuString, inline: false },
     { name: 'Memory Usage', value: memoryString, inline: true },
   ])
 
-  interaction.reply({
+  await interaction.reply({
     embeds: [embed],
   })
 }
@@ -74,63 +78,24 @@ function formatBytes(bytes: number, decimals = 2): string {
     dm = decimals + 1 || 3,
     sizes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'],
     i = Math.floor(Math.log(bytes) / Math.log(k))
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i]
-}
-
-/** Details about who the owner is, and if they're a team */
-interface OwnerDetails {
-  name: string
-  id: string
-  tag: string
-  isTeam: boolean
-}
-
-/** Get the current owner of the bot/application */
-function getOwner(interaction: CommandInteraction): OwnerDetails {
-  const owner = interaction.client.application?.owner ?? null
-
-  if (owner instanceof User) {
-    return {
-      name: owner.username,
-      id: owner.id,
-      tag: owner.tag,
-      isTeam: false,
-    }
-  } else if (owner instanceof Team) {
-    return {
-      name: owner.name,
-      id: owner.id,
-      tag: owner.owner?.user.tag ?? 'Unknown team owner',
-      isTeam: true,
-    }
-  } else {
-    return {
-      name: 'Unknown',
-      id: 'Unknown',
-      tag: 'Unknown',
-      isTeam: false,
-    }
-  }
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`
 }
 
 /**
  * Formats the owner details into a string, dealing with teams appropriately
- * @param owner The owner details
+ * @param interaction The client to pull information from
  * @returns A string representation of the owner details
  */
-function formatOwner(owner: OwnerDetails): string {
-  const isTeam = owner.isTeam
-  const tag = owner.tag
-  const id = owner.id
-  const name = owner.name
+function formatOwner(client: Client<true>): string {
+  const { owner } = client.application
 
-  if (id === 'Unknown') {
-    return 'Unknown'
-  }
-
-  if (isTeam) {
-    return `Team: ${name} (Owned by ${tag})`
+  if (owner instanceof User) {
+    return formatUser(owner)
+  } else if (owner instanceof Team) {
+    return `Team: ${owner.name} (Owned by ${
+      owner.owner ? formatUser(owner.owner.user) : '<Unknown>'
+    })`
   } else {
-    return tag
+    return '<Unknown>'
   }
 }

@@ -27,14 +27,13 @@ async function runView(interaction: ChatInputCommandInteraction) {
   await defer
 
   if (!config) {
-    interaction.editReply('No Booru config found, so no config to view.')
-    return
+    return interaction.editReply('No Booru config found, so no config to view.')
   }
 
   settingsCache.setConfig(reference.id, config)
 
   const view = createConfigView(config)
-  interaction.editReply(view)
+  return interaction.editReply(view)
 }
 
 export function createConfigView(config: BooruConfig) {

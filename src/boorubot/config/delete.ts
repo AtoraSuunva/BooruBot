@@ -33,31 +33,31 @@ async function runDelete(interaction: ChatInputCommandInteraction) {
 
   const confirm = interaction.options.getBoolean('confirm', false)
   const reference = getReferenceFor(interaction)
-  const config = prisma.booruConfig.findFirst({
+  const config = await prisma.booruConfig.findFirst({
     where: { referenceId: reference.id },
   })
 
   const message = await defer
 
-  if (!config) {
-    interaction.editReply('No Booru config found, so no config to delete.')
-    return
+  if (config) {
+    return interaction.editReply(
+      'No Booru config found, so no config to delete.',
+    )
   }
 
   if (confirm === true) {
     await deleteConfig(reference.id)
-    interaction.editReply('Config deleted.')
-    return
+    return interaction.editReply('Config deleted.')
   }
 
   const deleteButton = new ButtonBuilder()
     .setStyle(ButtonStyle.Danger)
-    .setCustomId(`config/delete:${reference},${interaction.user.id}`)
+    .setCustomId(`config/delete:${reference.id},${interaction.user.id}`)
     .setLabel('Confirm Delete')
 
   const row = new ActionRowBuilder<ButtonBuilder>().addComponents(deleteButton)
 
-  interaction.editReply({
+  await interaction.editReply({
     content: 'Are you sure? You **CANNOT** undo this!!!',
     components: [row],
   })
@@ -73,17 +73,17 @@ async function runDelete(interaction: ChatInputCommandInteraction) {
 
       await deleteConfig(reference.id)
 
-      interaction.editReply({
+      await interaction.editReply({
         content: `Booru config deleted. Requested by ${interaction.user}`,
         components: [],
       })
 
       await defer
-      i.editReply('Config deleted.')
+      await i.editReply('Config deleted.')
 
       collector.stop()
     } else {
-      i.reply({
+      await i.reply({
         ephemeral: true,
         content: `Only ${interaction.user} can confirm this deletion.`,
       })
@@ -92,12 +92,14 @@ async function runDelete(interaction: ChatInputCommandInteraction) {
 
   collector.on('end', (_collected, reason) => {
     if (reason === 'time') {
-      interaction.editReply({
+      return void interaction.editReply({
         content: 'Deletion timed out',
         components: [],
       })
     }
   })
+
+  return
 }
 
 function deleteConfig(referenceId: string) {

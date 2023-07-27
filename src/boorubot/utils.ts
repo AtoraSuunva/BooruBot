@@ -7,7 +7,7 @@ import { Reference } from './SettingsCache.js'
 
 export function getReferenceFor(interaction: BaseInteraction): Reference {
   return {
-    id: interaction.guild?.id || interaction.user.id,
+    id: interaction.guild?.id ?? interaction.user.id,
     isGuild: interaction.guild !== null,
   }
 }

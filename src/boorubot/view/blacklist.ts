@@ -24,5 +24,5 @@ export const viewBlacklist = new SleetSlashSubcommand(
 )
 
 function runViewBlacklist(interaction: ChatInputCommandInteraction) {
-  runView(interaction)
+  return runView(interaction)
 }

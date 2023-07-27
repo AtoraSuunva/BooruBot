@@ -52,6 +52,7 @@ export async function getParentChannel(
 
   if (parentId == null) {
     const threadChannel = await thread.guild.channels.fetch(thread.id)
+    // eslint-disable-next-line @typescript-eslint/prefer-optional-chain
     if (threadChannel === null || threadChannel.parentId === null) {
       throw new Error(
         `Thread ${thread.id} has no parent ID even after fetching the thread, give up`,
@@ -92,7 +93,7 @@ export async function nsfwAllowedInChannel(
   //      - Check if allowNSFW, then check channel
 
   // false = disable *everywhere*
-  if (allowNSFW === false) {
+  if (!allowNSFW) {
     return false
   }
 
@@ -196,11 +197,11 @@ function compareTagAgainstBlacklist(tag: string, blacklist: string[]): boolean {
 }
 
 /**
- * Check if an extension is embedable inside of an embed (`.setImage`)
+ * Check if an extension is embeddable inside of an embed (`.setImage`)
  * @param ext The extension to check for.
- * @returns If the extension is embedable in an embed
+ * @returns If the extension is embeddable in an embed
  */
-function isEmbedableFileType(ext: string): boolean {
+function isEmbeddableFileType(ext: string): boolean {
   return ['.jpg', '.jpeg', '.png', '.gif'].includes(ext)
 }
 
@@ -252,7 +253,7 @@ export function formatPostToEmbed({
 }: PostFormatOptions): FormattedPost {
   const ext = extname(post.fileUrl ?? '').toLowerCase()
 
-  const embedable = !isEmbedableFileType(ext)
+  const embeddable = !isEmbeddableFileType(ext)
     ? '*The file will likely not embed*'
     : ''
 
@@ -266,14 +267,14 @@ export function formatPostToEmbed({
   const description = [
     leadingDescription,
     `**Tags:** ${formatTags(post.tags)}`,
-    embedable,
+    embeddable,
   ]
     .filter(notEmpty)
     .join('\n')
 
   const footerText = [
     post.booru.domain,
-    postNumber ? `${postNumber}/${postCount || postNumber}` : '',
+    postNumber ? `${postNumber}/${postCount ?? postNumber}` : '',
     timeTaken ? formatTime(timeTaken) : '',
   ]
     .filter(notEmpty)

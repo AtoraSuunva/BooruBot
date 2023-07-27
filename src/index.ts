@@ -107,5 +107,5 @@ sleetClient.addModules([
   rollbarLogger,
 ])
 
-sleetClient.putCommands()
-sleetClient.login()
+await sleetClient.putCommands()
+await sleetClient.login()

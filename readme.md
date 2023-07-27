@@ -1,3 +1,5 @@
+# Booru Bot
+
 Search 15 different boorus directly from within Discord!
 
 # [Add to Server](https://canary.discord.com/api/oauth2/authorize?client_id=204721731162734592&permissions=0&scope=bot%20applications.commands)
@@ -66,30 +68,38 @@ You're free to host the bot yourself, but it requires some dev knowledge:
 
   * I have no idea what the minimum required node.js version is, but v18.3.0 worked for me
   * You'll need a bot user set up, [see here](https://discord.com/developers/applications)
-  * You'll need a postgres server set up (or any other database supported by [prisma](https://www.prisma.io/) by overriding the provider)
   * You'll need a `.env` file:
 
 ```toml
-NODE_ENV=<production | development>
-TOKEN=<bot token>
-APPLICATION_ID=<app id>
-USE_PINO_PRETTY=<true | false>
-DATABASE_URL=<database url>
+NODE_ENV=development # or production
+TOKEN=<discord bot token>
+APPLICATION_ID=<discord application id>
+USE_PINO_PRETTY=true # or false for default pino logs
+DATABASE_URL="file:./db/dev.db" # or anywhere else you want an sqlite db to be
+ACTIVITIES_FILE="./resources/activities-smol.txt" # path to a text file with the activities you want the bot to show
 ```
 
 Then:
+
+Docker (recommended) can also be used, automatically building, migrating, and running. The default docker setup will use an sqlite file, you will have to modify it (and your docker network) to work with an external DB
+```sh
+docker-compose up
+```
 
 ```sh
 # Install dependencies (pnpm is used, but npm/yarn also work)
 pnpm install
 
-# Build the bot
-pnpm run build
+# Migrate the database if needed
+pnpm prisma migrate deploy
 
-# Run in dev mode (or)
+# Run in dev mode
 pnpm run start:dev
 
-# Run in production mode
+#  - OR -
+
+# Build the bot & run in production mode
+pnpm run build
 pnpm run start:prod
 ```
 

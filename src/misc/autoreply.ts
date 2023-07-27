@@ -24,57 +24,55 @@ const SOURCE_URL = 'https://github.com/AtoraSuunva/Booru-Discord'
 const WHY_SLASH_URL =
   'https://gist.github.com/AtoraSuunva/c55dd6c7e157eeb25c26ef09f47790d8'
 
-function handleMessageCreate(message: Message): Promise<unknown> | void {
+async function handleMessageCreate(message: Message): Promise<unknown> {
   if (message.author.bot) return
 
   const { client } = message
-  const { user } = client
+  const userRegex = lazyInitClientUserRegex(client.user)
 
-  if (user) {
-    const userRegex = lazyInitClientUserRegex(user)
+  if (userRegex.test(message.content)) {
+    const inviteLink = client.generateInvite({
+      scopes: client.application.installParams?.scopes ?? [
+        OAuth2Scopes.Bot,
+        OAuth2Scopes.ApplicationsCommands,
+      ],
+    })
 
-    if (userRegex.test(message.content)) {
-      const inviteLink = client.generateInvite({
-        scopes: client.application?.installParams?.scopes ?? [
-          OAuth2Scopes.Bot,
-          OAuth2Scopes.ApplicationsCommands,
-        ],
-      })
+    const row = new ActionRowBuilder<ButtonBuilder>()
+    const inviteButton = new ButtonBuilder()
+      .setLabel('Invite Bot')
+      .setStyle(ButtonStyle.Link)
+      .setURL(inviteLink)
 
-      const row = new ActionRowBuilder<ButtonBuilder>()
-      const inviteButton = new ButtonBuilder()
-        .setLabel('Invite Bot')
-        .setStyle(ButtonStyle.Link)
-        .setURL(inviteLink)
+    const changelogButton = new ButtonBuilder()
+      .setLabel('Changelog')
+      .setStyle(ButtonStyle.Link)
+      .setURL(CHANGELOG_URL)
 
-      const changelogButton = new ButtonBuilder()
-        .setLabel('Changelog')
-        .setStyle(ButtonStyle.Link)
-        .setURL(CHANGELOG_URL)
+    const sourceButton = new ButtonBuilder()
+      .setLabel('More Info & Source Code')
+      .setStyle(ButtonStyle.Link)
+      .setURL(SOURCE_URL)
 
-      const sourceButton = new ButtonBuilder()
-        .setLabel('More Info & Source Code')
-        .setStyle(ButtonStyle.Link)
-        .setURL(SOURCE_URL)
+    const whySlashButton = new ButtonBuilder()
+      .setLabel('Why Slash Commands?')
+      .setStyle(ButtonStyle.Link)
+      .setURL(WHY_SLASH_URL)
 
-      const whySlashButton = new ButtonBuilder()
-        .setLabel('Why Slash Commands?')
-        .setStyle(ButtonStyle.Link)
-        .setURL(WHY_SLASH_URL)
+    row.addComponents([
+      inviteButton,
+      changelogButton,
+      sourceButton,
+      whySlashButton,
+    ])
 
-      row.addComponents([
-        inviteButton,
-        changelogButton,
-        sourceButton,
-        whySlashButton,
-      ])
-
-      return message.reply({
-        content: `Use slash commands to interact with me, type \`/\` into your chat bar to see them.\nDon't see them? Try reinviting me!\nWant to learn more about how to use me? Click the "More Info" button!`,
-        components: [row],
-      })
-    }
+    return message.reply({
+      content: `Use slash commands to interact with me, type \`/\` into your chat bar to see them.\nDon't see them? Try reinviting me!\nWant to learn more about how to use me? Click the "More Info" button!`,
+      components: [row],
+    })
   }
+
+  return
 }
 
 function lazyInitClientUserRegex(user: ClientUser): RegExp {

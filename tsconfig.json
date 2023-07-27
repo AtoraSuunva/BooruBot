@@ -1,5 +1,6 @@
 {
-  "include": ["./src/**/*"],
+  "include": ["src"],
+  "exclude": ["**/node_modules", "**/.*/"],
   "compilerOptions": {
     /* Projects */
     "composite": true,
@@ -35,6 +36,7 @@
     "exactOptionalPropertyTypes": true,
 
     /* Completeness */
+    "skipDefaultLibCheck": true,
     "skipLibCheck": true
   }
 }
