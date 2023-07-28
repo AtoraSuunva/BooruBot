@@ -116,10 +116,34 @@ async function loadActivities() {
 async function runReady(client: Client) {
   await loadActivities()
   const activity = getRandomActivity()
-  client.user?.setActivity(activity)
+
+  setClientActivity(client, activity)
+
   timeout = setTimeout(() => {
     void runReady(client)
   }, timeoutDelay)
+}
+
+/**
+ * Helper function to set the activity for a client, adds in shard ID if the client is sharded
+ * @param client The client to set the activity for
+ * @param activity The activity to set
+ */
+function setClientActivity(client: Client, activity: ActivityOptions) {
+  if (client.shard) {
+    for (const shardId of client.shard.ids) {
+      // Shards start at 0, so with 4 shards we'd have [0, 1, 2, 3] and we don't want "Shard 3/4"
+      const count = client.shard.count - 1
+
+      client.user?.setActivity({
+        ...activity,
+        name: `${activity.name} | Shard ${shardId}/${count}`,
+        shardId,
+      })
+    }
+  } else {
+    client.user?.setActivity(activity)
+  }
 }
 
 /** Either set a new random activity, or set it to the one the user specified */
@@ -154,7 +178,8 @@ async function runActivity(
     }
   }
 
-  interaction.client.user.setActivity(activity)
+  setClientActivity(interaction.client, activity)
+
   return interaction.reply({
     ephemeral: true,
     content: `Set activity to:\n> ${formatActivity(activity)}`,
