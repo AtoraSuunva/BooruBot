@@ -40,7 +40,7 @@ export async function ensureConfigFor(
  */
 export function getItemsFrom(str: string): string[] {
   return str
-    .split(' ')
+    .split(/[, ]/)
     .map((tag) => tag.trim().toLowerCase())
     .filter((tag) => tag !== '')
 }
