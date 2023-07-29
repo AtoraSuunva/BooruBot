@@ -1,18 +1,10 @@
 import { GatewayIntentBits, Options } from 'discord.js'
 import env from 'env-var'
 import { SleetClient } from 'sleetcord'
-import { activity } from './misc/activity.js'
-import { info } from './misc/info.js'
-import { stats } from './misc/stats.js'
-import { autoreply } from './misc/autoreply.js'
-import { ping } from './misc/ping.js'
-import { blacklist } from './boorubot/blacklist/index.js'
-import { config } from './boorubot/config/index.js'
-import { search } from './boorubot/search/search.js'
-import { link } from './boorubot/link.js'
-import { view } from './boorubot/view/index.js'
-import { rollbarLogger } from './rollbar.js'
-import { logging } from './logging.js'
+import { logging, rollbarLogger } from 'sleetcord-common'
+import { booruModules } from './boorubot/index.js'
+import { miscModules } from './misc/index.js'
+import './util/dbLogging.js'
 
 const TOKEN = env.get('TOKEN').required().asString()
 const APPLICATION_ID = env.get('APPLICATION_ID').required().asString()
@@ -88,21 +80,8 @@ const sleetClient: SleetClient = new SleetClient({
 })
 
 sleetClient.addModules([
-  // booru
-  blacklist,
-  config,
-  search,
-  link,
-  view,
-
-  // misc
-  activity,
-  autoreply,
-  info,
-  ping,
-  stats,
-
-  // logging
+  ...booruModules,
+  ...miscModules,
   logging,
   rollbarLogger,
 ])

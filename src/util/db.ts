@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client'
-import { HOUR } from './constants.js'
+import { HOUR } from 'sleetcord-common'
 import env from 'env-var'
 
 const NODE_ENV = env.get('NODE_ENV').required().asString()

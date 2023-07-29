@@ -1,6 +1,6 @@
 {
   "name": "boorubot",
-  "version": "4.2.1",
+  "version": "4.2.2",
   "description": "A Discord bot to search boorus",
   "type": "module",
   "main": "dist/index.js",
@@ -13,15 +13,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/AtoraSuunva/Booru-Discord.git"
+    "url": "git+https://github.com/AtoraSuunva/BooruBot.git"
   },
   "keywords": [],
   "author": "AtoraSuunva",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/AtoraSuunva/Booru-Discord/issues"
+    "url": "https://github.com/AtoraSuunva/BooruBot/issues"
   },
-  "homepage": "https://github.com/AtoraSuunva/Booru-Discord#readme",
+  "homepage": "https://github.com/AtoraSuunva/BooruBot#readme",
   "dependencies": {
     "@prisma/client": "^5.0.0",
     "booru": "^2.6.3",
@@ -32,16 +32,16 @@
     "pino-dev": "^4.0.2",
     "pretty-ms": "^8.0.0",
     "rollbar": "^2.26.2",
-    "sleetcord": "^0.15.2"
+    "sleetcord": "^0.15.2",
+    "sleetcord-common": "^1.1.0"
   },
   "devDependencies": {
     "@types/node": "^20.4.5",
     "@typescript-eslint/eslint-plugin": "^6.2.0",
     "@typescript-eslint/parser": "^6.2.0",
-    "eslint": "^8.45.0",
+    "eslint": "^8.46.0",
     "eslint-config-prettier": "^8.9.0",
     "eslint-plugin-import": "^2.28.0",
-    "pino-pretty": "^10.2.0",
     "prettier": "^3.0.0",
     "prisma": "^5.0.0",
     "typescript": "^5.1.6"
