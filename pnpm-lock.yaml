@@ -574,7 +574,7 @@ packages:
     resolution: {integrity: sha512-dAq+XyKrvlCFNeUtS6Yng6TxghNofQea7t/yuPTezosnHp1Ypup+KwIiXpAdCAvxbRXuFtBuTd/RV4xPzsTo1w==}
     engines: {node: '>=10.0.0'}
     dependencies:
-      fast-xml-parser: 4.0.9
+      fast-xml-parser: 4.2.7
       undici: 5.21.0
     dev: false
 
@@ -1084,8 +1084,8 @@ packages:
     engines: {node: '>=6'}
     dev: false
 
-  /fast-xml-parser@4.0.9:
-    resolution: {integrity: sha512-4G8EzDg2Nb1Qurs3f7BpFV4+jpMVsdgLVuG1Uv8O2OHJfVCg7gcA53obuKbmVqzd4Y7YXVBK05oJG7hzGIdyzg==}
+  /fast-xml-parser@4.2.7:
+    resolution: {integrity: sha512-J8r6BriSLO1uj2miOk1NW0YVm8AGOOu3Si2HQp/cSmo6EA4m3fcwu2WKjJ4RK9wMLBtg69y1kS8baDiQBR41Ig==}
     hasBin: true
     dependencies:
       strnum: 1.0.5
