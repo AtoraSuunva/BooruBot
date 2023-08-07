@@ -1,4 +1,4 @@
-import { GatewayIntentBits, Options } from 'discord.js'
+import { GatewayIntentBits, Options, RESTOptions } from 'discord.js'
 import env from 'env-var'
 import { SleetClient } from 'sleetcord'
 import { logging, rollbarLogger } from 'sleetcord-common'
@@ -15,6 +15,9 @@ const sleetClient: SleetClient = new SleetClient({
     applicationId: APPLICATION_ID,
   },
   client: {
+    rest: {
+      makeRequest: fetch as unknown as RESTOptions['makeRequest'],
+    },
     shards: 'auto',
     intents: [
       // Remove this once people are better aware of slash commands?
@@ -54,19 +57,19 @@ const sleetClient: SleetClient = new SleetClient({
           message.author.id === sleetClient.client.user?.id,
       },
       GuildMemberManager: {
-        maxSize: 200,
+        maxSize: 50,
         keepOverLimit: (member) => member.id === sleetClient.client.user?.id,
       },
       UserManager: {
-        maxSize: 200,
+        maxSize: 50,
         keepOverLimit: (user) => user.id === sleetClient.client.user?.id,
       },
     }),
     sweepers: {
       ...Options.DefaultSweeperSettings,
-      // Remove messages older than 30 minutes every hour
+      // Remove messages older than 30 minutes every 30 minutes
       messages: {
-        interval: 3600,
+        interval: 1800,
         lifetime: 1800,
       },
       // Remove all bots every 15 minutes
