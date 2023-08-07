@@ -9,8 +9,8 @@ dependencies:
     specifier: ^5.1.1
     version: 5.1.1(prisma@5.1.1)
   booru:
-    specifier: ^2.6.3
-    version: 2.6.3
+    specifier: ^2.6.4
+    version: 2.6.4
   discord.js:
     specifier: ^14.12.1
     version: 14.12.1
@@ -567,12 +567,12 @@ packages:
     resolution: {integrity: sha512-AKpaYlHn8t4SVbOHCy+b5+KKgvR4vrsD8vbvrbiQJps7fKDTkjkDry6ji0rUJjC0kzbNePLwzxq8iypo41qeWA==}
     dev: false
 
-  /booru@2.6.3:
-    resolution: {integrity: sha512-dAq+XyKrvlCFNeUtS6Yng6TxghNofQea7t/yuPTezosnHp1Ypup+KwIiXpAdCAvxbRXuFtBuTd/RV4xPzsTo1w==}
+  /booru@2.6.4:
+    resolution: {integrity: sha512-EUODFgs7x0G7EmuU/a8w50tUJZd8igIjxhh5lQRhdw33sm1tGsbJp9zRWogsywHDjSo/W/QP/5hkWOPaOpMqxg==}
     engines: {node: '>=10.0.0'}
     dependencies:
-      fast-xml-parser: 4.0.9
-      undici: 5.21.0
+      fast-xml-parser: 4.2.7
+      undici: 5.23.0
     dev: false
 
   /brace-expansion@1.1.11:
@@ -1081,8 +1081,8 @@ packages:
     engines: {node: '>=6'}
     dev: false
 
-  /fast-xml-parser@4.0.9:
-    resolution: {integrity: sha512-4G8EzDg2Nb1Qurs3f7BpFV4+jpMVsdgLVuG1Uv8O2OHJfVCg7gcA53obuKbmVqzd4Y7YXVBK05oJG7hzGIdyzg==}
+  /fast-xml-parser@4.2.7:
+    resolution: {integrity: sha512-J8r6BriSLO1uj2miOk1NW0YVm8AGOOu3Si2HQp/cSmo6EA4m3fcwu2WKjJ4RK9wMLBtg69y1kS8baDiQBR41Ig==}
     hasBin: true
     dependencies:
       strnum: 1.0.5
@@ -2186,13 +2186,6 @@ packages:
       has-symbols: 1.0.3
       which-boxed-primitive: 1.0.2
     dev: true
-
-  /undici@5.21.0:
-    resolution: {integrity: sha512-HOjK8l6a57b2ZGXOcUsI5NLfoTrfmbOl90ixJDl0AEFG4wgHNDQxtZy15/ZQp7HhjkpaGlp/eneMgtsu1dIlUA==}
-    engines: {node: '>=12.18'}
-    dependencies:
-      busboy: 1.6.0
-    dev: false
 
   /undici@5.23.0:
     resolution: {integrity: sha512-1D7w+fvRsqlQ9GscLBwcAJinqcZGHUKjbOmXdlE/v8BvEGXjeWAax+341q44EuTcHXXnfyKNbKRq4Lg7OzhMmg==}
