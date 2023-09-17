@@ -1,6 +1,6 @@
 {
   "name": "boorubot",
-  "version": "4.2.4",
+  "version": "4.3.0",
   "description": "A Discord bot to search boorus",
   "type": "module",
   "main": "dist/index.js",
@@ -9,7 +9,8 @@
     "start:prod": "npx prisma migrate deploy && node dist/index.js",
     "build": "tsc --build",
     "lint": "eslint src/ && prettier --check src/ && tsc --noEmit",
-    "lint:fix": "eslint src/ --fix && prettier --write src/ && pnpm prisma format && tsc --noEmit"
+    "lint:fix": "eslint src/ --fix && prettier --write src/ && pnpm prisma format && tsc --noEmit",
+    "sentry:sourcemaps": "sentry-cli sourcemaps inject ./dist"
   },
   "repository": {
     "type": "git",
@@ -39,6 +40,7 @@
     "sleetcord-common": "^3.0.1"
   },
   "devDependencies": {
+    "@sentry/cli": "^2.20.7",
     "@types/node": "^20.6.2",
     "@typescript-eslint/eslint-plugin": "^6.7.0",
     "@typescript-eslint/parser": "^6.7.0",

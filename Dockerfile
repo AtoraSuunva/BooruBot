@@ -1,5 +1,7 @@
 # Step that pulls in everything needed to build the app and builds it
 FROM node:20-bookworm-slim as dev-build
+ARG GIT_COMMIT_SHA
+ENV GIT_COMMIT_SHA=${GIT_COMMIT_SHA:-development}
 WORKDIR /home/node/app
 RUN npm install -g pnpm
 COPY pnpm-lock.yaml ./
@@ -11,6 +13,7 @@ COPY tsconfig.json ./
 COPY /prisma ./prisma/
 RUN pnpm exec prisma generate && pnpm run build
 COPY /resources ./resources/
+RUN pnpm sentry:sourcemaps
 
 
 # Step that only pulls in (production) deps required to run the app

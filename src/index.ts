@@ -16,8 +16,11 @@ import { prisma } from './util/db.js'
 async function main() {
   const TOKEN = env.get('TOKEN').required().asString()
   const APPLICATION_ID = env.get('APPLICATION_ID').required().asString()
+  const GIT_COMMIT_SHA = env.get('GIT_COMMIT_SHA').asString() ?? 'development'
 
-  initSentry()
+  initSentry({
+    release: GIT_COMMIT_SHA,
+  })
   initDBLogging(prisma)
 
   const sleetClient: SleetClient = new SleetClient({

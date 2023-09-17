@@ -7,3 +7,6 @@ dist/
 prisma/db/
 prisma/**/*.db
 prisma/**/*.sqlite
+
+# Sentry Auth Token
+.sentryclirc
