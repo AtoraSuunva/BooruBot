@@ -4,7 +4,7 @@ import env from 'env-var'
 
 const NODE_ENV = env.get('NODE_ENV').required().asString()
 
-export const prisma = new PrismaClient({
+export const prisma: PrismaClient = new PrismaClient({
   errorFormat: NODE_ENV === 'development' ? 'pretty' : 'colorless',
   log: [
     {

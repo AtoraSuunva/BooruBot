@@ -1,5 +1,5 @@
 import { BooruConfig } from '@prisma/client'
-import { BaseInteraction } from 'discord.js'
+import { APIApplicationCommandOptionChoice, BaseInteraction } from 'discord.js'
 import { prisma } from '../util/db.js'
 import booru from 'booru'
 import { AutocompleteHandler, makeChoices } from 'sleetcord'
@@ -181,7 +181,8 @@ export const autocompleteSiteOrList: AutocompleteHandler<string> = ({
   }))
 }
 
-export const siteChoices = makeChoices(siteInfo.map((site) => site.domain))
+export const siteChoices: APIApplicationCommandOptionChoice<string>[] =
+  makeChoices(siteInfo.map((site) => site.domain))
 
 /**
  * Clones an array and then shuffles the clone in-place using Durstenfeld's algorithm

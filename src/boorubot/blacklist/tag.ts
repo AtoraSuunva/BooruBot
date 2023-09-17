@@ -112,7 +112,9 @@ function makeTagModifier(tagAction: TagAction) {
       },
     )
 
-    return interaction.editReply(formattedBlacklist)
+    return interaction.editReply(formattedBlacklist).catch(() => {
+      /* ignore */
+    })
   }
 }
 
