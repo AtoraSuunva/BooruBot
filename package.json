@@ -36,7 +36,6 @@
     "pino": "^8.15.1",
     "pino-dev": "^4.0.2",
     "pretty-ms": "^8.0.0",
-    "rollbar": "^2.26.2",
     "sleetcord": "^0.17.1",
     "sleetcord-common": "^3.1.0"
   },
