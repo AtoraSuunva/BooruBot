@@ -45,8 +45,8 @@ dependencies:
     specifier: ^0.17.1
     version: 0.17.1(discord.js@14.13.0)
   sleetcord-common:
-    specifier: ^3.0.1
-    version: 3.0.1(@prisma/client@5.3.1)(@sentry/integrations@7.69.0)(@sentry/node@7.69.0)(@sentry/profiling-node@1.2.1)(discord.js@14.13.0)(env-var@7.4.1)(pino@8.15.1)(pretty-ms@8.0.0)(sleetcord@0.17.1)
+    specifier: ^3.1.0
+    version: 3.1.0(@prisma/client@5.3.1)(@sentry/integrations@7.69.0)(@sentry/node@7.69.0)(@sentry/profiling-node@1.2.1)(discord.js@14.13.0)(env-var@7.4.1)(pino@8.15.1)(pretty-ms@8.0.0)(sleetcord@0.17.1)
 
 devDependencies:
   '@sentry/cli':
@@ -2627,8 +2627,8 @@ packages:
     engines: {node: '>=8'}
     dev: true
 
-  /sleetcord-common@3.0.1(@prisma/client@5.3.1)(@sentry/integrations@7.69.0)(@sentry/node@7.69.0)(@sentry/profiling-node@1.2.1)(discord.js@14.13.0)(env-var@7.4.1)(pino@8.15.1)(pretty-ms@8.0.0)(sleetcord@0.17.1):
-    resolution: {integrity: sha512-f5CNncCKLtfZ6vejX+7QJfCECSzizADSEFGT0+gW4aLOqhMwCr2fArmnHowcgyJEKwz4Z7zCj3srbGGQ4rOdHw==}
+  /sleetcord-common@3.1.0(@prisma/client@5.3.1)(@sentry/integrations@7.69.0)(@sentry/node@7.69.0)(@sentry/profiling-node@1.2.1)(discord.js@14.13.0)(env-var@7.4.1)(pino@8.15.1)(pretty-ms@8.0.0)(sleetcord@0.17.1):
+    resolution: {integrity: sha512-JNRrfQmaPt3HexKgLfoVOs6y27XMo0VL/xYp5PqJt74LZUXtAWX9oyJ1YupTMq+ZAvGEwMOYD7CWywUnnwccWg==}
     peerDependencies:
       '@prisma/client': ^5.3.1
       '@sentry/integrations': ^7.69.0
