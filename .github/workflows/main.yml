@@ -46,7 +46,6 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          outputs: type=local,dest=build-result
           build-args: |
             GIT_COMMIT_SHA=${{ github.sha }}
 
