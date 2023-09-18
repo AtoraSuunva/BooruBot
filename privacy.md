@@ -1,6 +1,6 @@
 # BooruBot Privacy Policy
 
-Last Updated & Effective as of: June 10, 2023
+Last Updated & Effective as of: September 17, 2023
 
 For Discord Bot: BooruBot#9381 (204722411403345920)
 
@@ -20,12 +20,14 @@ Config data for a guild is stored for 10 days after BooruBot is removed from a g
 
 Data deleted manually (via `/config delete`) or automatically (after 10 days of not being in the guild) is deleted permanently.
 
-[Rollbar](https://rollbar.com) is used for error tracking. Data collected when an error occurs:
+[Sentry](https://sentry.io) is used for error tracking. Data collected when an error occurs:
 
 - `error`: The error message and stack trace
 - `interaction`: The interaction + options used (ex. `/search [site<string>: example.com] [tags<string>: foo bar]`)
+- `module`: The module that errored
+- Local stack variables
 
-Errors reported to Rollbar are deleted after 30 days.
+Errors reported to Sentry are deleted after 90 days.
 
 For a copy of your data, or to delete the data by request, you may contact the developer. Please note that you may be required to verify your identity and/or your permissions on a server before requests can be completed, to avoid unauthorized access or deletion of data.
 
