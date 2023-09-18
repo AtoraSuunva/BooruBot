@@ -31,7 +31,7 @@ export async function runView(interaction: ChatInputCommandInteraction) {
   const formattedBlacklist = formatBlacklist(blacklist)
 
   return interaction.reply({
-    content: formattedBlacklist,
+    ...formattedBlacklist,
     ephemeral,
   })
 }
