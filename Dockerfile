@@ -14,13 +14,6 @@ COPY /prisma ./prisma/
 RUN pnpm exec prisma generate && pnpm run build
 COPY /resources ./resources/
 RUN pnpm sentry:sourcemaps:inject
-RUN --mount=type=secret,id=SENTRY_AUTH_TOKEN \
-      --mount=type=secret,id=SENTRY_ORG \
-      --mount=type=secret,id=SENTRY_PROJECT \
-      SENTRY_AUTH_TOKEN=$(cat /run/secrets/SENTRY_AUTH_TOKEN) \
-      SENTRY_ORG=$(cat /run/secrets/SENTRY_ORG) \
-      SENTRY_PROJECT=$(cat /run/secrets/SENTRY_PROJECT) \
-      pnpm sentry:sourcemaps:upload
 
 
 # Step that only pulls in (production) deps required to run the app
