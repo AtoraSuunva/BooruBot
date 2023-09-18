@@ -48,8 +48,10 @@ jobs:
           cache-to: type=gha,mode=max
           build-args: |
             GIT_COMMIT_SHA=${{ github.sha }}
+          outputs: type=local,dest=docker-out
 
       - run: ls -l
+      - run: ls -l docker-out
 
       - name: Create Sentry release
         uses: getsentry/action-release@v1
@@ -59,5 +61,5 @@ jobs:
           SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
         with:
           environment: production
-          sourcemaps: ./dist
+          sourcemaps: ./docker-out/dist
           version: ${{ github.sha }}
