@@ -7,7 +7,7 @@ import {
   logging,
   sentryLogger,
   initDBLogging,
-  sentryModuleRunner,
+  getModuleRunner,
 } from 'sleetcord-common'
 import { booruModules } from './boorubot/index.js'
 import { miscModules } from './misc/index.js'
@@ -27,7 +27,7 @@ async function main() {
     sleet: {
       token: TOKEN,
       applicationId: APPLICATION_ID,
-      moduleRunner: sentryModuleRunner,
+      moduleRunner: getModuleRunner(),
     },
     client: {
       rest: {
