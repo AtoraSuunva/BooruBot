@@ -1,36 +1,18 @@
-import { BooruConfig } from '@prisma/client'
 import { APIApplicationCommandOptionChoice, BaseInteraction } from 'discord.js'
-import { prisma } from '../util/db.js'
 import booru from 'booru'
 import { AutocompleteHandler, makeChoices } from 'sleetcord'
 import { Reference } from './SettingsCache.js'
 
+/**
+ * Get a reference usable to fetch settings for some particular interaction
+ * @param interaction The interaction to get a reference for
+ * @returns A reference item for this interaction, based on the guild or user id
+ */
 export function getReferenceFor(interaction: BaseInteraction): Reference {
   return {
     id: interaction.guild?.id ?? interaction.user.id,
     isGuild: interaction.guild !== null,
   }
-}
-
-export async function ensureConfigFor(
-  reference: Reference,
-): Promise<BooruConfig> {
-  const config = await prisma.booruConfig.findUnique({
-    where: {
-      referenceId: reference.id,
-    },
-  })
-
-  if (config !== null) {
-    return config
-  }
-
-  return prisma.booruConfig.create({
-    data: {
-      referenceId: reference.id,
-      isGuild: reference.isGuild,
-    },
-  })
 }
 
 /**

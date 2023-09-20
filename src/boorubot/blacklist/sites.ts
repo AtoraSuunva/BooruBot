@@ -6,7 +6,6 @@ import { AutocompleteHandler, SleetSlashSubcommand } from 'sleetcord'
 import { prisma } from '../../util/db.js'
 import { Reference, settingsCache } from '../SettingsCache.js'
 import {
-  ensureConfigFor,
   getReferenceFor,
   resolveListsFor,
   resolveSitesAndListsFor,
@@ -91,7 +90,7 @@ type SiteAction = (reference: Reference, sites: string[]) => Promise<void>
 function makeSiteAction(siteAction: SiteAction) {
   return async function (interaction: ChatInputCommandInteraction) {
     const reference = getReferenceFor(interaction)
-    await ensureConfigFor(reference)
+    await settingsCache.get(reference)
 
     const currentSites = await prisma.site.findMany({
       where: { referenceId: reference.id },

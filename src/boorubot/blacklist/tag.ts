@@ -5,7 +5,7 @@ import {
 import { AutocompleteHandler, SleetSlashSubcommand } from 'sleetcord'
 import { prisma } from '../../util/db.js'
 import { Reference, settingsCache } from '../SettingsCache.js'
-import { ensureConfigFor, getItemsFrom, getReferenceFor } from '../utils.js'
+import { getItemsFrom, getReferenceFor } from '../utils.js'
 import { formatBlacklist, getBlacklistFor } from './utils.js'
 
 export const blacklistAddTags = new SleetSlashSubcommand(
@@ -131,7 +131,7 @@ function makeTagModifier(tagAction: TagAction) {
 }
 
 async function addTags(reference: Reference, tags: string[]) {
-  await ensureConfigFor(reference)
+  await settingsCache.get(reference)
 
   const tagsToAdd = tags.map((tag) => ({
     referenceId: reference.id,
@@ -157,7 +157,7 @@ async function addTags(reference: Reference, tags: string[]) {
 }
 
 async function removeTags(reference: Reference, tags: string[]) {
-  await ensureConfigFor(reference)
+  await settingsCache.get(reference)
 
   await prisma.tag.deleteMany({
     where: { name: { in: tags } },
