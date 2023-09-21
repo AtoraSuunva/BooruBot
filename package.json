@@ -1,11 +1,11 @@
 {
   "name": "boorubot",
-  "version": "4.3.0",
+  "version": "4.4.0",
   "description": "A Discord bot to search boorus",
   "type": "module",
   "main": "dist/index.js",
   "scripts": {
-    "start:dev": "tsc --build && node -r dotenv/config --trace-warnings dist/index.js",
+    "start:dev": "tsc --build && node --env-file=.env --trace-warnings dist/index.js",
     "start:prod": "npx prisma migrate deploy && node dist/index.js",
     "build": "tsc --build",
     "lint": "eslint src/ && prettier --check src/ && tsc --noEmit",
@@ -31,7 +31,6 @@
     "@sentry/profiling-node": "^1.2.1",
     "booru": "^2.6.4",
     "discord.js": "^14.13.0",
-    "dotenv": "^16.3.1",
     "env-var": "^7.4.1",
     "pino": "^8.15.1",
     "pino-dev": "^4.0.2",
