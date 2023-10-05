@@ -1,13 +1,13 @@
 import { GatewayIntentBits, Options, RESTOptions } from 'discord.js'
 import env from 'env-var'
-import { SleetClient } from 'sleetcord'
+import { SleetClient, SleetModuleEventHandlers } from 'sleetcord'
 import {
-  initSentry,
   Sentry,
+  getModuleRunner,
+  initDBLogging,
+  initSentry,
   logging,
   sentryLogger,
-  initDBLogging,
-  getModuleRunner,
 } from 'sleetcord-common'
 import { booruModules } from './boorubot/index.js'
 import { miscModules } from './misc/index.js'
@@ -18,8 +18,31 @@ async function main() {
   const APPLICATION_ID = env.get('APPLICATION_ID').required().asString()
   const GIT_COMMIT_SHA = env.get('GIT_COMMIT_SHA').asString() ?? 'development'
 
-  initSentry({
+  await initSentry({
     release: GIT_COMMIT_SHA,
+    tracesSampler(samplingContext) {
+      const { name, op } = samplingContext.transactionContext
+
+      if (op === 'module') {
+        // Transaction names are `${module.name}:${event.name}`
+        const [moduleName, eventName] = name.split(':') as [
+          string,
+          keyof SleetModuleEventHandlers,
+        ]
+
+        if (eventName === 'messageCreate') {
+          return 0.01
+        } else if (moduleName === 'logging' || moduleName === 'sentryLogger') {
+          return 0.01
+        }
+
+        return 0.25
+      } else if (op === 'db.sql.prisma') {
+        return 0.15
+      }
+
+      return 0.5
+    },
   })
   initDBLogging(prisma)
 
