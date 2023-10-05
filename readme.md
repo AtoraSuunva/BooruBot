@@ -76,7 +76,7 @@ Create a `docker-boorubot.yml` (or whatever name you want):
 version: '3.7'
 services:
   bot:
-    image: 'ghcr.io/atorasuunva/boorubot'
+    image: 'ghcr.io/atorasuunva/boorubot:main'
     restart: always
     init: true
     env_file:
