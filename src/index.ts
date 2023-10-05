@@ -18,7 +18,7 @@ async function main() {
   const APPLICATION_ID = env.get('APPLICATION_ID').required().asString()
   const GIT_COMMIT_SHA = env.get('GIT_COMMIT_SHA').asString() ?? 'development'
 
-  await initSentry({
+  initSentry({
     release: GIT_COMMIT_SHA,
     tracesSampler(samplingContext) {
       const { name, op } = samplingContext.transactionContext

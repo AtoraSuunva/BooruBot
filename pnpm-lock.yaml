@@ -39,8 +39,8 @@ dependencies:
     specifier: ^1.2.0
     version: 1.2.0(discord.js@14.13.0)
   sleetcord-common:
-    specifier: ^5.0.0
-    version: 5.0.0(prisma@5.4.1)
+    specifier: ^6.0.0
+    version: 6.0.0(prisma@5.4.1)
 
 devDependencies:
   '@sentry/cli':
@@ -2584,8 +2584,8 @@ packages:
     engines: {node: '>=8'}
     dev: true
 
-  /sleetcord-common@5.0.0(prisma@5.4.1):
-    resolution: {integrity: sha512-QUg1kVyDB09RydrVFOPBMW7GL4s7Wb9FVV87EFR2o7OhRPU+p3jrX7FIH9MzBWBRAsNalVocM8T5ejiQnEKpGA==}
+  /sleetcord-common@6.0.0(prisma@5.4.1):
+    resolution: {integrity: sha512-Zum1ZoEoYiEXjzbkImVih1t3wExR0KvoN71mAEjCoPEVO91BJjboGnqYeDqlOgxXpO6FLBolyvJF0SZXf8N8Yg==}
     dependencies:
       '@prisma/client': 5.4.1(prisma@5.4.1)
       '@sentry/integrations': 7.73.0

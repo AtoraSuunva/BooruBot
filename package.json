@@ -36,7 +36,7 @@
     "pino-dev": "^4.0.2",
     "pretty-ms": "^8.0.0",
     "sleetcord": "^1.2.0",
-    "sleetcord-common": "^5.0.0"
+    "sleetcord-common": "^6.0.0"
   },
   "devDependencies": {
     "@sentry/cli": "^2.21.2",
