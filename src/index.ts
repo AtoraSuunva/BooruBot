@@ -30,18 +30,24 @@ async function main() {
           keyof SleetModuleEventHandlers,
         ]
 
-        if (eventName === 'messageCreate') {
+        if (moduleName === 'autoreply') {
+          return 0.001
+        } else if (
+          eventName === 'messageCreate' ||
+          eventName === 'messageUpdate' ||
+          eventName === 'userUpdate'
+        ) {
           return 0.01
         } else if (moduleName === 'logging' || moduleName === 'sentryLogger') {
           return 0.01
         }
 
-        return 0.25
+        return 0.2
       } else if (op === 'db.sql.prisma') {
-        return 0.15
+        return 0.1
       }
 
-      return 0.5
+      return 0.2
     },
   })
   initDBLogging(prisma)

@@ -1,15 +1,16 @@
 import { Post } from 'booru'
 import {
-  escapeMarkdown,
-  ColorResolvable,
-  EmbedBuilder,
   AnyThreadChannel,
   ChannelType,
+  ColorResolvable,
   CommandInteraction,
+  EmbedBuilder,
+  ForumChannel,
+  MediaChannel,
   NewsChannel,
   TextBasedChannel,
   TextChannel,
-  ForumChannel,
+  escapeMarkdown,
 } from 'discord.js'
 import { extname } from 'path'
 
@@ -43,7 +44,7 @@ export async function getInteractionChannel(
  */
 export async function getParentChannel(
   thread: AnyThreadChannel,
-): Promise<NewsChannel | TextChannel | ForumChannel> {
+): Promise<NewsChannel | TextChannel | ForumChannel | MediaChannel> {
   if (thread.parent) {
     return thread.parent
   }

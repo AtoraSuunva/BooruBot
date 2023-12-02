@@ -1,5 +1,5 @@
 # Step that pulls in everything needed to build the app and builds it
-FROM node:20-bookworm-slim as dev-build
+FROM node:21-alpine as dev-build
 ARG GIT_COMMIT_SHA
 ENV GIT_COMMIT_SHA=${GIT_COMMIT_SHA:-development}
 WORKDIR /home/node/app
@@ -17,7 +17,7 @@ RUN pnpm sentry:sourcemaps:inject
 
 
 # Step that only pulls in (production) deps required to run the app
-FROM node:20-bookworm-slim as prod-build
+FROM node:21-alpine as prod-build
 WORKDIR /home/node/app
 RUN npm install -g pnpm
 COPY --from=dev-build /home/node/app/pnpm-lock.yaml ./
@@ -30,10 +30,11 @@ COPY --from=dev-build /home/node/app/resources ./resources/
 
 
 # The actual runtime itself
-FROM node:20-bookworm-slim as prod-runtime
+FROM node:21-alpine as prod-runtime
 # See https://github.com/prisma/prisma/issues/19729, watch in case this changes
-RUN apt-get update -y
-RUN apt-get install -y openssl
+RUN apk upgrade --update-cache --available && \
+    apk add openssl && \
+    rm -rf /var/cache/apk/*
 WORKDIR /home/node/app
 COPY --from=prod-build /home/node/app ./
 USER node
