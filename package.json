@@ -5,8 +5,8 @@
   "type": "module",
   "main": "dist/index.js",
   "scripts": {
-    "start:dev": "tsc --build && node --env-file=.env --trace-warnings dist/index.js",
-    "start:prod": "npx prisma migrate deploy && node dist/index.js",
+    "start:dev": "tsc --build && node --env-file=.env --enable-source-maps dist/index.js",
+    "start:prod": "npx prisma migrate deploy && node --enable-source-maps dist/index.js",
     "build": "tsc --build",
     "lint": "eslint src/ && prettier --check src/ && tsc --noEmit",
     "lint:fix": "eslint src/ --fix && prettier --write src/ && pnpm prisma format && tsc --noEmit",
