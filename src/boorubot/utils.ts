@@ -1,17 +1,53 @@
-import { APIApplicationCommandOptionChoice, BaseInteraction } from 'discord.js'
 import booru from 'booru'
+import {
+  APIApplicationCommandBasicOption,
+  APIApplicationCommandOptionChoice,
+  ApplicationCommandOptionType,
+  BaseInteraction,
+  ChannelType,
+  ChatInputCommandInteraction,
+  Interaction,
+  Snowflake,
+} from 'discord.js'
 import { AutocompleteHandler, makeChoices } from 'sleetcord'
-import { Reference } from './SettingsCache.js'
+import { BooruSettings, Reference, settingsCache } from './SettingsCache.js'
+
+export const channelOption: APIApplicationCommandBasicOption = {
+  name: 'channel',
+  description: 'The channel to set the config for',
+  type: ApplicationCommandOptionType.Channel,
+  channel_types: [
+    ChannelType.GuildAnnouncement,
+    ChannelType.GuildForum,
+    ChannelType.GuildMedia,
+    ChannelType.GuildStageVoice,
+    ChannelType.GuildText,
+    ChannelType.GuildVoice,
+  ],
+}
 
 /**
  * Get a reference usable to fetch settings for some particular interaction
  * @param interaction The interaction to get a reference for
+ * @param checkOptions Whether or not to check the options for a channel
  * @returns A reference item for this interaction, based on the guild or user id
  */
-export function getReferenceFor(interaction: BaseInteraction): Reference {
+export function getReferenceFor(
+  interaction: BaseInteraction,
+  checkOptions = true,
+): Reference {
+  const channel =
+    checkOptions &&
+    interaction instanceof ChatInputCommandInteraction &&
+    // Channel is only relevant in guilds, in DMs it's always the user id
+    interaction.inGuild()
+      ? interaction.options.getChannel(channelOption.name)
+      : null
+
   return {
-    id: interaction.guild?.id ?? interaction.user.id,
-    isGuild: interaction.guild !== null,
+    id: channel?.id ?? interaction.guild?.id ?? interaction.user.id,
+    guildId: interaction.guild?.id ?? null,
+    isGuild: channel ? false : interaction.guild !== null,
   }
 }
 
@@ -180,4 +216,59 @@ export function shuffleArray<T>(array: T[]): T[] {
   }
 
   return clone
+}
+
+interface MergedSettings {
+  guild: BooruSettings
+  channel: BooruSettings
+  user: BooruSettings
+  merged: BooruSettings
+}
+
+export async function getMergedSettings(
+  interaction: Interaction & { channelId: Snowflake },
+): Promise<MergedSettings> {
+  const reference = getReferenceFor(interaction)
+  const channelReferenceId = interaction.channelId
+  const userReferenceId = interaction.user.id
+
+  const [guildSettings, channelSettings, userSettings] = await Promise.all([
+    settingsCache.get(reference),
+    settingsCache.get({
+      id: channelReferenceId,
+      guildId: reference.isGuild ? reference.id : null,
+      isGuild: reference.isGuild,
+    }),
+    settingsCache.get({ id: userReferenceId, guildId: null, isGuild: false }),
+  ])
+
+  const merged = {
+    config: {
+      ...guildSettings.config,
+      ...channelSettings.config,
+      // User configs only override outside of guilds
+      ...(interaction.inGuild() ? {} : userSettings.config),
+    },
+    tags: Array.from(
+      new Set([
+        ...guildSettings.tags,
+        ...channelSettings.tags,
+        ...userSettings.tags,
+      ]),
+    ),
+    sites: Array.from(
+      new Set([
+        ...guildSettings.sites,
+        ...channelSettings.sites,
+        ...userSettings.sites,
+      ]),
+    ),
+  }
+
+  return {
+    guild: guildSettings,
+    channel: channelSettings,
+    user: userSettings,
+    merged,
+  }
 }

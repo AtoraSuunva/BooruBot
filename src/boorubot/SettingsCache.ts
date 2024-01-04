@@ -9,12 +9,14 @@ export interface BooruSettings {
 
 export interface Reference {
   id: string
+  guildId: string | null
   isGuild: boolean
 }
 
 class SettingsCache {
   #configCache = new Map<string, BooruConfig>()
   #tagsCache = new Map<string, string[]>()
+  #defaultTagsCache = new Map<string, string[]>()
   #sitesCache = new Map<string, string[]>()
 
   async get(reference: Reference): Promise<BooruSettings> {
@@ -56,6 +58,7 @@ class SettingsCache {
       config = await prisma.booruConfig.create({
         data: {
           referenceId: reference.id,
+          guildId: reference.guildId ?? null,
           allowNSFW: reference.isGuild,
           isGuild: reference.isGuild,
         },
@@ -100,6 +103,33 @@ class SettingsCache {
 
   deleteTags(referenceId: string) {
     this.#tagsCache.delete(referenceId)
+  }
+
+  async getDefaultTags(referenceId: string): Promise<string[]> {
+    const cache = this.#defaultTagsCache.get(referenceId)
+
+    if (cache) {
+      return cache
+    }
+
+    const tags = await prisma.defaultTag
+      .findMany({
+        where: { referenceId },
+        select: { name: true },
+      })
+      .then((ts) => ts.map((t) => t.name))
+
+    this.#defaultTagsCache.set(referenceId, tags)
+
+    return tags
+  }
+
+  setDefaultTags(referenceId: string, tags: string[]) {
+    this.#defaultTagsCache.set(referenceId, tags)
+  }
+
+  deleteDefaultTags(referenceId: string) {
+    this.#defaultTagsCache.delete(referenceId)
   }
 
   async getSites(referenceId: string): Promise<string[]> {

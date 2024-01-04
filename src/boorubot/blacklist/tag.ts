@@ -5,7 +5,7 @@ import {
 import { AutocompleteHandler, SleetSlashSubcommand } from 'sleetcord'
 import { prisma } from '../../util/db.js'
 import { Reference, settingsCache } from '../SettingsCache.js'
-import { getItemsFrom, getReferenceFor } from '../utils.js'
+import { channelOption, getItemsFrom, getReferenceFor } from '../utils.js'
 import { formatBlacklist, getBlacklistFor } from './utils.js'
 
 export const blacklistAddTags = new SleetSlashSubcommand(
@@ -19,6 +19,7 @@ export const blacklistAddTags = new SleetSlashSubcommand(
         type: ApplicationCommandOptionType.String,
         required: true,
       },
+      channelOption,
     ],
   },
   {
@@ -85,6 +86,7 @@ export const blacklistRemoveTags = new SleetSlashSubcommand(
         required: true,
         autocomplete: removeTagAutocomplete,
       },
+      channelOption,
     ],
   },
   {

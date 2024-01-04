@@ -1,14 +1,17 @@
 import { BooruConfig } from '@prisma/client'
-import { ChatInputCommandInteraction, EmbedBuilder } from 'discord.js'
+import { ChatInputCommandInteraction } from 'discord.js'
 import { SleetSlashSubcommand } from 'sleetcord'
+import { notNullish } from 'sleetcord-common'
 import { prisma } from '../../util/db.js'
+import { formatConfig } from '../../util/format.js'
 import { settingsCache } from '../SettingsCache.js'
-import { getReferenceFor } from '../utils.js'
+import { channelOption, getReferenceFor } from '../utils.js'
 
 export const configView = new SleetSlashSubcommand(
   {
     name: 'view',
     description: 'View the config',
+    options: [channelOption],
   },
   {
     run: runView,
@@ -20,37 +23,54 @@ async function runView(interaction: ChatInputCommandInteraction) {
 
   const defer = interaction.deferReply()
 
-  const config = await prisma.booruConfig.findFirst({
-    where: { referenceId: reference.id },
-  })
+  const [guildConfig, channelConfig] = await Promise.all([
+    prisma.booruConfig.findFirst({
+      where: { referenceId: reference.id },
+    }),
+    prisma.booruConfig.findFirst({
+      where: { referenceId: interaction.channelId },
+    }),
+  ])
 
   await defer
 
-  if (!config) {
+  if (!guildConfig && !channelConfig) {
     return interaction.editReply('No Booru config found, so no config to view.')
   }
 
-  settingsCache.setConfig(reference.id, config)
+  if (guildConfig) {
+    settingsCache.setConfig(reference.id, guildConfig)
+  }
 
-  const view = createConfigView(config)
+  if (channelConfig) {
+    settingsCache.setConfig(interaction.channelId, channelConfig)
+  }
+
+  const view = createConfigView(
+    ...[guildConfig, channelConfig].filter(notNullish),
+  )
   return interaction.editReply(view)
 }
 
-export function createConfigView(config: BooruConfig) {
-  // TODO: just text, it was nicer
-  const embed = new EmbedBuilder().setTitle('Booru Config').addFields([
-    {
-      name: 'Min Score',
-      value:
-        config.minScore === null ? 'No Min Score' : String(config.minScore),
-      inline: true,
-    },
-    {
-      name: 'Allow NSFW',
-      value: String(config.allowNSFW),
-      inline: true,
-    },
-  ])
+export function createConfigView(...configs: BooruConfig[]) {
+  return { content: configs.map(singleConfigView).join('\n') }
+}
 
-  return { embeds: [embed] }
+function singleConfigView(config: BooruConfig) {
+  const header = config.isGuild
+    ? 'Guild Config'
+    : config.guildId
+      ? `Channel Config: <#${config.referenceId}>`
+      : 'User Config'
+
+  const shownConfig = {
+    minScore: config.minScore,
+    allowNSFW: config.allowNSFW,
+  }
+
+  const formatted = formatConfig({
+    config: shownConfig,
+  })
+
+  return `${header}\n${formatted}`
 }

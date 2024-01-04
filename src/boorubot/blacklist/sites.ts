@@ -6,6 +6,7 @@ import { AutocompleteHandler, SleetSlashSubcommand } from 'sleetcord'
 import { prisma } from '../../util/db.js'
 import { Reference, settingsCache } from '../SettingsCache.js'
 import {
+  channelOption,
   getReferenceFor,
   resolveListsFor,
   resolveSitesAndListsFor,
@@ -19,28 +20,27 @@ function buildSiteAutocomplete(
 ): AutocompleteHandler<string> {
   return async ({ interaction, value }) => {
     const reference = getReferenceFor(interaction)
-
-    const guildSites = await settingsCache.getSites(reference.id)
+    const addedSites = await settingsCache.getSites(reference.id)
 
     const listSites = (
       type === 'remove'
         ? // To remove, we union (non-zero) special lists and guild lists
-          resolveListsFor(value, (s) => guildSites.includes(s.domain))
+          resolveListsFor(value, (s) => addedSites.includes(s.domain))
         : // To add, we exclude guild lists from the possible list
-          resolveSitesAndListsFor(value, (s) => !guildSites.includes(s.domain))
+          resolveSitesAndListsFor(value, (s) => !addedSites.includes(s.domain))
     ).filter((r) => r.sites.length > 0)
 
     const options =
       type === 'remove'
         ? [
             ...listSites,
-            ...guildSites.map((s) => ({
+            ...addedSites.map((s) => ({
               name: s,
               value: s,
             })),
           ]
         : listSites.filter(
-            (site) => !guildSites.some((guildSite) => guildSite === site.value),
+            (site) => !addedSites.some((guildSite) => guildSite === site.value),
           )
 
     return options.sort().slice(0, 25)
@@ -59,6 +59,7 @@ export const blacklistAddSite = new SleetSlashSubcommand(
         autocomplete: buildSiteAutocomplete('add'),
         required: true,
       },
+      channelOption,
     ],
   },
   {
@@ -78,6 +79,7 @@ export const blacklistRemoveSite = new SleetSlashSubcommand(
         autocomplete: buildSiteAutocomplete('remove'),
         required: true,
       },
+      channelOption,
     ],
   },
   {

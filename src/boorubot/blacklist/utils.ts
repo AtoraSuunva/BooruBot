@@ -1,8 +1,11 @@
-import { escapeCodeBlock, bold, BaseMessageOptions } from 'discord.js'
+import { BaseMessageOptions, bold, escapeCodeBlock } from 'discord.js'
 import { prisma } from '../../util/db.js'
 import { settingsCache } from '../SettingsCache.js'
 
 export interface Blacklist {
+  referenceId: string
+  guildId?: string | null
+  isGuild?: boolean
   tags: string[]
   sites: string[]
 }
@@ -26,7 +29,13 @@ export function formatBlacklist(
   const tags = formatBlacklistArray(blacklist.tags, highlightTags)
   const sites = formatBlacklistArray(blacklist.sites, highlightSites)
 
-  const formatted = `\`\`\`yml
+  const header = blacklist.isGuild
+    ? 'Guild Config'
+    : blacklist.guildId
+      ? `Channel Config: <#${blacklist.referenceId}>`
+      : 'User Config'
+
+  const formatted = `${header}\n\`\`\`yml
 Tags:
   - ${tags}
 
@@ -68,6 +77,9 @@ export async function getBlacklistFor(referenceId: string): Promise<Blacklist> {
         referenceId,
       },
       select: {
+        referenceId: true,
+        guildId: true,
+        isGuild: true,
         tags: {
           select: {
             name: true,
@@ -83,10 +95,14 @@ export async function getBlacklistFor(referenceId: string): Promise<Blacklist> {
     .then((result) =>
       result
         ? {
+            referenceId: result.referenceId,
+            guildId: result.guildId,
+            isGuild: result.isGuild,
             tags: result.tags.map((tag) => tag.name),
             sites: result.sites.map((site) => site.name),
           }
         : {
+            referenceId,
             tags: [],
             sites: [],
           },

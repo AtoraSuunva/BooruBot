@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client'
 import {
   ActionRowBuilder,
   ApplicationCommandOptionType,
@@ -9,7 +10,7 @@ import {
 import { SleetSlashSubcommand } from 'sleetcord'
 import { prisma } from '../../util/db.js'
 import { settingsCache } from '../SettingsCache.js'
-import { getReferenceFor } from '../utils.js'
+import { channelOption, getReferenceFor } from '../utils.js'
 
 export const configDelete = new SleetSlashSubcommand(
   {
@@ -18,9 +19,17 @@ export const configDelete = new SleetSlashSubcommand(
     options: [
       {
         name: 'confirm',
-        description: 'Confirm the delete, bypassing the confirmation prompt',
+        description:
+          'Confirm the delete, bypassing the confirmation prompt (default: false)',
         type: ApplicationCommandOptionType.Boolean,
       },
+      {
+        name: 'full',
+        description:
+          'Delete the config for the entire server, including any per-channel config (default: false)',
+        type: ApplicationCommandOptionType.Boolean,
+      },
+      channelOption,
     ],
   },
   {
@@ -31,31 +40,40 @@ export const configDelete = new SleetSlashSubcommand(
 async function runDelete(interaction: ChatInputCommandInteraction) {
   const defer = interaction.deferReply({ fetchReply: true })
 
-  const confirm = interaction.options.getBoolean('confirm', false)
+  const confirm = interaction.options.getBoolean('confirm', false) ?? false
+  const full = interaction.options.getBoolean('full', false) ?? false
+
   const reference = getReferenceFor(interaction)
-  const config = await prisma.booruConfig.findFirst({
-    where: { referenceId: reference.id },
-  })
 
   const message = await defer
 
-  if (config) {
-    return interaction.editReply(
-      'No Booru config found, so no config to delete.',
-    )
-  }
-
-  if (confirm === true) {
-    await deleteConfig(reference.id)
+  if (confirm) {
+    await deleteConfig(reference.id, full)
     return interaction.editReply('Config deleted.')
   }
+
+  const cancelButton = new ButtonBuilder()
+    .setStyle(ButtonStyle.Secondary)
+    .setCustomId(`config/cancel:${reference.id},${interaction.user.id}`)
+    .setLabel('Cancel')
 
   const deleteButton = new ButtonBuilder()
     .setStyle(ButtonStyle.Danger)
     .setCustomId(`config/delete:${reference.id},${interaction.user.id}`)
-    .setLabel('Confirm Delete')
+    .setLabel('Delete Guild Config')
 
-  const row = new ActionRowBuilder<ButtonBuilder>().addComponents(deleteButton)
+  const fullDeleteButton = new ButtonBuilder()
+    .setStyle(ButtonStyle.Danger)
+    .setCustomId(`config/fulldelete:${reference.id},${interaction.user.id}`)
+    .setLabel('Delete Guild and All Channel Configs')
+
+  const row = new ActionRowBuilder<ButtonBuilder>()
+
+  if (full) {
+    row.addComponents([cancelButton, fullDeleteButton])
+  } else {
+    row.addComponents([cancelButton, deleteButton, fullDeleteButton])
+  }
 
   await interaction.editReply({
     content: 'Are you sure? You **CANNOT** undo this!!!',
@@ -69,12 +87,24 @@ async function runDelete(interaction: ChatInputCommandInteraction) {
 
   collector.on('collect', async (i) => {
     if (i.user.id === interaction.user.id) {
+      if (i.customId.startsWith('config/cancel:')) {
+        await i.reply({
+          content: 'Cancelled.',
+          ephemeral: true,
+        })
+        collector.stop()
+        return
+      }
+
       const defer = i.deferReply({ ephemeral: true })
 
-      await deleteConfig(reference.id)
+      const isFull = i.customId.startsWith('config/fulldelete:')
+      await deleteConfig(reference.id, isFull || full)
 
       await interaction.editReply({
-        content: `Booru config deleted. Requested by ${interaction.user}`,
+        content: `Guild${
+          isFull || full ? ' and all Channel' : ''
+        } config deleted. Requested by ${interaction.user}`,
         components: [],
       })
 
@@ -102,11 +132,39 @@ async function runDelete(interaction: ChatInputCommandInteraction) {
   return
 }
 
-function deleteConfig(referenceId: string) {
-  // deletes should be cascaded, or at least let's make sure we have fresh data after this
+async function deleteConfig(referenceId: string, full = false) {
+  const promises = await collectDeletePromises(referenceId, full)
+  return prisma.$transaction(promises)
+}
+
+async function collectDeletePromises(
+  referenceId: string,
+  full = false,
+): Promise<Prisma.PrismaPromise<unknown>[]> {
+  // Deletes should be cascaded
   settingsCache.deleteConfig(referenceId)
   settingsCache.deleteTags(referenceId)
   settingsCache.deleteSites(referenceId)
 
-  return prisma.booruConfig.delete({ where: { referenceId } })
+  const deletePromises: Prisma.PrismaPromise<unknown>[] = []
+
+  if (full) {
+    // Find all configs that have this referenceId as guildId and then delete them
+    const guildConfigs = await prisma.booruConfig.findMany({
+      select: { referenceId: true },
+      where: { guildId: referenceId },
+    })
+
+    const allPromises = await Promise.all(
+      guildConfigs.flatMap(({ referenceId }) =>
+        collectDeletePromises(referenceId, false),
+      ),
+    )
+
+    deletePromises.push(...allPromises.flat(1))
+  }
+
+  deletePromises.push(prisma.booruConfig.deleteMany({ where: { referenceId } }))
+
+  return deletePromises
 }

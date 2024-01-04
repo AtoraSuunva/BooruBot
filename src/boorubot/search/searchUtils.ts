@@ -15,21 +15,27 @@ import {
 import { extname } from 'path'
 
 /**
- * Get the channel that a slash command was called in
+ * Get the channel that a slash command was called in, for threads, this is the parent channel
  * @param interaction The interaction to fetch the channel for
  * @returns The channel the interaction was called in
  */
 export async function getInteractionChannel(
   interaction: CommandInteraction,
 ): Promise<TextBasedChannel> {
-  if (interaction.channel) {
-    return interaction.channel
-  }
+  const channel =
+    interaction.channel ??
+    (await interaction.client.channels.fetch(interaction.channelId))
 
-  const channel = await interaction.client.channels.fetch(interaction.channelId)
+  if (channel) {
+    if (channel.isThread()) {
+      const parent = await getParentChannel(channel)
 
-  if (channel && channel.isTextBased()) {
-    return channel
+      if (parent.isTextBased()) {
+        return parent
+      }
+    } else if (channel.isTextBased()) {
+      return channel
+    }
   }
 
   throw new Error(

@@ -3,6 +3,8 @@ import {
   ChatInputCommandInteraction,
 } from 'discord.js'
 import { SleetSlashSubcommand } from 'sleetcord'
+import { notNullish } from 'sleetcord-common'
+import { getInteractionChannel } from '../search/searchUtils.js'
 import { getReferenceFor } from '../utils.js'
 import { formatBlacklist, getBlacklistFor } from './utils.js'
 
@@ -27,11 +29,30 @@ export const blacklistView = new SleetSlashSubcommand(
 export async function runView(interaction: ChatInputCommandInteraction) {
   const ephemeral = interaction.options.getBoolean('ephemeral') ?? false
   const reference = getReferenceFor(interaction)
-  const blacklist = await getBlacklistFor(reference.id)
-  const formattedBlacklist = formatBlacklist(blacklist)
+  const channel = await getInteractionChannel(interaction)
+
+  const blacklists = await Promise.all([
+    getBlacklistFor(reference.id),
+    interaction.inGuild() ? getBlacklistFor(channel.id) : null,
+  ])
+
+  const formattedBlacklists = blacklists
+    .filter(notNullish)
+    .map((b) => formatBlacklist(b))
+    .reduce((prev, current) => {
+      if (current.content) {
+        prev.content = (prev.content ?? '') + '\n' + current.content
+      }
+
+      if (current.files) {
+        prev.files = (prev.files ?? []).concat(current.files)
+      }
+
+      return prev
+    }, {})
 
   return interaction.reply({
-    ...formattedBlacklist,
+    ...formattedBlacklists,
     ephemeral,
   })
 }

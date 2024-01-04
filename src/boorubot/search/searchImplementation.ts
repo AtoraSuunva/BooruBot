@@ -1,3 +1,4 @@
+import booru, { Post } from 'booru'
 import {
   ActionRowBuilder,
   ButtonBuilder,
@@ -7,18 +8,16 @@ import {
   ComponentType,
   inlineCode,
 } from 'discord.js'
-import { getReferenceFor, shuffleArray, siteInfo } from '../utils.js'
-import booru, { Post } from 'booru'
-import { settingsCache } from '../SettingsCache.js'
+import { getMergedSettings, shuffleArray, siteInfo } from '../utils.js'
 import {
-  getTagsMatchingBlacklist,
-  hasOrderTag,
-  getErrorMessage,
   filterPosts,
   formatPostToEmbed,
   formatTags,
-  NSFW_RATINGS,
+  getErrorMessage,
   getInteractionChannel,
+  getTagsMatchingBlacklist,
+  hasOrderTag,
+  NSFW_RATINGS,
   nsfwAllowedInChannel,
 } from './searchUtils.js'
 
@@ -47,7 +46,7 @@ export interface SearchSettings {
 }
 
 const WHY_NO_NSFW_DM_URL =
-  ' [Opting into NSFW](https://github.com/AtoraSuunva/Booru-Discord#opting-into-nsfw)'
+  ' [How to opt into NSFW](https://github.com/AtoraSuunva/Booru-Discord#opting-into-nsfw)'
 
 /**
  * Run the actual search, split out so that /link can use this as well, and to split
@@ -61,28 +60,19 @@ export async function runBooruSearch(
   { site, tags, ephemeral }: SearchSettings,
 ) {
   // Fetch settings
-  const reference = getReferenceFor(interaction)
-  const userReferenceId = interaction.user.id
-  const [settings, userSettings] = await Promise.all([
-    settingsCache.get(reference),
-    settingsCache.get({ id: userReferenceId, isGuild: false }),
-  ])
-
-  const blacklistedSites = [...settings.sites, ...userSettings.sites]
-  const blacklistedTags = [...settings.tags, ...userSettings.tags]
+  const settings = await getMergedSettings(interaction)
 
   // Incrementally validate things to fail early when possible
-
-  if (settings.sites.includes(site.domain)) {
+  if (settings.user.sites.includes(site.domain)) {
     return interaction.reply({
-      content: `${site.domain} is blacklisted here.`,
+      content: `${site.domain} is blacklisted in your settings.`,
       ephemeral: true,
     })
   }
 
-  if (userSettings.sites.includes(site.domain)) {
+  if (settings.merged.sites.includes(site.domain)) {
     return interaction.reply({
-      content: `${site.domain} is blacklisted in your settings.`,
+      content: `${site.domain} is blacklisted here.`,
       ephemeral: true,
     })
   }
@@ -94,7 +84,10 @@ export async function runBooruSearch(
     })
   }
 
-  const blacklistedTagsUsed = getTagsMatchingBlacklist(tags, blacklistedTags)
+  const blacklistedTagsUsed = getTagsMatchingBlacklist(
+    tags,
+    settings.merged.tags,
+  )
 
   if (blacklistedTagsUsed.length > 0) {
     return interaction.reply({
@@ -109,11 +102,11 @@ export async function runBooruSearch(
   // Keep NSFW out of non-NSFW channels
   const allowNSFW = await nsfwAllowedInChannel(
     channel,
-    settings.config.allowNSFW,
+    settings.merged.config.allowNSFW,
   )
 
   const noNSFWMessage =
-    !reference.isGuild && !allowNSFW ? WHY_NO_NSFW_DM_URL : ''
+    !interaction.inGuild() && !allowNSFW ? WHY_NO_NSFW_DM_URL : ''
 
   if (!allowNSFW && getTagsMatchingBlacklist(tags, NSFW_RATINGS).length > 0) {
     return interaction.reply({
@@ -133,8 +126,7 @@ export async function runBooruSearch(
     unfilteredPosts = await searchBooru({
       domain: site.domain,
       tags,
-      // allowNSFW, // later on, have some flag that's like "nsfw-alt" or "only-nsfw" on sites?
-      blacklistedSites,
+      blacklistedSites: settings.merged.sites,
     })
   } catch (e) {
     await defer
@@ -151,9 +143,9 @@ export async function runBooruSearch(
   const endTime = process.hrtime.bigint()
 
   const posts = filterPosts(unfilteredPosts, {
-    minScore: settings.config.minScore,
+    minScore: settings.merged.config.minScore,
     allowNSFW,
-    blacklistedTags,
+    blacklistedTags: settings.merged.tags,
   })
 
   if (posts.length === 0) {
