@@ -19,7 +19,7 @@ function buildSiteAutocomplete(
   type: AutocompleteType,
 ): AutocompleteHandler<string> {
   return async ({ interaction, value }) => {
-    const reference = getReferenceFor(interaction)
+    const reference = await getReferenceFor(interaction)
     const addedSites = await settingsCache.getSites(reference.id)
 
     const listSites = (
@@ -91,7 +91,7 @@ type SiteAction = (reference: Reference, sites: string[]) => Promise<void>
 
 function makeSiteAction(siteAction: SiteAction) {
   return async function (interaction: ChatInputCommandInteraction) {
-    const reference = getReferenceFor(interaction)
+    const reference = await getReferenceFor(interaction)
     await settingsCache.get(reference)
 
     const currentSites = await prisma.site.findMany({

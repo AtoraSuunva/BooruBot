@@ -33,7 +33,7 @@ const setMinScore = new SleetSlashSubcommand(
 
 async function runSetMinScore(interaction: ChatInputCommandInteraction) {
   const score = interaction.options.getNumber('score')
-  const reference = getReferenceFor(interaction)
+  const reference = await getReferenceFor(interaction)
 
   const defer = interaction.deferReply()
 
@@ -44,8 +44,11 @@ async function runSetMinScore(interaction: ChatInputCommandInteraction) {
       minScore: score,
       guildId: reference.guildId,
       isGuild: reference.isGuild,
+      // null if in channel, true if in guild, false if in DM
+      allowNSFW: reference.guildId ? null : reference.isGuild,
     },
     update: { minScore: score },
+    include: { defaultTags: true },
   })
 
   settingsCache.setConfig(reference.id, config)
@@ -146,7 +149,7 @@ async function setAllowNSFWAndReply(
   interaction: ChatInputCommandInteraction | MessageComponentInteraction,
   allowNSFW: boolean,
 ) {
-  const reference = getReferenceFor(interaction)
+  const reference = await getReferenceFor(interaction)
 
   const defer = interaction.deferReply()
 
@@ -159,6 +162,7 @@ async function setAllowNSFWAndReply(
       isGuild: reference.isGuild,
     },
     update: { allowNSFW },
+    include: { defaultTags: true },
   })
 
   settingsCache.setConfig(reference.id, config)

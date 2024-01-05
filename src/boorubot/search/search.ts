@@ -3,7 +3,7 @@ import {
   ChatInputCommandInteraction,
 } from 'discord.js'
 import { AutocompleteHandler, SleetSlashCommand } from 'sleetcord'
-import { getMergedSettings, resolveSitesFor, siteInfo } from '../utils.js'
+import { getMergedSites, resolveSitesFor, siteInfo } from '../utils.js'
 import {
   RANDOM_BOORU_SITE,
   RANDOM_BOORU_VALUE,
@@ -14,9 +14,7 @@ const autocompleteSiteWithBlacklist: AutocompleteHandler<string> = async ({
   interaction,
   value,
 }) => {
-  const settings = await getMergedSettings(interaction)
-
-  const blacklistedSites = settings.merged.sites
+  const blacklistedSites = await getMergedSites(interaction)
 
   const sites = resolveSitesFor(value)
     .filter((site) => !blacklistedSites.includes(site.domain))

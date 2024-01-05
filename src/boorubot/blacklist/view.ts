@@ -28,7 +28,7 @@ export const blacklistView = new SleetSlashSubcommand(
 
 export async function runView(interaction: ChatInputCommandInteraction) {
   const ephemeral = interaction.options.getBoolean('ephemeral') ?? false
-  const reference = getReferenceFor(interaction)
+  const reference = await getReferenceFor(interaction)
   const channel = await getInteractionChannel(interaction)
 
   const blacklists = await Promise.all([

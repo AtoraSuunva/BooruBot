@@ -42,7 +42,7 @@ async function runDelete(interaction: ChatInputCommandInteraction) {
   const confirm = interaction.options.getBoolean('confirm', false) ?? false
   const full = interaction.options.getBoolean('full', false) ?? false
 
-  const reference = getReferenceFor(interaction)
+  const reference = await getReferenceFor(interaction)
 
   const message = await defer
 

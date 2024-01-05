@@ -3,14 +3,17 @@ import {
   APIApplicationCommandBasicOption,
   APIApplicationCommandOptionChoice,
   ApplicationCommandOptionType,
+  AutocompleteInteraction,
   BaseInteraction,
   ChannelType,
-  ChatInputCommandInteraction,
-  Interaction,
+  CommandInteraction,
+  CommandInteractionOption,
   Snowflake,
 } from 'discord.js'
 import { AutocompleteHandler, makeChoices } from 'sleetcord'
+import { notNullish } from 'sleetcord-common'
 import { BooruSettings, Reference, settingsCache } from './SettingsCache.js'
+import { getInteractionChannel } from './search/searchUtils.js'
 
 export const channelOption: APIApplicationCommandBasicOption = {
   name: 'channel',
@@ -32,17 +35,29 @@ export const channelOption: APIApplicationCommandBasicOption = {
  * @param checkOptions Whether or not to check the options for a channel
  * @returns A reference item for this interaction, based on the guild or user id
  */
-export function getReferenceFor(
+export async function getReferenceFor(
   interaction: BaseInteraction,
   checkOptions = true,
-): Reference {
-  const channel =
-    checkOptions &&
-    interaction instanceof ChatInputCommandInteraction &&
-    // Channel is only relevant in guilds, in DMs it's always the user id
-    interaction.inGuild()
-      ? interaction.options.getChannel(channelOption.name)
-      : null
+): Promise<Reference> {
+  let channel: CommandInteractionOption<undefined>['channel'] | null = null
+
+  if (checkOptions && interaction.inGuild()) {
+    if (interaction.isChatInputCommand()) {
+      channel = interaction.options.getChannel(channelOption.name)
+    } else if (interaction.isAutocomplete()) {
+      const channelValue = interaction.options.get(channelOption.name)?.value
+
+      if (channelValue) {
+        const chanOpt = await interaction.client.channels.fetch(
+          channelValue as Snowflake,
+        )
+
+        if (chanOpt && !chanOpt.isDMBased()) {
+          channel = chanOpt
+        }
+      }
+    }
+  }
 
   return {
     id: channel?.id ?? interaction.guild?.id ?? interaction.user.id,
@@ -222,20 +237,20 @@ interface MergedSettings {
   guild: BooruSettings
   channel: BooruSettings
   user: BooruSettings
-  merged: BooruSettings
+  merged: BooruSettings & { config: { allowNSFW: boolean } }
 }
 
 export async function getMergedSettings(
-  interaction: Interaction & { channelId: Snowflake },
+  interaction: CommandInteraction | AutocompleteInteraction,
 ): Promise<MergedSettings> {
-  const reference = getReferenceFor(interaction)
-  const channelReferenceId = interaction.channelId
+  const reference = await getReferenceFor(interaction)
+  const channel = await getInteractionChannel(interaction)
   const userReferenceId = interaction.user.id
 
   const [guildSettings, channelSettings, userSettings] = await Promise.all([
     settingsCache.get(reference),
     settingsCache.get({
-      id: channelReferenceId,
+      id: channel.id,
       guildId: reference.isGuild ? reference.id : null,
       isGuild: reference.isGuild,
     }),
@@ -243,12 +258,20 @@ export async function getMergedSettings(
   ])
 
   const merged = {
-    config: {
-      ...guildSettings.config,
-      ...channelSettings.config,
+    config: merge(
+      { allowNSFW: interaction.inGuild() },
+      guildSettings.config,
+      channelSettings.config,
       // User configs only override outside of guilds
-      ...(interaction.inGuild() ? {} : userSettings.config),
-    },
+      interaction.inGuild() ? {} : userSettings.config,
+    ),
+    defaultTags: Array.from(
+      new Set([
+        ...guildSettings.defaultTags,
+        ...channelSettings.defaultTags,
+        ...userSettings.defaultTags,
+      ]),
+    ),
     tags: Array.from(
       new Set([
         ...guildSettings.tags,
@@ -271,4 +294,65 @@ export async function getMergedSettings(
     user: userSettings,
     merged,
   }
+}
+
+type OptionalPropertyNames<T> = {
+  [K in keyof T]-?: object extends { [P in K]: T[K] }
+    ? K
+    : null extends T[K]
+      ? K
+      : undefined extends T[K]
+        ? K
+        : never
+}[keyof T]
+
+type SpreadProperties<L, R, K extends keyof L & keyof R> = {
+  [P in K]: L[P] | Exclude<R[P], undefined | null>
+}
+
+type Id<T> = T extends infer U ? { [K in keyof U]: U[K] } : never
+
+type SpreadTwo<L, R> = Id<
+  Pick<L, Exclude<keyof L, keyof R>> &
+    Pick<R, Exclude<keyof R, OptionalPropertyNames<R>>> &
+    Pick<R, Exclude<OptionalPropertyNames<R>, keyof L>> &
+    SpreadProperties<L, R, OptionalPropertyNames<R> & keyof L>
+>
+
+type Spread<A extends readonly [...unknown[]]> = A extends [infer L, ...infer R]
+  ? SpreadTwo<L, Spread<R>>
+  : unknown
+
+/**
+ * Merge a series of objects, with later values overriding previous values unless they are null or undefined
+ * @param objs The objects to merge
+ * @returns The merged objects, with null properties not overriding previous properties
+ */
+function merge<T extends object[]>(...objs: [...T]): Spread<T> {
+  return objs.slice(1).reduce((acc, obj) => {
+    for (const [key, value] of Object.entries(obj)) {
+      if (notNullish(value)) {
+        acc[key as keyof typeof acc] =
+          value as unknown as (typeof acc)[keyof typeof acc]
+      }
+    }
+
+    return acc
+  }) as Spread<T>
+}
+
+export async function getMergedSites(
+  interaction: CommandInteraction | AutocompleteInteraction,
+): Promise<string[]> {
+  const reference = await getReferenceFor(interaction)
+  const channel = await getInteractionChannel(interaction)
+  const userReferenceId = interaction.user.id
+
+  const [guildSites, channelSites, userSites] = await Promise.all([
+    settingsCache.getSites(reference.id),
+    settingsCache.getSites(channel.id),
+    settingsCache.getSites(userReferenceId),
+  ])
+
+  return Array.from(new Set([...guildSites, ...channelSites, ...userSites]))
 }

@@ -6,12 +6,12 @@ import { AutocompleteHandler, SleetSlashSubcommand } from 'sleetcord'
 import { prisma } from '../../util/db.js'
 import { Reference, settingsCache } from '../SettingsCache.js'
 import { channelOption, getItemsFrom, getReferenceFor } from '../utils.js'
-import { formatBlacklist, getBlacklistFor } from './utils.js'
+import { runView } from './view.js'
 
-export const blacklistAddTags = new SleetSlashSubcommand(
+export const configAddDefaultTags = new SleetSlashSubcommand(
   {
-    name: 'tags',
-    description: 'Add tags to the blacklist',
+    name: 'default_tags',
+    description: 'Add tags to use on every search',
     options: [
       {
         name: 'tags',
@@ -32,7 +32,7 @@ const removeTagAutocomplete: AutocompleteHandler<string> = async ({
   value,
 }) => {
   const reference = await getReferenceFor(interaction)
-  const tags = await settingsCache.getTags(reference.id)
+  const tags = await settingsCache.getDefaultTags(reference.id)
 
   const previousTags = getItemsFrom(value)
   const latestInput = previousTags.pop() ?? ''
@@ -74,10 +74,10 @@ const removeTagAutocomplete: AutocompleteHandler<string> = async ({
     .slice(0, 25)
 }
 
-export const blacklistRemoveTags = new SleetSlashSubcommand(
+export const configRemoveDefaultTags = new SleetSlashSubcommand(
   {
-    name: 'tags',
-    description: 'Remove tags from the blacklist',
+    name: 'default_tags',
+    description: 'Remove tags used on every search',
     options: [
       {
         name: 'tags',
@@ -119,16 +119,7 @@ function makeTagModifier(tagAction: TagAction) {
     await tagAction(reference, tags)
     await defer
 
-    const formattedBlacklist = formatBlacklist(
-      await getBlacklistFor(reference.id),
-      {
-        highlightTags: tags,
-      },
-    )
-
-    return interaction.editReply(formattedBlacklist).catch(() => {
-      /* ignore */
-    })
+    return await runView(interaction, false)
   }
 }
 
@@ -142,7 +133,7 @@ async function addTags(reference: Reference, tags: string[]) {
 
   await prisma.$transaction(
     tagsToAdd.map((data) =>
-      prisma.tag.upsert({
+      prisma.defaultTag.upsert({
         where: {
           referenceId_name: {
             referenceId: data.referenceId,
@@ -155,15 +146,15 @@ async function addTags(reference: Reference, tags: string[]) {
     ),
   )
 
-  settingsCache.deleteTags(reference.id)
+  settingsCache.deleteDefaultTags(reference.id)
 }
 
 async function removeTags(reference: Reference, tags: string[]) {
   await settingsCache.get(reference)
 
-  await prisma.tag.deleteMany({
+  await prisma.defaultTag.deleteMany({
     where: { name: { in: tags } },
   })
 
-  settingsCache.deleteTags(reference.id)
+  settingsCache.deleteDefaultTags(reference.id)
 }

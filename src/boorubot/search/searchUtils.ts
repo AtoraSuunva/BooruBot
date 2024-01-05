@@ -1,6 +1,7 @@
 import { Post } from 'booru'
 import {
   AnyThreadChannel,
+  AutocompleteInteraction,
   ChannelType,
   ColorResolvable,
   CommandInteraction,
@@ -20,7 +21,7 @@ import { extname } from 'path'
  * @returns The channel the interaction was called in
  */
 export async function getInteractionChannel(
-  interaction: CommandInteraction,
+  interaction: CommandInteraction | AutocompleteInteraction,
 ): Promise<TextBasedChannel> {
   const channel =
     interaction.channel ??
@@ -125,18 +126,53 @@ interface ContextSettings {
   blacklistedTags: string[]
 }
 
+interface FilteredPost {
+  post: Post
+  reason: string
+}
+
+interface FilterResults {
+  posts: Post[]
+  filtered: FilteredPost[]
+}
+
 export function filterPosts(
   posts: Post[],
   { minScore, allowNSFW, blacklistedTags }: ContextSettings,
-) {
-  return posts.filter(
-    (post) =>
-      post.fileUrl &&
-      post.available &&
-      (minScore === null || post.score >= minScore) &&
-      (allowNSFW || !isNSFWPost(post)) &&
-      !postMatchesBlacklist(post, blacklistedTags),
+): FilterResults {
+  const passing: Post[] = []
+  const filtered: FilteredPost[] = []
+
+  for (const post of posts) {
+    if (!post.fileUrl) {
+      filtered.push({ post, reason: 'No file URL' })
+    } else if (!post.available) {
+      filtered.push({ post, reason: 'Unavailable' })
+    } else if (minScore !== null && post.score < minScore) {
+      filtered.push({ post, reason: `Score below ${minScore}` })
+    } else if (!allowNSFW && isNSFWPost(post)) {
+      filtered.push({ post, reason: 'NSFW' })
+    } else if (postMatchesBlacklist(post, blacklistedTags)) {
+      filtered.push({ post, reason: 'Blacklisted tags' })
+    } else {
+      passing.push(post)
+    }
+  }
+
+  return { posts: passing, filtered }
+}
+
+export function formatFilteredPosts(filteredPosts: FilteredPost[]): string {
+  return Array.from(
+    filteredPosts
+      .reduce(
+        (acc, { reason }) => acc.set(reason, (acc.get(reason) ?? 0) + 1),
+        new Map<string, number>(),
+      )
+      .entries(),
   )
+    .map(([reason, count]) => `${count} ${reason}`)
+    .join(', ')
 }
 
 /**
@@ -240,8 +276,10 @@ interface PostFormatOptions {
   timeTaken?: bigint
   postNumber?: number
   postCount?: number
-  hiddenPostsCount?: number
+  filteredPosts?: FilteredPost[]
   appendContent?: string
+  tags?: string[]
+  defaultTags?: string[]
 }
 
 interface FormattedPost {
@@ -255,8 +293,10 @@ export function formatPostToEmbed({
   timeTaken,
   postNumber,
   postCount,
-  hiddenPostsCount = 0,
+  filteredPosts = [],
   appendContent = '',
+  tags = [],
+  defaultTags = [],
 }: PostFormatOptions): FormattedPost {
   const ext = extname(post.fileUrl ?? '').toLowerCase()
 
@@ -298,10 +338,27 @@ export function formatPostToEmbed({
       iconURL: `https://${post.booru.domain}/favicon.ico`,
     })
 
-  const content =
-    hiddenPostsCount > 0
-      ? `${hiddenPostsCount} hidden ${pluralize('post', hiddenPostsCount)}.`
+  const tagLine = [
+    tags.length > 0 ? `**Tags:** ${formatTags(tags)}` : '',
+    defaultTags.length > 0
+      ? `**Default Tags:** ${formatTags(defaultTags)}`
+      : '',
+  ]
+    .filter((v) => v !== '')
+    .join(' + ')
+
+  const filterCount = filteredPosts.length
+  const reasonCount = formatFilteredPosts(filteredPosts)
+
+  const hiddenCount =
+    filterCount > 0
+      ? `${filterCount} hidden ${pluralize(
+          'post',
+          filterCount,
+        )} (${reasonCount})`
       : ''
+
+  const content = [tagLine, hiddenCount].filter((v) => v !== '').join('\n')
 
   return {
     content: `${content}${appendContent}`.trim(),

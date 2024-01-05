@@ -11,6 +11,7 @@ import {
 import { getMergedSettings, shuffleArray, siteInfo } from '../utils.js'
 import {
   filterPosts,
+  formatFilteredPosts,
   formatPostToEmbed,
   formatTags,
   getErrorMessage,
@@ -77,9 +78,22 @@ export async function runBooruSearch(
     })
   }
 
-  if (site.domain === 'danbooru.donmai.us' && tags.length > 2) {
+  const { defaultTags } = settings.merged
+
+  if (
+    site.domain === 'danbooru.donmai.us' &&
+    tags.length + defaultTags.length > 2
+  ) {
     return interaction.reply({
-      content: 'Sorry, but Danbooru only lets you search for 2 tags at a time.',
+      content:
+        'Sorry, but Danbooru only lets you search for 2 tags at a time.' +
+        (defaultTags.length > 0)
+          ? `\nThere are ${
+              defaultTags.length
+            } default tags set, so you can only add ${
+              2 - defaultTags.length
+            } more.`
+          : '',
       ephemeral: true,
     })
   }
@@ -97,6 +111,9 @@ export async function runBooruSearch(
       ephemeral: true,
     })
   }
+
+  const originalTags = tags.slice(0)
+  tags.push(...defaultTags)
 
   const channel = await getInteractionChannel(interaction)
   // Keep NSFW out of non-NSFW channels
@@ -142,7 +159,7 @@ export async function runBooruSearch(
 
   const endTime = process.hrtime.bigint()
 
-  const posts = filterPosts(unfilteredPosts, {
+  const { posts, filtered } = filterPosts(unfilteredPosts, {
     minScore: settings.merged.config.minScore,
     allowNSFW,
     blacklistedTags: settings.merged.tags,
@@ -154,13 +171,12 @@ export async function runBooruSearch(
     if (unfilteredPosts.length === 0) {
       return interaction.editReply('No results found.')
     } else {
+      const reasonCount = formatFilteredPosts(filtered)
       return interaction.editReply(
-        `${unfilteredPosts.length} results found, but were all filtered.${noNSFWMessage}`,
+        `${unfilteredPosts.length} results found, but were all filtered.\n${reasonCount}${noNSFWMessage}`,
       )
     }
   }
-
-  const hiddenPostsCount = unfilteredPosts.length - posts.length
 
   const prevButton = new ButtonBuilder()
     .setCustomId(SEARCH_PREV)
@@ -206,8 +222,10 @@ export async function runBooruSearch(
     color,
     postNumber,
     postCount,
-    hiddenPostsCount,
+    filteredPosts: filtered,
     timeTaken,
+    tags: originalTags,
+    defaultTags,
   })
 
   const message = await defer
@@ -305,7 +323,7 @@ export async function runBooruSearch(
       color,
       postNumber,
       postCount,
-      hiddenPostsCount,
+      filteredPosts: filtered,
       timeTaken,
       appendContent: noNSFWMessage,
     })

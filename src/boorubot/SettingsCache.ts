@@ -3,6 +3,7 @@ import { prisma } from '../util/db.js'
 
 export interface BooruSettings {
   config: BooruConfig
+  defaultTags: string[]
   tags: string[]
   sites: string[]
 }
@@ -20,14 +21,16 @@ class SettingsCache {
   #sitesCache = new Map<string, string[]>()
 
   async get(reference: Reference): Promise<BooruSettings> {
-    const [config, tags, sites] = await Promise.all([
+    const [config, defaultTags, tags, sites] = await Promise.all([
       this.getConfig(reference),
+      this.getDefaultTags(reference.id),
       this.getTags(reference.id),
       this.getSites(reference.id),
     ])
 
     return {
       config,
+      defaultTags,
       tags,
       sites,
     }

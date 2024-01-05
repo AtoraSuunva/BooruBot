@@ -1,10 +1,11 @@
-import { BooruConfig } from '@prisma/client'
+import { Prisma } from '@prisma/client'
 import { ChatInputCommandInteraction } from 'discord.js'
 import { SleetSlashSubcommand } from 'sleetcord'
 import { notNullish } from 'sleetcord-common'
 import { prisma } from '../../util/db.js'
 import { formatConfig } from '../../util/format.js'
 import { settingsCache } from '../SettingsCache.js'
+import { getInteractionChannel } from '../search/searchUtils.js'
 import { channelOption, getReferenceFor } from '../utils.js'
 
 export const configView = new SleetSlashSubcommand(
@@ -18,17 +19,30 @@ export const configView = new SleetSlashSubcommand(
   },
 )
 
-async function runView(interaction: ChatInputCommandInteraction) {
-  const reference = getReferenceFor(interaction)
+export async function runView(
+  interaction: ChatInputCommandInteraction,
+  shouldDefer = true,
+) {
+  const reference = await getReferenceFor(interaction)
+  const channel = await getInteractionChannel(interaction)
 
-  const defer = interaction.deferReply()
+  let defer
+  if (shouldDefer) {
+    defer = interaction.deferReply()
+  }
 
   const [guildConfig, channelConfig] = await Promise.all([
     prisma.booruConfig.findFirst({
       where: { referenceId: reference.id },
+      include: {
+        defaultTags: true,
+      },
     }),
     prisma.booruConfig.findFirst({
-      where: { referenceId: interaction.channelId },
+      where: { referenceId: channel.id },
+      include: {
+        defaultTags: true,
+      },
     }),
   ])
 
@@ -52,11 +66,17 @@ async function runView(interaction: ChatInputCommandInteraction) {
   return interaction.editReply(view)
 }
 
-export function createConfigView(...configs: BooruConfig[]) {
+type ConfigView = Prisma.BooruConfigGetPayload<{
+  include: {
+    defaultTags: true
+  }
+}>
+
+export function createConfigView(...configs: ConfigView[]) {
   return { content: configs.map(singleConfigView).join('\n') }
 }
 
-function singleConfigView(config: BooruConfig) {
+function singleConfigView(config: ConfigView) {
   const header = config.isGuild
     ? 'Guild Config'
     : config.guildId
@@ -66,6 +86,7 @@ function singleConfigView(config: BooruConfig) {
   const shownConfig = {
     minScore: config.minScore,
     allowNSFW: config.allowNSFW,
+    defaultTags: config.defaultTags.map((t) => t.name).join(', '),
   }
 
   const formatted = formatConfig({
