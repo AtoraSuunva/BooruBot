@@ -4,18 +4,21 @@ import {
   APIApplicationCommandOptionChoice,
   ApplicationCommandOptionType,
   AutocompleteInteraction,
+  BaseGuildTextChannel,
+  BaseGuildVoiceChannel,
   BaseInteraction,
   ChannelType,
   CommandInteraction,
-  CommandInteractionOption,
   Snowflake,
+  ThreadOnlyChannel,
+  VoiceChannel,
 } from 'discord.js'
 import { AutocompleteHandler, makeChoices } from 'sleetcord'
 import { notNullish } from 'sleetcord-common'
 import { BooruSettings, Reference, settingsCache } from './SettingsCache.js'
 import { getInteractionChannel } from './search/searchUtils.js'
 
-export const channelOption: APIApplicationCommandBasicOption = {
+export const channelOption = {
   name: 'channel',
   description: 'The channel to set the config for',
   type: ApplicationCommandOptionType.Channel,
@@ -27,7 +30,7 @@ export const channelOption: APIApplicationCommandBasicOption = {
     ChannelType.GuildText,
     ChannelType.GuildVoice,
   ],
-}
+} satisfies APIApplicationCommandBasicOption
 
 /**
  * Get a reference usable to fetch settings for some particular interaction
@@ -39,11 +42,20 @@ export async function getReferenceFor(
   interaction: BaseInteraction,
   checkOptions = true,
 ): Promise<Reference> {
-  let channel: CommandInteractionOption<undefined>['channel'] | null = null
+  let channel:
+    | BaseGuildTextChannel
+    | BaseGuildVoiceChannel
+    | VoiceChannel
+    | ThreadOnlyChannel
+    | null = null
 
   if (checkOptions && interaction.inGuild()) {
     if (interaction.isChatInputCommand()) {
-      channel = interaction.options.getChannel(channelOption.name)
+      channel = interaction.options.getChannel(
+        channelOption.name,
+        false,
+        channelOption.channel_types,
+      )
     } else if (interaction.isAutocomplete()) {
       const channelValue = interaction.options.get(channelOption.name)?.value
 
@@ -52,7 +64,12 @@ export async function getReferenceFor(
           channelValue as Snowflake,
         )
 
-        if (chanOpt && !chanOpt.isDMBased()) {
+        if (
+          chanOpt &&
+          chanOpt.isTextBased() &&
+          !chanOpt.isThread() &&
+          !chanOpt.isDMBased()
+        ) {
           channel = chanOpt
         }
       }
@@ -63,6 +80,7 @@ export async function getReferenceFor(
     id: channel?.id ?? interaction.guild?.id ?? interaction.user.id,
     guildId: interaction.guild?.id ?? null,
     isGuild: channel ? false : interaction.guild !== null,
+    allowNSFW: channel ? channel.nsfw : interaction.inGuild(),
   }
 }
 
@@ -252,6 +270,7 @@ export async function getMergedSettings(
       id: userReferenceId,
       guildId: null,
       isGuild: false,
+      allowNSFW: false,
     })
 
     return {
@@ -273,8 +292,14 @@ export async function getMergedSettings(
       id: channel.id,
       guildId: reference.isGuild ? reference.id : null,
       isGuild: false,
+      allowNSFW: 'nsfw' in channel ? channel.nsfw : reference.allowNSFW,
     }),
-    settingsCache.get({ id: userReferenceId, guildId: null, isGuild: false }),
+    settingsCache.get({
+      id: userReferenceId,
+      guildId: null,
+      isGuild: false,
+      allowNSFW: false,
+    }),
   ])
 
   const merged = {

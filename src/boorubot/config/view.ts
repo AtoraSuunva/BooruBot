@@ -22,6 +22,7 @@ export const configView = new SleetSlashSubcommand(
 export async function runView(
   interaction: ChatInputCommandInteraction,
   shouldDefer = true,
+  recurse = true,
 ) {
   const reference = await getReferenceFor(interaction)
   const channel = reference.isGuild
@@ -49,6 +50,35 @@ export async function runView(
           },
         }),
   ])
+
+  let modified = false
+
+  if (interaction.guildId && guildOrUserConfig && !guildOrUserConfig.isGuild) {
+    // For some reason it's not marked as a guild, fix that
+    await prisma.booruConfig.update({
+      where: { referenceId: interaction.guildId },
+      data: { isGuild: true },
+    })
+    modified = true
+  }
+
+  if (
+    interaction.guildId &&
+    channel &&
+    channelConfig &&
+    (channelConfig.isGuild || channelConfig.guildId === null)
+  ) {
+    // For some reason it's not marked as a channel, fix that
+    await prisma.booruConfig.update({
+      where: { referenceId: channel.id },
+      data: { isGuild: false, guildId: interaction.guildId },
+    })
+    modified = true
+  }
+
+  if (modified && recurse) {
+    return runView(interaction, false, false)
+  }
 
   await defer
 

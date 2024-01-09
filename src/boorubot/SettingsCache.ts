@@ -12,6 +12,7 @@ export interface Reference {
   id: string
   guildId: string | null
   isGuild: boolean
+  allowNSFW: boolean
 }
 
 class SettingsCache {
@@ -51,7 +52,7 @@ class SettingsCache {
       config = await prisma.booruConfig.update({
         where: { referenceId: reference.id },
         data: {
-          allowNSFW: reference.isGuild,
+          allowNSFW: reference.allowNSFW,
           isGuild: reference.isGuild,
         },
       })
@@ -62,7 +63,7 @@ class SettingsCache {
         data: {
           referenceId: reference.id,
           guildId: reference.guildId ?? null,
-          allowNSFW: reference.isGuild,
+          allowNSFW: reference.allowNSFW,
           isGuild: reference.isGuild,
         },
       })
