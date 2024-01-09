@@ -76,11 +76,11 @@ export async function runView(
     modified = true
   }
 
+  await defer
+
   if (modified && recurse) {
     return runView(interaction, false, false)
   }
-
-  await defer
 
   if (!guildOrUserConfig && !channelConfig) {
     return interaction.editReply('No Booru config found, so no config to view.')
