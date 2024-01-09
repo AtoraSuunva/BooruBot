@@ -272,7 +272,7 @@ export async function getMergedSettings(
     settingsCache.get({
       id: channel.id,
       guildId: reference.isGuild ? reference.id : null,
-      isGuild: reference.isGuild,
+      isGuild: false,
     }),
     settingsCache.get({ id: userReferenceId, guildId: null, isGuild: false }),
   ])

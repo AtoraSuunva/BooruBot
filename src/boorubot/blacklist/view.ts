@@ -29,11 +29,13 @@ export const blacklistView = new SleetSlashSubcommand(
 export async function runView(interaction: ChatInputCommandInteraction) {
   const ephemeral = interaction.options.getBoolean('ephemeral') ?? false
   const reference = await getReferenceFor(interaction)
-  const channel = await getInteractionChannel(interaction)
+  const channel = reference.isGuild
+    ? await getInteractionChannel(interaction)
+    : null
 
   const blacklists = await Promise.all([
     getBlacklistFor(reference.id),
-    interaction.inGuild() ? getBlacklistFor(channel.id) : null,
+    channel ? getBlacklistFor(channel.id) : null,
   ])
 
   const formattedBlacklists = blacklists
@@ -50,6 +52,27 @@ export async function runView(interaction: ChatInputCommandInteraction) {
 
       return prev
     }, {})
+
+  if (!formattedBlacklists.content && !formattedBlacklists.files) {
+    return interaction.reply({
+      content: 'No blacklist found.',
+      ephemeral,
+    })
+  }
+
+  if (
+    formattedBlacklists.content &&
+    formattedBlacklists.content.length > 2000
+  ) {
+    formattedBlacklists.files ??= []
+
+    formattedBlacklists.files.push({
+      name: 'blacklist.txt',
+      attachment: Buffer.from(formattedBlacklists.content),
+    })
+
+    delete formattedBlacklists.content
+  }
 
   return interaction.reply({
     ...formattedBlacklists,

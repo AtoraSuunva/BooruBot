@@ -23,9 +23,15 @@ export interface FormatBlacklistOptions {
  * @returns A message options object that can be sent to Discord
  */
 export function formatBlacklist(
-  blacklist: Blacklist,
+  blacklist: Blacklist | null,
   { highlightTags = [], highlightSites = [] }: FormatBlacklistOptions = {},
 ): BaseMessageOptions {
+  if (blacklist === null) {
+    return {
+      content: '',
+    }
+  }
+
   const tags = formatBlacklistArray(blacklist.tags, highlightTags)
   const sites = formatBlacklistArray(blacklist.sites, highlightSites)
 
@@ -70,7 +76,9 @@ function formatBlacklistArray(items: string[], highlight: string[]): string {
     .join(', ')
 }
 
-export async function getBlacklistFor(referenceId: string): Promise<Blacklist> {
+export async function getBlacklistFor(
+  referenceId: string,
+): Promise<Blacklist | null> {
   const blacklist = await prisma.booruConfig
     .findFirst({
       where: {
@@ -101,15 +109,13 @@ export async function getBlacklistFor(referenceId: string): Promise<Blacklist> {
             tags: result.tags.map((tag) => tag.name),
             sites: result.sites.map((site) => site.name),
           }
-        : {
-            referenceId,
-            tags: [],
-            sites: [],
-          },
+        : null,
     )
 
-  settingsCache.setTags(referenceId, blacklist.tags)
-  settingsCache.setSites(referenceId, blacklist.sites)
+  if (blacklist) {
+    settingsCache.setTags(referenceId, blacklist.tags)
+    settingsCache.setSites(referenceId, blacklist.sites)
+  }
 
   return blacklist
 }
