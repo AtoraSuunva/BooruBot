@@ -10,6 +10,7 @@ import {
 import { SleetSlashCommandGroup, SleetSlashSubcommand } from 'sleetcord'
 import { prisma } from '../../util/db.js'
 import { settingsCache } from '../SettingsCache.js'
+import { getInteractionChannel } from '../search/searchUtils.js'
 import { channelOption, getReferenceFor } from '../utils.js'
 import { createConfigView } from './view.js'
 
@@ -34,6 +35,7 @@ const setMinScore = new SleetSlashSubcommand(
 async function runSetMinScore(interaction: ChatInputCommandInteraction) {
   const score = interaction.options.getNumber('score')
   const reference = await getReferenceFor(interaction)
+  const channel = await getInteractionChannel(interaction)
 
   const defer = interaction.deferReply()
 
@@ -45,7 +47,8 @@ async function runSetMinScore(interaction: ChatInputCommandInteraction) {
       guildId: reference.guildId,
       isGuild: reference.isGuild,
       // null if in channel, true if in guild, false if in DM
-      allowNSFW: reference.guildId ? null : reference.isGuild,
+      allowNSFW:
+        reference.guildId && !channel.isDMBased() ? null : reference.isGuild,
     },
     update: { minScore: score },
     include: { defaultTags: true },

@@ -171,7 +171,7 @@ export function formatFilteredPosts(filteredPosts: FilteredPost[]): string {
       )
       .entries(),
   )
-    .map(([reason, count]) => `${count} ${reason}`)
+    .map(([reason, count]) => `${count}: ${reason}`)
     .join(', ')
 }
 
@@ -181,7 +181,7 @@ export function formatFilteredPosts(filteredPosts: FilteredPost[]): string {
  * @returns Is the post considered NSFW?
  */
 function isNSFWPost(post: Post): boolean {
-  return post.rating !== 's'
+  return !['s', 'g'].includes(post.rating)
 }
 
 const EXPANDED_RATINGS = {
@@ -287,6 +287,28 @@ interface FormattedPost {
   embeds: EmbedBuilder[]
 }
 
+const ratingEmojis: Record<string, string | undefined> = {
+  s: '<:rating_safe:1194080016779202610>',
+  g: '<:rating_general:1194080014413615216>',
+  q: '<:rating_questionable:1194080015353127023>',
+  e: '<:rating_explicit:1194080012769431645>',
+  u: '<:rating_unknown:1194080018536603669>',
+}
+
+function formatRating(rating: string): string {
+  return ratingEmojis[rating] ?? rating.toUpperCase()
+}
+
+function formatScore(score: number): string {
+  if (score > 0) {
+    return `<:green_arrow_up:1194080011330801744> ${score}`
+  } else if (score < 0) {
+    return `<:red_arrow_down:1194080019719401603> ${score}`
+  } else {
+    return `<:yellow_tilde:1194080020956729364> ${score}`
+  }
+}
+
 export function formatPostToEmbed({
   post,
   color = '#34363C',
@@ -305,10 +327,10 @@ export function formatPostToEmbed({
     : ''
 
   const leadingDescription = [
-    `**Score:** ${post.score}`,
-    `**Rating:** ${post.rating}`,
-    `[File](${post.fileUrl})`,
-    ext,
+    `**Score:** ${formatScore(post.score)}`,
+    `**Rating:** ${formatRating(post.rating)}`,
+    `[File URL](${post.fileUrl})`,
+    `\`${ext}\``,
   ].join(' | ')
 
   const description = [

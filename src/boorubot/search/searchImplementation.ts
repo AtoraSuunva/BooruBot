@@ -47,7 +47,7 @@ export interface SearchSettings {
 }
 
 const WHY_NO_NSFW_DM_URL =
-  ' [How to opt into NSFW](https://github.com/AtoraSuunva/Booru-Discord#opting-into-nsfw)'
+  ' [How to opt into NSFW](https://github.com/AtoraSuunva/BooruBot#opting-into-nsfw).'
 
 /**
  * Run the actual search, split out so that /link can use this as well, and to split

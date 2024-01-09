@@ -24,36 +24,40 @@ export async function runView(
   shouldDefer = true,
 ) {
   const reference = await getReferenceFor(interaction)
-  const channel = await getInteractionChannel(interaction)
+  const channel = reference.isGuild
+    ? await getInteractionChannel(interaction)
+    : null
 
   let defer
   if (shouldDefer) {
     defer = interaction.deferReply()
   }
 
-  const [guildConfig, channelConfig] = await Promise.all([
+  const [guildOrUserConfig, channelConfig] = await Promise.all([
     prisma.booruConfig.findFirst({
       where: { referenceId: reference.id },
       include: {
         defaultTags: true,
       },
     }),
-    prisma.booruConfig.findFirst({
-      where: { referenceId: channel.id },
-      include: {
-        defaultTags: true,
-      },
-    }),
+    channel === null
+      ? null
+      : prisma.booruConfig.findFirst({
+          where: { referenceId: channel.id },
+          include: {
+            defaultTags: true,
+          },
+        }),
   ])
 
   await defer
 
-  if (!guildConfig && !channelConfig) {
+  if (!guildOrUserConfig && !channelConfig) {
     return interaction.editReply('No Booru config found, so no config to view.')
   }
 
-  if (guildConfig) {
-    settingsCache.setConfig(reference.id, guildConfig)
+  if (guildOrUserConfig) {
+    settingsCache.setConfig(reference.id, guildOrUserConfig)
   }
 
   if (channelConfig) {
@@ -61,7 +65,7 @@ export async function runView(
   }
 
   const view = createConfigView(
-    ...[guildConfig, channelConfig].filter(notNullish),
+    ...[guildOrUserConfig, channelConfig].filter(notNullish),
   )
   return interaction.editReply(view)
 }

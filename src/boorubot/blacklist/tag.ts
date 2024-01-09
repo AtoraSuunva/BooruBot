@@ -27,52 +27,58 @@ export const blacklistAddTags = new SleetSlashSubcommand(
   },
 )
 
-const removeTagAutocomplete: AutocompleteHandler<string> = async ({
-  interaction,
-  value,
-}) => {
-  const reference = await getReferenceFor(interaction)
-  const tags = await settingsCache.getTags(reference.id)
+export function makeTagAutocomplete(
+  tagFetcher: (reference: Reference) => Promise<string[]>,
+): AutocompleteHandler<string> {
+  return async ({ interaction, value }) => {
+    const reference = await getReferenceFor(interaction)
+    // const tags = await settingsCache.getTags(reference.id)
+    const tags = await tagFetcher(reference)
 
-  const previousTags = getItemsFrom(value)
-  const latestInput = previousTags.pop() ?? ''
-  const prevValue = previousTags.join(' ')
+    const previousTags = getItemsFrom(value)
+    const latestInput = previousTags.pop() ?? ''
+    const prevValue = previousTags.join(' ')
 
-  const possibleCompletions = tags.filter(
-    (tag) => tag.startsWith(latestInput) && !previousTags.includes(tag),
-  )
-
-  if (tags.includes(latestInput)) {
-    // Then assume that last input is a full tag and also include more tag suggestions
-    possibleCompletions.push(
-      ...tags
-        .filter((tag) => !previousTags.includes(tag) && tag !== latestInput)
-        .map((tag) => `${latestInput} ${tag}`),
+    const possibleCompletions = tags.filter(
+      (tag) => tag.startsWith(latestInput) && !previousTags.includes(tag),
     )
+
+    if (tags.includes(latestInput)) {
+      // Then assume that last input is a full tag and also include more tag suggestions
+      possibleCompletions.push(
+        ...tags
+          .filter((tag) => !previousTags.includes(tag) && tag !== latestInput)
+          .map((tag) => `${latestInput} ${tag}`),
+      )
+    }
+
+    if (possibleCompletions.length === 0) {
+      return [
+        {
+          name: value || 'Enter 1 or more tags to remove, separated by spaces',
+          value: value || '',
+        },
+      ]
+    }
+
+    return possibleCompletions
+      .sort()
+      .map((tag) => {
+        const suggestion = `${prevValue} ${tag}`
+
+        return {
+          name: suggestion,
+          value: suggestion,
+        }
+      })
+      .filter((t) => t.name.length <= 100)
+      .slice(0, 25)
   }
-
-  if (possibleCompletions.length === 0) {
-    return [
-      {
-        name: value || 'Enter 1 or more tags to remove, separated by spaces',
-        value: value || '',
-      },
-    ]
-  }
-
-  return possibleCompletions
-    .sort()
-    .map((tag) => {
-      const suggestion = `${prevValue} ${tag}`
-
-      return {
-        name: suggestion,
-        value: suggestion,
-      }
-    })
-    .filter((t) => t.name.length <= 100)
-    .slice(0, 25)
 }
+
+const removeTagAutocomplete: AutocompleteHandler<string> = makeTagAutocomplete(
+  (reference) => settingsCache.getTags(reference.id),
+)
 
 export const blacklistRemoveTags = new SleetSlashSubcommand(
   {

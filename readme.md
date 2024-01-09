@@ -8,11 +8,19 @@ Search 15 different boorus directly from within Discord!
 
 ## **Features:**
 
-- Tag/Site blacklist (server-wide and personal per-user lists)
+- Tag/Site blacklist
+  - Server-wide,
+  - Per-channel,
+  - and per-user blacklist!
+  - Hide results across the whole server, or only in certain channels, or create your own personal blacklist (in DMs) that applies to any search you do _anywhere_!
 - NSFW in age-restricted channels **only** (See below on how to opt-in for DMs or opt-out for servers)
 - Support for 15 sites
 - Ability to randomly search all sites until you get a result
-- Configurable minimum score a post needs to be shown! Filter out posts with a negative score!
+- Configurable!
+  - Minimum score a post needs to be shown! Filter out posts with a negative score!
+  - Disable NSFW everywhere, even in age-restricted channels!
+  - Default tags! Apply `rating:s` to all your searches instead of getting 70 filtered results!
+  - Configs can be done per-channel! Merged with guild configs so you can be more (or less) strict in certain channels! Use the `channel:` option for per-channel configs.
 - Uses fancy embeds!
 - Previous/Next buttons to look through all the results (up to 100!)
 - "Hide post" ❌ button to hide the image if it's... not great!
@@ -36,9 +44,11 @@ NSFW results will **never** be posted in non age-restricted channels, regardless
 ## **Managing the blacklist**
 
 > ℹ️ Running these commands in-server will manage that server's blacklist, while running them in-DM will manage your *personal* blacklist.
-> When you search in a server, the server blacklist and your personal blacklist are merged together to filter the results
+> When you search in a server, the server blacklist, channel blacklist, and your personal blacklist are merged together to filter the results
 
 Use the `/blacklist` command to view/edit/delete the blacklist. See the subcommands for what exactly you can do. You'll need "Manage Messages" to use these commands.
+
+Use the `channel:` option to manage the blacklist of a specific channel.
 
 Use `/view blacklist` to view the blacklist without any permissions.
 

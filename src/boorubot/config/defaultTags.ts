@@ -5,6 +5,7 @@ import {
 import { AutocompleteHandler, SleetSlashSubcommand } from 'sleetcord'
 import { prisma } from '../../util/db.js'
 import { Reference, settingsCache } from '../SettingsCache.js'
+import { makeTagAutocomplete } from '../blacklist/tag.js'
 import { channelOption, getItemsFrom, getReferenceFor } from '../utils.js'
 import { runView } from './view.js'
 
@@ -27,52 +28,9 @@ export const configAddDefaultTags = new SleetSlashSubcommand(
   },
 )
 
-const removeTagAutocomplete: AutocompleteHandler<string> = async ({
-  interaction,
-  value,
-}) => {
-  const reference = await getReferenceFor(interaction)
-  const tags = await settingsCache.getDefaultTags(reference.id)
-
-  const previousTags = getItemsFrom(value)
-  const latestInput = previousTags.pop() ?? ''
-  const prevValue = previousTags.join(' ')
-
-  const possibleCompletions = tags.filter(
-    (tag) => tag.startsWith(latestInput) && !previousTags.includes(tag),
-  )
-
-  if (tags.includes(latestInput)) {
-    // Then assume that last input is a full tag and also include more tag suggestions
-    possibleCompletions.push(
-      ...tags
-        .filter((tag) => !previousTags.includes(tag) && tag !== latestInput)
-        .map((tag) => `${latestInput} ${tag}`),
-    )
-  }
-
-  if (possibleCompletions.length === 0) {
-    return [
-      {
-        name: value || 'Enter 1 or more tags to remove, separated by spaces',
-        value: value || '',
-      },
-    ]
-  }
-
-  return possibleCompletions
-    .sort()
-    .map((tag) => {
-      const suggestion = `${prevValue} ${tag}`
-
-      return {
-        name: suggestion,
-        value: suggestion,
-      }
-    })
-    .filter((t) => t.name.length <= 100)
-    .slice(0, 25)
-}
+const removeTagAutocomplete: AutocompleteHandler<string> = makeTagAutocomplete(
+  (reference) => settingsCache.getDefaultTags(reference.id),
+)
 
 export const configRemoveDefaultTags = new SleetSlashSubcommand(
   {

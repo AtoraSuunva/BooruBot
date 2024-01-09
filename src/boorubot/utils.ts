@@ -247,6 +247,26 @@ export async function getMergedSettings(
   const channel = await getInteractionChannel(interaction)
   const userReferenceId = interaction.user.id
 
+  if (channel.isDMBased()) {
+    const userSettings = await settingsCache.get({
+      id: userReferenceId,
+      guildId: null,
+      isGuild: false,
+    })
+
+    return {
+      guild: userSettings,
+      channel: userSettings,
+      user: userSettings,
+      merged: {
+        config: merge({ allowNSFW: false }, userSettings.config),
+        defaultTags: userSettings.defaultTags,
+        tags: userSettings.tags,
+        sites: userSettings.sites,
+      },
+    }
+  }
+
   const [guildSettings, channelSettings, userSettings] = await Promise.all([
     settingsCache.get(reference),
     settingsCache.get({
