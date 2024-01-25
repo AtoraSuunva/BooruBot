@@ -12,7 +12,7 @@ export interface Reference {
   id: string
   guildId: string | null
   isGuild: boolean
-  allowNSFW: boolean
+  allowNSFW: boolean | null
 }
 
 class SettingsCache {

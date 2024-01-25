@@ -292,13 +292,13 @@ export async function getMergedSettings(
       id: channel.id,
       guildId: reference.isGuild ? reference.id : null,
       isGuild: false,
-      allowNSFW: 'nsfw' in channel ? channel.nsfw : reference.allowNSFW,
+      allowNSFW: null, // default: pass through to guild setting
     }),
     settingsCache.get({
       id: userReferenceId,
       guildId: null,
       isGuild: false,
-      allowNSFW: false,
+      allowNSFW: false, // default: no nsfw in DMs
     }),
   ])
 
