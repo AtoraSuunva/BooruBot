@@ -90,60 +90,60 @@ const ALLOW_NSFW_DENY = 'config/allow_nsfw/deny'
 async function runSetAllowNSFW(interaction: ChatInputCommandInteraction) {
   const allowNSFW = interaction.options.getBoolean('allow', true)
 
-  if (allowNSFW) {
-    const row = new ActionRowBuilder<ButtonBuilder>()
-    const confirmButton = new ButtonBuilder()
-      .setCustomId(ALLOW_NSFW_CONFIRM)
-      .setStyle(ButtonStyle.Primary)
-      .setLabel('Allow')
-    const denyButton = new ButtonBuilder()
-      .setCustomId(ALLOW_NSFW_DENY)
-      .setStyle(ButtonStyle.Danger)
-      .setLabel('Deny')
-
-    row.setComponents([confirmButton, denyButton])
-
-    const extraMessage = interaction.inGuild()
-      ? 'NSFW results only will be shown in channels marked as age-restricted.'
-      : 'NSFW results will be shown in DMs with the bot.'
-
-    const message = await interaction.reply({
-      content: `Allow NSFW results? By enabling this, you confirm that you are 18+ and legally able to view NSFW content.\n> ${extraMessage}`,
-      components: [row],
-      fetchReply: true,
-    })
-
-    const collector = message.createMessageComponentCollector({
-      componentType: ComponentType.Button,
-      idle: 5 * 60 * 1000,
-    })
-
-    collector.on('collect', (i) => {
-      if (i.user.id !== interaction.user.id) {
-        return void i.reply({
-          content: "You can't confirm this.",
-          ephemeral: true,
-        })
-      }
-
-      if (i.customId === ALLOW_NSFW_CONFIRM) {
-        void setAllowNSFWAndReply(i, true)
-      } else {
-        void i.reply({
-          content: 'You cancelled this.',
-          ephemeral: true,
-        })
-      }
-
-      collector.stop()
-    })
-
-    collector.on('end', () => {
-      void interaction.editReply({ components: [] })
-    })
-  } else {
-    return setAllowNSFWAndReply(interaction, allowNSFW)
+  if (!allowNSFW) {
+    return setAllowNSFWAndReply(interaction, false)
   }
+
+  const row = new ActionRowBuilder<ButtonBuilder>()
+  const confirmButton = new ButtonBuilder()
+    .setCustomId(ALLOW_NSFW_CONFIRM)
+    .setStyle(ButtonStyle.Primary)
+    .setLabel('Allow')
+  const denyButton = new ButtonBuilder()
+    .setCustomId(ALLOW_NSFW_DENY)
+    .setStyle(ButtonStyle.Danger)
+    .setLabel('Deny')
+
+  row.setComponents([confirmButton, denyButton])
+
+  const extraMessage = interaction.inGuild()
+    ? 'NSFW results only will be shown in channels marked as age-restricted.'
+    : 'NSFW results will be shown in DMs with the bot.'
+
+  const message = await interaction.reply({
+    content: `Allow NSFW results? By enabling this, you confirm that you are 18+ and legally able to view NSFW content.\n> ${extraMessage}`,
+    components: [row],
+    fetchReply: true,
+  })
+
+  const collector = message.createMessageComponentCollector({
+    componentType: ComponentType.Button,
+    idle: 5 * 60 * 1000,
+  })
+
+  collector.on('collect', (i) => {
+    if (i.user.id !== interaction.user.id) {
+      return void i.reply({
+        content: "You can't confirm this.",
+        ephemeral: true,
+      })
+    }
+
+    if (i.customId === ALLOW_NSFW_CONFIRM) {
+      void setAllowNSFWAndReply(interaction, true)
+    } else {
+      void i.reply({
+        content: 'You cancelled this.',
+        ephemeral: true,
+      })
+    }
+
+    collector.stop()
+  })
+
+  collector.on('end', () => {
+    void interaction.editReply({ components: [] })
+  })
 
   return
 }
