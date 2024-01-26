@@ -91,7 +91,7 @@ async function runSetAllowNSFW(interaction: ChatInputCommandInteraction) {
   const allowNSFW = interaction.options.getBoolean('allow', true)
 
   if (!allowNSFW) {
-    return setAllowNSFWAndReply(interaction, false)
+    return setAllowNSFWAndReply(interaction, interaction, false)
   }
 
   const row = new ActionRowBuilder<ButtonBuilder>()
@@ -130,7 +130,7 @@ async function runSetAllowNSFW(interaction: ChatInputCommandInteraction) {
     }
 
     if (i.customId === ALLOW_NSFW_CONFIRM) {
-      void setAllowNSFWAndReply(interaction, true)
+      void setAllowNSFWAndReply(i, interaction, true)
     } else {
       void i.reply({
         content: 'You cancelled this.',
@@ -150,9 +150,10 @@ async function runSetAllowNSFW(interaction: ChatInputCommandInteraction) {
 
 async function setAllowNSFWAndReply(
   interaction: ChatInputCommandInteraction | MessageComponentInteraction,
+  referenceInteraction: ChatInputCommandInteraction,
   allowNSFW: boolean,
 ) {
-  const reference = await getReferenceFor(interaction)
+  const reference = await getReferenceFor(referenceInteraction)
 
   const defer = interaction.deferReply()
 
