@@ -53,7 +53,11 @@ export async function runView(
 
   let modified = false
 
-  if (interaction.guildId && guildOrUserConfig && !guildOrUserConfig.isGuild) {
+  if (
+    interaction.guildId === reference.id &&
+    guildOrUserConfig &&
+    !guildOrUserConfig.isGuild
+  ) {
     // For some reason it's not marked as a guild, fix that
     await prisma.booruConfig.update({
       where: { referenceId: interaction.guildId },
@@ -65,6 +69,7 @@ export async function runView(
   if (
     interaction.guildId &&
     channel &&
+    channel.id === reference.id &&
     channelConfig &&
     (channelConfig.isGuild || channelConfig.guildId === null)
   ) {
