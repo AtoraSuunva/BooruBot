@@ -11,6 +11,7 @@ import {
   NewsChannel,
   TextBasedChannel,
   TextChannel,
+  ThreadOnlyChannel,
   escapeMarkdown,
 } from 'discord.js'
 import { extname } from 'path'
@@ -22,7 +23,7 @@ import { extname } from 'path'
  */
 export async function getInteractionChannel(
   interaction: CommandInteraction | AutocompleteInteraction,
-): Promise<TextBasedChannel> {
+): Promise<TextBasedChannel | ThreadOnlyChannel> {
   const channel =
     interaction.channel ??
     (await interaction.client.channels.fetch(interaction.channelId))
@@ -31,7 +32,7 @@ export async function getInteractionChannel(
     if (channel.isThread()) {
       const parent = await getParentChannel(channel)
 
-      if (parent.isTextBased()) {
+      if (parent.isTextBased() || parent.isThreadOnly()) {
         return parent
       }
     } else if (channel.isTextBased()) {
@@ -89,7 +90,7 @@ export async function getParentChannel(
 }
 
 export async function nsfwAllowedInChannel(
-  channel: TextBasedChannel,
+  channel: TextBasedChannel | ThreadOnlyChannel,
   allowNSFW: boolean,
 ): Promise<boolean> {
   // There are 3 cases:
