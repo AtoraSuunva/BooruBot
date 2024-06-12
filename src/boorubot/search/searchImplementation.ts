@@ -87,13 +87,13 @@ export async function runBooruSearch(
     return interaction.reply({
       content:
         'Sorry, but Danbooru only lets you search for 2 tags at a time.' +
-        (defaultTags.length > 0)
+        (defaultTags.length > 0
           ? `\nThere are ${
               defaultTags.length
             } default tags set, so you can only add ${
               2 - defaultTags.length
             } more.`
-          : '',
+          : ''),
       ephemeral: true,
     })
   }
@@ -244,6 +244,7 @@ export async function runBooruSearch(
   })
 
   // this uses closures so we can't extract it out :(
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   collector.on('collect', async (i) => {
     if (i.user.id !== interaction.user.id) {
       return void i.reply({
@@ -334,6 +335,7 @@ export async function runBooruSearch(
     })
   })
 
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   collector.on('end', async () => {
     await interaction.editReply({ components: [] })
   })

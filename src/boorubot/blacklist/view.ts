@@ -66,10 +66,12 @@ export async function runView(interaction: ChatInputCommandInteraction) {
   ) {
     formattedBlacklists.files ??= []
 
-    formattedBlacklists.files.push({
-      name: 'blacklist.txt',
-      attachment: Buffer.from(formattedBlacklists.content),
-    })
+    if (Array.isArray(formattedBlacklists.files)) {
+      formattedBlacklists.files.push({
+        name: 'blacklist.txt',
+        attachment: Buffer.from(formattedBlacklists.content),
+      })
+    }
 
     delete formattedBlacklists.content
   }

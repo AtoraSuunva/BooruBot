@@ -25,29 +25,29 @@
   },
   "homepage": "https://github.com/AtoraSuunva/BooruBot#readme",
   "dependencies": {
-    "@prisma/client": "5.11.0",
-    "@sentry/integrations": "^7.107.0",
-    "@sentry/node": "^7.107.0",
-    "@sentry/profiling-node": "^7.107.0",
+    "@prisma/client": "5.15.0",
+    "@sentry/integrations": "^7.114.0",
+    "@sentry/node": "^8.9.1",
+    "@sentry/profiling-node": "^8.9.1",
     "booru": "^2.6.5",
-    "discord.js": "^14.14.1",
-    "env-var": "^7.4.1",
-    "pino": "^8.19.0",
+    "discord.js": "^14.15.3",
+    "env-var": "^7.5.0",
+    "pino": "^9.2.0",
     "pino-dev": "^4.0.3",
     "pretty-ms": "^9.0.0",
-    "sleetcord": "^1.2.2",
-    "sleetcord-common": "^6.2.0"
+    "sleetcord": "^1.6.0",
+    "sleetcord-common": "^7.0.0"
   },
   "devDependencies": {
-    "@sentry/cli": "^2.30.2",
-    "@types/node": "^20.11.28",
-    "@typescript-eslint/eslint-plugin": "^7.2.0",
-    "@typescript-eslint/parser": "^7.2.0",
+    "@sentry/cli": "^2.32.1",
+    "@types/node": "^20.14.2",
+    "@typescript-eslint/eslint-plugin": "^7.13.0",
+    "@typescript-eslint/parser": "^7.13.0",
     "eslint": "^8.57.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-import": "^2.29.1",
-    "prettier": "^3.2.5",
-    "prisma": "5.11.0",
-    "typescript": "^5.4.2"
+    "prettier": "^3.3.2",
+    "prisma": "5.15.0",
+    "typescript": "^5.4.5"
   }
 }
