@@ -12,6 +12,7 @@ import {
   TextBasedChannel,
   TextChannel,
   ThreadOnlyChannel,
+  bold,
   escapeMarkdown,
 } from 'discord.js'
 import { extname } from 'path'
@@ -323,10 +324,6 @@ export function formatPostToEmbed({
 }: PostFormatOptions): FormattedPost {
   const ext = extname(post.fileUrl ?? '').toLowerCase()
 
-  const embeddable = !isEmbeddableFileType(ext)
-    ? '*The file will likely not embed*'
-    : ''
-
   const leadingDescription = [
     `**Score:** ${formatScore(post.score)}`,
     `**Rating:** ${formatRating(post.rating)}`,
@@ -334,11 +331,7 @@ export function formatPostToEmbed({
     `\`${ext}\``,
   ].join(' | ')
 
-  const description = [
-    leadingDescription,
-    `**Tags:** ${formatTags(post.tags)}`,
-    embeddable,
-  ]
+  const description = [leadingDescription, `**Tags:** ${formatTags(post.tags)}`]
     .filter(notEmpty)
     .join('\n')
 
@@ -350,24 +343,13 @@ export function formatPostToEmbed({
     .filter(notEmpty)
     .join(' · ')
 
-  const embed = new EmbedBuilder()
-    .setColor(color)
-    .setTitle(`Post #${post.id}`)
-    .setURL(post.postView)
-    .setDescription(description)
-    .setImage(post.fileUrl)
-    .setFooter({
-      text: footerText,
-      iconURL: `https://${post.booru.domain}/favicon.ico`,
-    })
-
   const tagLine = [
     tags.length > 0 ? `**Tags:** ${formatTags(tags)}` : '',
     defaultTags.length > 0
       ? `**Default Tags:** ${formatTags(defaultTags)}`
       : '',
   ]
-    .filter((v) => v !== '')
+    .filter(notEmpty)
     .join(' + ')
 
   const filterCount = filteredPosts.length
@@ -381,11 +363,39 @@ export function formatPostToEmbed({
         )} (${reasonCount})`
       : ''
 
-  const content = [tagLine, hiddenCount].filter((v) => v !== '').join('\n')
+  const contentLines = [tagLine, hiddenCount]
+  const embeds: EmbedBuilder[] = []
+
+  // If the file is embeddable, use an embed (it looks prettier!)
+  // Otherwise, we need to fallback to no embed and let Discord handle creating the embed from the file URL
+  // If you have an embed in your message, Discord won't automatically embed the file URL, and embeds sent by bots can't add videos
+  // yay :/
+  if (isEmbeddableFileType(ext)) {
+    const embed = new EmbedBuilder()
+      .setColor(color)
+      .setTitle(`Post #${post.id}`)
+      .setURL(post.postView)
+      .setDescription(description)
+      .setImage(post.fileUrl)
+      .setFooter({
+        text: footerText,
+        iconURL: `https://${post.booru.domain}/favicon.ico`,
+      })
+
+    embeds.push(embed)
+  } else {
+    contentLines.unshift(
+      '>>> ' + bold(`[Post #${post.id}](<${post.postView}>)`),
+      description,
+      footerText,
+    )
+  }
+
+  const content = contentLines.filter(notEmpty).join('\n')
 
   return {
     content: `${content}${appendContent}`.trim(),
-    embeds: [embed],
+    embeds,
   }
 }
 
