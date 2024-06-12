@@ -21,8 +21,8 @@ importers:
         specifier: ^8.9.1
         version: 8.9.1
       booru:
-        specifier: ^2.6.5
-        version: 2.6.5
+        specifier: ^2.6.6
+        version: 2.6.6
       discord.js:
         specifier: ^14.15.3
         version: 14.15.3
@@ -717,8 +717,8 @@ packages:
   base64-js@1.5.1:
     resolution: {integrity: sha512-AKpaYlHn8t4SVbOHCy+b5+KKgvR4vrsD8vbvrbiQJps7fKDTkjkDry6ji0rUJjC0kzbNePLwzxq8iypo41qeWA==}
 
-  booru@2.6.5:
-    resolution: {integrity: sha512-GzkI3LDGcLEhxaRAhyyJQe6gzb2VAkFHvRJzdUbdKuNYTrkGmv8HYuxICwp00Vzwm7UG+KnPT9xogSMWyQ6/pA==}
+  booru@2.6.6:
+    resolution: {integrity: sha512-73oMTrJHaInkdk6PgKOonKzRvPq2ZHk15NQR1b0+P87ohXKUnkSrkuEIdLb5Kk9VJlSz+8KzdH8RFidfWfj0pw==}
     engines: {node: '>=10.0.0'}
 
   brace-expansion@1.1.11:
@@ -970,8 +970,8 @@ packages:
     resolution: {integrity: sha512-dwsoQlS7h9hMeYUq1W++23NDcBLV4KqONnITDV9DjfS3q1SgDGVrBdvvTLUotWtPSD7asWDV9/CmsZPy8Hf70A==}
     engines: {node: '>=6'}
 
-  fast-xml-parser@4.3.6:
-    resolution: {integrity: sha512-M2SovcRxD4+vC493Uc2GZVcZaj66CCJhWurC4viynVSTvrpErCShNcDz1lAho6n9REQKvL/ll4A4/fw6Y9z8nw==}
+  fast-xml-parser@4.4.0:
+    resolution: {integrity: sha512-kLY3jFlwIYwBNDojclKsNAC12sfD6NwW74QB2CoNGPvtVxjliYehVunB3HYyNi+n4Tt1dAcgwYvmKF/Z18flqg==}
     hasBin: true
 
   fastq@1.17.1:
@@ -1675,9 +1675,9 @@ packages:
     resolution: {integrity: sha512-Q2rtqmZWrbP8nePMq7mOJIN98M0fYvSgV89vwl/BQRT4mDOeY2GXZngfGpcBBhtky3woM7G24wZV3Q304Bv6cw==}
     engines: {node: '>=18.0'}
 
-  undici@6.9.0:
-    resolution: {integrity: sha512-XPWfXzJedevUziHwun70EKNvGnxv4CnfraFZ4f/JV01+fcvMYzHE26r/j8AY/9c/70nkN4B1zX7E2Oyuqwz4+Q==}
-    engines: {node: '>=18.0'}
+  undici@6.18.2:
+    resolution: {integrity: sha512-o/MQLTwRm9IVhOqhZ0NQ9oXax1ygPjw6Vs+Vq/4QRjbOAC3B1GCHy7TYxxbExKlb7bzDRzt9vBWU6BDz0RFfYg==}
+    engines: {node: '>=18.17'}
 
   uri-js@4.4.1:
     resolution: {integrity: sha512-7rKUyy33Q1yc98pQ1DAmLtwX109F7TIfWlW1Ydo8Wl1ii1SeHieeh0HHfPeL2fMXK6z0s8ecKs9frCuLJvndBg==}
@@ -2550,10 +2550,10 @@ snapshots:
 
   base64-js@1.5.1: {}
 
-  booru@2.6.5:
+  booru@2.6.6:
     dependencies:
-      fast-xml-parser: 4.3.6
-      undici: 6.9.0
+      fast-xml-parser: 4.4.0
+      undici: 6.18.2
 
   brace-expansion@1.1.11:
     dependencies:
@@ -2885,7 +2885,7 @@ snapshots:
 
   fast-redact@3.5.0: {}
 
-  fast-xml-parser@4.3.6:
+  fast-xml-parser@4.4.0:
     dependencies:
       strnum: 1.0.5
 
@@ -3638,7 +3638,7 @@ snapshots:
 
   undici@6.13.0: {}
 
-  undici@6.9.0: {}
+  undici@6.18.2: {}
 
   uri-js@4.4.1:
     dependencies:
