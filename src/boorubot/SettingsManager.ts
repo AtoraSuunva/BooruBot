@@ -21,15 +21,12 @@ type PrismaTransaction = Parameters<
 
 class SettingsManager {
   async get(reference: Reference): Promise<BooruSettings> {
-    const [config, defaultTags, tags, sites] = await prisma.$transaction(
-      async (tx) =>
-        await Promise.all([
-          this.getConfig(reference, tx),
-          this.getDefaultTags(reference.id, tx),
-          this.getTags(reference.id, tx),
-          this.getSites(reference.id, tx),
-        ]),
-    )
+    const [config, defaultTags, tags, sites] = await Promise.all([
+      this.getConfig(reference),
+      this.getDefaultTags(reference.id),
+      this.getTags(reference.id),
+      this.getSites(reference.id),
+    ])
 
     return {
       config,
