@@ -9,7 +9,6 @@ import {
 } from 'discord.js'
 import { SleetSlashSubcommand } from 'sleetcord'
 import { prisma } from '../../util/db.js'
-import { settingsCache } from '../SettingsCache.js'
 import { channelOption, getReferenceFor } from '../utils.js'
 
 export const configDelete = new SleetSlashSubcommand(
@@ -142,11 +141,6 @@ async function collectDeletePromises(
   referenceId: string,
   full = false,
 ): Promise<Prisma.PrismaPromise<unknown>[]> {
-  // Deletes should be cascaded
-  settingsCache.deleteConfig(referenceId)
-  settingsCache.deleteTags(referenceId)
-  settingsCache.deleteSites(referenceId)
-
   const deletePromises: Prisma.PrismaPromise<unknown>[] = []
 
   if (full) {

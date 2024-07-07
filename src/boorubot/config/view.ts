@@ -4,7 +4,6 @@ import { SleetSlashSubcommand } from 'sleetcord'
 import { notNullish } from 'sleetcord-common'
 import { prisma } from '../../util/db.js'
 import { formatConfig } from '../../util/format.js'
-import { settingsCache } from '../SettingsCache.js'
 import { getInteractionChannel } from '../search/searchUtils.js'
 import { channelOption, getReferenceFor } from '../utils.js'
 
@@ -89,14 +88,6 @@ export async function runView(
 
   if (!guildOrUserConfig && !channelConfig) {
     return interaction.editReply('No Booru config found, so no config to view.')
-  }
-
-  if (guildOrUserConfig) {
-    settingsCache.setConfig(reference.id, guildOrUserConfig)
-  }
-
-  if (channelConfig) {
-    settingsCache.setConfig(interaction.channelId, channelConfig)
   }
 
   const view = createConfigView(

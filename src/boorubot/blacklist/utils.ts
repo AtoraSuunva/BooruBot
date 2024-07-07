@@ -1,6 +1,5 @@
 import { BaseMessageOptions, bold, escapeCodeBlock } from 'discord.js'
 import { prisma } from '../../util/db.js'
-import { settingsCache } from '../SettingsCache.js'
 
 export interface Blacklist {
   referenceId: string
@@ -111,11 +110,6 @@ export async function getBlacklistFor(
           }
         : null,
     )
-
-  if (blacklist) {
-    settingsCache.setTags(referenceId, blacklist.tags)
-    settingsCache.setSites(referenceId, blacklist.sites)
-  }
 
   return blacklist
 }

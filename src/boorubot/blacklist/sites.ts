@@ -4,7 +4,7 @@ import {
 } from 'discord.js'
 import { AutocompleteHandler, SleetSlashSubcommand } from 'sleetcord'
 import { prisma } from '../../util/db.js'
-import { Reference, settingsCache } from '../SettingsCache.js'
+import { Reference, settingsCache } from '../SettingsManager.js'
 import {
   channelOption,
   getReferenceFor,
@@ -113,7 +113,7 @@ function makeSiteAction(siteAction: SiteAction) {
 
     if (sites.length < 1) {
       return interaction.reply({
-        content: "Couldn't resolve a single site, try using the autocomplete",
+        content: "Couldn't resolve any sites, try using the autocomplete",
         ephemeral: true,
       })
     }
@@ -155,14 +155,13 @@ async function addSites(reference: Reference, sites: string[]) {
       }),
     ),
   )
-
-  settingsCache.deleteSites(reference.id)
 }
 
 async function removeSites(reference: Reference, sites: string[]) {
   await prisma.site.deleteMany({
-    where: { name: { in: sites } },
+    where: {
+      referenceId: reference.id,
+      name: { in: sites },
+    },
   })
-
-  settingsCache.deleteSites(reference.id)
 }

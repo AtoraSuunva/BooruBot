@@ -4,7 +4,7 @@ import {
 } from 'discord.js'
 import { AutocompleteHandler, SleetSlashSubcommand } from 'sleetcord'
 import { prisma } from '../../util/db.js'
-import { Reference, settingsCache } from '../SettingsCache.js'
+import { Reference, settingsCache } from '../SettingsManager.js'
 import { makeTagAutocomplete } from '../blacklist/tag.js'
 import { channelOption, getItemsFrom, getReferenceFor } from '../utils.js'
 import { runView } from './view.js'
@@ -103,16 +103,10 @@ async function addTags(reference: Reference, tags: string[]) {
       }),
     ),
   )
-
-  settingsCache.deleteDefaultTags(reference.id)
 }
 
 async function removeTags(reference: Reference, tags: string[]) {
-  await settingsCache.get(reference)
-
   await prisma.defaultTag.deleteMany({
-    where: { name: { in: tags } },
+    where: { referenceId: reference.id, name: { in: tags } },
   })
-
-  settingsCache.deleteDefaultTags(reference.id)
 }

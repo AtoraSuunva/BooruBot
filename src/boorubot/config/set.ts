@@ -9,7 +9,6 @@ import {
 } from 'discord.js'
 import { SleetSlashCommandGroup, SleetSlashSubcommand } from 'sleetcord'
 import { prisma } from '../../util/db.js'
-import { settingsCache } from '../SettingsCache.js'
 import { getInteractionChannel } from '../search/searchUtils.js'
 import { channelOption, getReferenceFor } from '../utils.js'
 import { createConfigView } from './view.js'
@@ -53,8 +52,6 @@ async function runSetMinScore(interaction: ChatInputCommandInteraction) {
     update: { minScore: score },
     include: { defaultTags: true },
   })
-
-  settingsCache.setConfig(reference.id, config)
 
   await defer
 
@@ -168,8 +165,6 @@ async function setAllowNSFWAndReply(
     update: { allowNSFW },
     include: { defaultTags: true },
   })
-
-  settingsCache.setConfig(reference.id, config)
 
   await defer
 

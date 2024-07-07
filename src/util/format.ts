@@ -68,6 +68,7 @@ export function formatConfig<Config extends Record<string, Value>>(
   const formatterEntries = Object.entries(defaultFormatters)
 
   const formatted = Object.entries(config)
+    .sort(([key1], [key2]) => key1.localeCompare(key2))
     .filter(([key]) => !omit.includes(key.toLowerCase()))
     .map(([key, value]): [string, Value] => {
       const isNew = oldConfig && oldConfig[key] !== value

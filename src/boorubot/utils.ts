@@ -15,7 +15,7 @@ import {
 } from 'discord.js'
 import { AutocompleteHandler, makeChoices } from 'sleetcord'
 import { notNullish } from 'sleetcord-common'
-import { BooruSettings, Reference, settingsCache } from './SettingsCache.js'
+import { BooruSettings, Reference, settingsCache } from './SettingsManager.js'
 import { getInteractionChannel } from './search/searchUtils.js'
 
 export const channelOption = {

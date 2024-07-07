@@ -21,18 +21,16 @@ async function main() {
   initSentry({
     release: GIT_COMMIT_SHA,
     tracesSampler(samplingContext) {
-      const { name, op } = samplingContext.transactionContext
+      const { name } = samplingContext
 
-      if (op === 'module') {
+      if (name.includes(':')) {
         // Transaction names are `${module.name}:${event.name}`
         const [moduleName, eventName] = name.split(':') as [
           string,
           keyof SleetModuleEventHandlers,
         ]
 
-        if (moduleName === 'autoreply') {
-          return 0.001
-        } else if (
+        if (
           eventName === 'messageCreate' ||
           eventName === 'messageUpdate' ||
           eventName === 'userUpdate'
@@ -43,8 +41,6 @@ async function main() {
         }
 
         return 0.2
-      } else if (op === 'db.sql.prisma') {
-        return 0.1
       }
 
       return 0.2

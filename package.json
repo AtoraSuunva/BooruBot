@@ -1,6 +1,6 @@
 {
   "name": "boorubot",
-  "version": "4.6.1",
+  "version": "4.7.0",
   "description": "A Discord bot to search boorus",
   "type": "module",
   "main": "dist/index.js",
@@ -25,10 +25,10 @@
   },
   "homepage": "https://github.com/AtoraSuunva/BooruBot#readme",
   "dependencies": {
-    "@prisma/client": "5.15.0",
+    "@prisma/client": "5.16.1",
     "@sentry/integrations": "^7.114.0",
-    "@sentry/node": "^8.9.1",
-    "@sentry/profiling-node": "^8.9.1",
+    "@sentry/node": "^8.15.0",
+    "@sentry/profiling-node": "^8.15.0",
     "booru": "^2.6.6",
     "discord.js": "^14.15.3",
     "env-var": "^7.5.0",
@@ -36,18 +36,18 @@
     "pino-dev": "^4.0.3",
     "pretty-ms": "^9.0.0",
     "sleetcord": "^1.6.0",
-    "sleetcord-common": "^7.0.0"
+    "sleetcord-common": "^8.0.3"
   },
   "devDependencies": {
     "@sentry/cli": "^2.32.1",
-    "@types/node": "^20.14.2",
-    "@typescript-eslint/eslint-plugin": "^7.13.0",
-    "@typescript-eslint/parser": "^7.13.0",
+    "@types/node": "^20.14.10",
+    "@typescript-eslint/eslint-plugin": "^7.15.0",
+    "@typescript-eslint/parser": "^7.15.0",
     "eslint": "^8.57.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-import": "^2.29.1",
     "prettier": "^3.3.2",
-    "prisma": "5.15.0",
-    "typescript": "^5.4.5"
+    "prisma": "5.16.1",
+    "typescript": "^5.5.3"
   }
 }
