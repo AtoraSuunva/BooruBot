@@ -322,7 +322,12 @@ export function formatPostToEmbed({
   tags = [],
   defaultTags = [],
 }: PostFormatOptions): FormattedPost {
-  const ext = extname(post.fileUrl ?? '').toLowerCase()
+  const ext = extname(
+    // eslint-disable-next-line @typescript-eslint/dot-notation
+    (post['data'] as Record<string, string | undefined>).file_name ??
+      post.fileUrl ??
+      '',
+  ).toLowerCase()
 
   const leadingDescription = [
     `**Score:** ${formatScore(post.score)}`,
@@ -405,7 +410,7 @@ export function hasOrderTag(tags: string[]): boolean {
 }
 
 function pluralize(str: string, count: number, plural?: string): string {
-  return count === 1 ? str : plural ?? `${str}s`
+  return count === 1 ? str : (plural ?? `${str}s`)
 }
 
 export function getErrorMessage(e: unknown): string {
