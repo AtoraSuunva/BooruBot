@@ -1,4 +1,4 @@
-import { ChatInputCommandInteraction } from 'discord.js'
+import type { ChatInputCommandInteraction } from 'discord.js'
 import { SleetSlashSubcommand } from 'sleetcord'
 
 export const viewSites = new SleetSlashSubcommand(

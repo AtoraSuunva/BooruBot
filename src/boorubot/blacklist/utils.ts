@@ -1,4 +1,4 @@
-import { BaseMessageOptions, bold, escapeCodeBlock } from 'discord.js'
+import { type BaseMessageOptions, bold, escapeCodeBlock } from 'discord.js'
 import { prisma } from '../../util/db.js'
 
 export interface Blacklist {
@@ -52,15 +52,15 @@ Sites:
     return {
       content: formatted,
     }
-  } else {
-    return {
-      files: [
-        {
-          name: 'blacklist.txt',
-          attachment: Buffer.from(formatted, 'utf-8'),
-        },
-      ],
-    }
+  }
+
+  return {
+    files: [
+      {
+        name: 'blacklist.txt',
+        attachment: Buffer.from(formatted, 'utf-8'),
+      },
+    ],
   }
 }
 

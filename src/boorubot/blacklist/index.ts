@@ -1,8 +1,8 @@
 import { SleetSlashCommand, SleetSlashCommandGroup } from 'sleetcord'
 import { blacklistDelete } from './delete.js'
-import { blacklistView } from './view.js'
 import { blacklistAddSite, blacklistRemoveSite } from './sites.js'
 import { blacklistAddTags, blacklistRemoveTags } from './tag.js'
+import { blacklistView } from './view.js'
 
 export const blacklistAdd = new SleetSlashCommandGroup({
   name: 'add',

@@ -1,6 +1,6 @@
 import {
   ApplicationCommandOptionType,
-  ChatInputCommandInteraction,
+  type ChatInputCommandInteraction,
 } from 'discord.js'
 import { SleetSlashSubcommand } from 'sleetcord'
 import { runView } from '../blacklist/view.js'

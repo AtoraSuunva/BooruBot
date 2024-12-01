@@ -1,21 +1,20 @@
-import { Post } from 'booru'
+import { extname } from 'node:path'
+import type { Post } from 'booru'
 import {
-  AnyThreadChannel,
-  AutocompleteInteraction,
+  type AnyThreadChannel,
+  type AutocompleteInteraction,
   ChannelType,
-  ColorResolvable,
-  CommandInteraction,
+  type ColorResolvable,
+  type CommandInteraction,
   EmbedBuilder,
-  ForumChannel,
-  MediaChannel,
-  NewsChannel,
-  TextBasedChannel,
-  TextChannel,
-  ThreadOnlyChannel,
-  bold,
+  type ForumChannel,
+  type MediaChannel,
+  type NewsChannel,
+  type TextBasedChannel,
+  type TextChannel,
+  type ThreadOnlyChannel,
   escapeMarkdown,
 } from 'discord.js'
-import { extname } from 'path'
 
 /**
  * Get the channel that a slash command was called in, for threads, this is the parent channel
@@ -83,11 +82,11 @@ export async function getParentChannel(
     parent.type === ChannelType.GuildText
   ) {
     return parent
-  } else {
-    throw new Error(
-      `Thread ${thread.id} has an unexpected parent channel type ${parent.type}`,
-    )
   }
+
+  throw new Error(
+    `Thread ${thread.id} has an unexpected parent channel type ${parent.type}`,
+  )
 }
 
 export async function nsfwAllowedInChannel(
@@ -110,13 +109,15 @@ export async function nsfwAllowedInChannel(
   // true = enable in DMs or age-restricted channels
   if (channel.isDMBased()) {
     return allowNSFW
-  } else if (channel.isThread()) {
+  }
+
+  if (channel.isThread()) {
     // Already checked allowNSFW, check parent channel
     return await getParentChannel(channel).then((parent) => parent.nsfw)
-  } else {
-    // Already checked allowNSFW, check channel
-    return channel.nsfw
   }
+
+  // Already checked allowNSFW, check channel
+  return channel.nsfw
 }
 
 /**
@@ -304,11 +305,13 @@ function formatRating(rating: string): string {
 function formatScore(score: number): string {
   if (score > 0) {
     return `<:green_arrow_up:1194080011330801744> ${score}`
-  } else if (score < 0) {
-    return `<:red_arrow_down:1194080019719401603> ${score}`
-  } else {
-    return `<:yellow_tilde:1194080020956729364> ${score}`
   }
+
+  if (score < 0) {
+    return `<:red_arrow_down:1194080019719401603> ${score}`
+  }
+
+  return `<:yellow_tilde:1194080020956729364> ${score}`
 }
 
 export function formatPostToEmbed({
@@ -323,7 +326,7 @@ export function formatPostToEmbed({
   defaultTags = [],
 }: PostFormatOptions): FormattedPost {
   const ext = extname(
-    // eslint-disable-next-line @typescript-eslint/dot-notation
+    // biome-ignore lint/complexity/useLiteralKeys: Typescript doesn't like us access data like this
     (post['data'] as Record<string, string | undefined>).file_name ??
       post.fileUrl ??
       '',
@@ -390,7 +393,7 @@ export function formatPostToEmbed({
     embeds.push(embed)
   } else {
     contentLines.unshift(
-      '>>> ' + bold(`[Post #${post.id}](<${post.postView}>)`),
+      `>>> **[Post #${post.id}](<${post.postView}>)**`,
       description,
       footerText,
     )

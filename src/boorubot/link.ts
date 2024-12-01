@@ -1,6 +1,6 @@
 import {
   ApplicationCommandOptionType,
-  ChatInputCommandInteraction,
+  type ChatInputCommandInteraction,
 } from 'discord.js'
 import { SleetSlashCommand } from 'sleetcord'
 
@@ -32,16 +32,16 @@ const siteFormats: Record<string, SiteIdData> = Object.fromEntries<SiteIdData>(
           query: info.api.postView.split('&').pop()?.slice(0, -1) ?? 'id',
         },
       ]
-    } else {
-      return [
-        domain,
-        {
-          type: 'url',
-          // ie. /view/post/
-          path: info.api.postView,
-        },
-      ]
     }
+
+    return [
+      domain,
+      {
+        type: 'url',
+        // ie. /view/post/
+        path: info.api.postView,
+      },
+    ]
   }),
 )
 

@@ -1,10 +1,10 @@
 import {
   ApplicationCommandOptionType,
-  ChatInputCommandInteraction,
+  type ChatInputCommandInteraction,
 } from 'discord.js'
-import { AutocompleteHandler, SleetSlashSubcommand } from 'sleetcord'
+import { type AutocompleteHandler, SleetSlashSubcommand } from 'sleetcord'
 import { prisma } from '../../util/db.js'
-import { Reference, settingsCache } from '../SettingsManager.js'
+import { type Reference, settingsCache } from '../SettingsManager.js'
 import {
   channelOption,
   getReferenceFor,
@@ -90,7 +90,7 @@ export const blacklistRemoveSite = new SleetSlashSubcommand(
 type SiteAction = (reference: Reference, sites: string[]) => Promise<void>
 
 function makeSiteAction(siteAction: SiteAction) {
-  return async function (interaction: ChatInputCommandInteraction) {
+  return async (interaction: ChatInputCommandInteraction) => {
     const reference = await getReferenceFor(interaction)
     await settingsCache.get(reference)
 

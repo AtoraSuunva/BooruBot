@@ -1,4 +1,4 @@
-import { Guild, codeBlock } from 'discord.js'
+import { type Guild, codeBlock } from 'discord.js'
 import { notNullish } from 'sleetcord-common'
 
 type Value = string | number | boolean | Date | null | undefined
@@ -30,12 +30,12 @@ export const guildFormatter: Formatter = (value: Value, guild?: Guild) =>
 
 export const channelFormatter: Formatter = (value: Value, guild?: Guild) =>
   `#${
-    guild?.channels.cache.get(value as string)?.name ?? `unknown-channel`
+    guild?.channels.cache.get(value as string)?.name ?? 'unknown-channel'
   } (${String(value)})`
 
 export const roleFormatter: Formatter = (value: Value, guild?: Guild) =>
   `@${
-    guild?.roles.cache.get(value as string)?.name ?? `unknown-role`
+    guild?.roles.cache.get(value as string)?.name ?? 'unknown-role'
   } (${String(value)})`
 
 const defaultFormatters: Record<string, Formatter> = {

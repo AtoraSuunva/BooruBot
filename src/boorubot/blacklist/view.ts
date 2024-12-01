@@ -1,6 +1,7 @@
 import {
   ApplicationCommandOptionType,
-  ChatInputCommandInteraction,
+  type ChatInputCommandInteraction,
+  type InteractionReplyOptions,
 } from 'discord.js'
 import { SleetSlashSubcommand } from 'sleetcord'
 import { notNullish } from 'sleetcord-common'
@@ -43,7 +44,7 @@ export async function runView(interaction: ChatInputCommandInteraction) {
     .map((b) => formatBlacklist(b))
     .reduce((prev, current) => {
       if (current.content) {
-        prev.content = (prev.content ?? '') + '\n' + current.content
+        prev.content = `${prev.content ?? ''}\n${current.content}`
       }
 
       if (current.files) {
@@ -60,24 +61,26 @@ export async function runView(interaction: ChatInputCommandInteraction) {
     })
   }
 
+  const reply: InteractionReplyOptions = {}
+
   if (
     formattedBlacklists.content &&
     formattedBlacklists.content.length > 2000
   ) {
-    formattedBlacklists.files ??= []
-
-    if (Array.isArray(formattedBlacklists.files)) {
-      formattedBlacklists.files.push({
+    reply.files = [
+      ...(formattedBlacklists.files ?? []),
+      {
         name: 'blacklist.txt',
         attachment: Buffer.from(formattedBlacklists.content),
-      })
-    }
-
-    delete formattedBlacklists.content
+      },
+    ]
+  } else {
+    reply.content = formattedBlacklists.content ?? ''
+    reply.files = formattedBlacklists.files ?? []
   }
 
   return interaction.reply({
-    ...formattedBlacklists,
+    ...reply,
     ephemeral,
   })
 }

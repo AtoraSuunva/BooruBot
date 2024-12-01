@@ -1,8 +1,8 @@
 import {
   ApplicationCommandOptionType,
-  ChatInputCommandInteraction,
+  type ChatInputCommandInteraction,
 } from 'discord.js'
-import { AutocompleteHandler, SleetSlashCommand } from 'sleetcord'
+import { type AutocompleteHandler, SleetSlashCommand } from 'sleetcord'
 import { getMergedSites, resolveSitesFor, siteInfo } from '../utils.js'
 import {
   RANDOM_BOORU_SITE,

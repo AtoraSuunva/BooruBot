@@ -1,5 +1,5 @@
-import { Prisma } from '@prisma/client'
-import { ChatInputCommandInteraction } from 'discord.js'
+import type { Prisma } from '@prisma/client'
+import type { ChatInputCommandInteraction } from 'discord.js'
 import { SleetSlashSubcommand } from 'sleetcord'
 import { notNullish } from 'sleetcord-common'
 import { prisma } from '../../util/db.js'
@@ -28,9 +28,8 @@ export async function runView(
     ? await getInteractionChannel(interaction)
     : null
 
-  let defer
   if (shouldDefer) {
-    defer = interaction.deferReply()
+    await interaction.deferReply()
   }
 
   const [guildOrUserConfig, channelConfig] = await Promise.all([
@@ -79,8 +78,6 @@ export async function runView(
     })
     modified = true
   }
-
-  await defer
 
   if (modified && recurse) {
     return runView(interaction, false, false)

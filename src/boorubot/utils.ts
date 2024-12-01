@@ -1,21 +1,25 @@
 import booru from 'booru'
 import {
-  APIApplicationCommandBasicOption,
-  APIApplicationCommandOptionChoice,
+  type APIApplicationCommandBasicOption,
+  type APIApplicationCommandOptionChoice,
   ApplicationCommandOptionType,
-  AutocompleteInteraction,
-  BaseGuildTextChannel,
-  BaseGuildVoiceChannel,
-  BaseInteraction,
+  type AutocompleteInteraction,
+  type BaseGuildTextChannel,
+  type BaseGuildVoiceChannel,
+  type BaseInteraction,
   ChannelType,
-  CommandInteraction,
-  Snowflake,
-  ThreadOnlyChannel,
-  VoiceChannel,
+  type CommandInteraction,
+  type Snowflake,
+  type ThreadOnlyChannel,
+  type VoiceChannel,
 } from 'discord.js'
-import { AutocompleteHandler, makeChoices } from 'sleetcord'
+import { type AutocompleteHandler, makeChoices } from 'sleetcord'
 import { notNullish } from 'sleetcord-common'
-import { BooruSettings, Reference, settingsCache } from './SettingsManager.js'
+import {
+  type BooruSettings,
+  type Reference,
+  settingsCache,
+} from './SettingsManager.js'
 import { getInteractionChannel } from './search/searchUtils.js'
 
 export const channelOption = {
@@ -65,8 +69,7 @@ export async function getReferenceFor(
         )
 
         if (
-          chanOpt &&
-          chanOpt.isTextBased() &&
+          chanOpt?.isTextBased() &&
           !chanOpt.isThread() &&
           !chanOpt.isDMBased()
         ) {

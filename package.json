@@ -8,8 +8,8 @@
     "start:dev": "tsc --build && node --env-file=.env dist/index.js",
     "start:prod": "npx prisma migrate deploy && node --enable-source-maps dist/index.js",
     "build": "tsc --build",
-    "lint": "eslint src/ && prettier --check src/ && tsc --noEmit",
-    "lint:fix": "eslint src/ --fix && prettier --write src/ && pnpm prisma format && tsc --noEmit",
+    "lint": "biome check && tsc --noEmit",
+    "lint:fix": "biome check --write && prisma format && tsc --noEmit",
     "sentry:sourcemaps:inject": "sentry-cli sourcemaps inject ./dist",
     "sentry:sourcemaps:upload": "sentry-cli sourcemaps upload ./dist"
   },
@@ -24,30 +24,25 @@
     "url": "https://github.com/AtoraSuunva/BooruBot/issues"
   },
   "homepage": "https://github.com/AtoraSuunva/BooruBot#readme",
+  "engines": {
+    "node": ">=22.0.0"
+  },
   "dependencies": {
-    "@prisma/client": "5.17.0",
-    "@sentry/integrations": "^7.114.0",
-    "@sentry/node": "^8.19.0",
-    "@sentry/profiling-node": "^8.19.0",
-    "booru": "^2.6.7",
-    "discord.js": "^14.15.3",
+    "@prisma/client": "6.0.0",
+    "booru": "^2.6.9",
+    "discord.js": "^14.16.3",
     "env-var": "^7.5.0",
-    "pino": "^9.3.1",
+    "pino": "^9.5.0",
     "pino-dev": "^4.0.3",
-    "pretty-ms": "^9.0.0",
-    "sleetcord": "^1.6.0",
-    "sleetcord-common": "^8.0.3"
+    "pretty-ms": "^9.2.0",
+    "sleetcord": "^2.3.0",
+    "sleetcord-common": "^10.0.0"
   },
   "devDependencies": {
-    "@sentry/cli": "^2.32.2",
-    "@types/node": "^20.14.11",
-    "@typescript-eslint/eslint-plugin": "^7.17.0",
-    "@typescript-eslint/parser": "^7.17.0",
-    "eslint": "^8.57.0",
-    "eslint-config-prettier": "^9.1.0",
-    "eslint-plugin-import": "^2.29.1",
-    "prettier": "^3.3.3",
-    "prisma": "5.17.0",
-    "typescript": "^5.5.4"
+    "@biomejs/biome": "1.9.4",
+    "@sentry/cli": "^2.39.1",
+    "@types/node": "^22.10.1",
+    "prisma": "6.0.0",
+    "typescript": "^5.7.2"
   }
 }

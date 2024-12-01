@@ -3,9 +3,9 @@ import {
   ApplicationCommandOptionType,
   ButtonBuilder,
   ButtonStyle,
-  ChatInputCommandInteraction,
+  type ChatInputCommandInteraction,
   ComponentType,
-  MessageComponentInteraction,
+  type MessageComponentInteraction,
 } from 'discord.js'
 import { SleetSlashCommandGroup, SleetSlashSubcommand } from 'sleetcord'
 import { prisma } from '../../util/db.js'

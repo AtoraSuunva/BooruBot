@@ -1,15 +1,16 @@
-import booru, { Post } from 'booru'
+import booru, { type Post } from 'booru'
 import {
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
-  ChatInputCommandInteraction,
-  codeBlock,
+  type ChatInputCommandInteraction,
   ComponentType,
+  codeBlock,
   inlineCode,
 } from 'discord.js'
 import { getMergedSettings, shuffleArray, siteInfo } from '../utils.js'
 import {
+  NSFW_RATINGS,
   filterPosts,
   formatFilteredPosts,
   formatPostToEmbed,
@@ -18,7 +19,6 @@ import {
   getInteractionChannel,
   getTagsMatchingBlacklist,
   hasOrderTag,
-  NSFW_RATINGS,
   nsfwAllowedInChannel,
 } from './searchUtils.js'
 
@@ -84,16 +84,17 @@ export async function runBooruSearch(
     site.domain === 'danbooru.donmai.us' &&
     tags.length + defaultTags.length > 2
   ) {
+    const appended =
+      defaultTags.length > 0
+        ? `\nThere are ${
+            defaultTags.length
+          } default tags set, so you can only add ${
+            2 - defaultTags.length
+          } more.`
+        : ''
+
     return interaction.reply({
-      content:
-        'Sorry, but Danbooru only lets you search for 2 tags at a time.' +
-        (defaultTags.length > 0
-          ? `\nThere are ${
-              defaultTags.length
-            } default tags set, so you can only add ${
-              2 - defaultTags.length
-            } more.`
-          : ''),
+      content: `Sorry, but Danbooru only lets you search for 2 tags at a time.${appended}`,
       ephemeral: true,
     })
   }
@@ -170,12 +171,12 @@ export async function runBooruSearch(
 
     if (unfilteredPosts.length === 0) {
       return interaction.editReply('No results found.')
-    } else {
-      const reasonCount = formatFilteredPosts(filtered)
-      return interaction.editReply(
-        `${unfilteredPosts.length} results found, but were all filtered.\n${reasonCount}${noNSFWMessage}`,
-      )
     }
+
+    const reasonCount = formatFilteredPosts(filtered)
+    return interaction.editReply(
+      `${unfilteredPosts.length} results found, but were all filtered.\n${reasonCount}${noNSFWMessage}`,
+    )
   }
 
   const prevButton = new ButtonBuilder()
@@ -379,14 +380,14 @@ async function searchBooru({
     }
 
     throw new SearchError('Failed to find any results in any booru')
-  } else {
-    return booru
-      .search(domain, tags, {
-        limit: 100,
-        random,
-      })
-      .then((res) => res.posts)
   }
+
+  return booru
+    .search(domain, tags, {
+      limit: 100,
+      random,
+    })
+    .then((res) => res.posts)
 }
 
 class SearchError extends Error {}

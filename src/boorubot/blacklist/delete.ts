@@ -1,10 +1,10 @@
-import { Prisma } from '@prisma/client'
+import type { Prisma } from '@prisma/client'
 import {
   ActionRowBuilder,
   ApplicationCommandOptionType,
   ButtonBuilder,
   ButtonStyle,
-  ChatInputCommandInteraction,
+  type ChatInputCommandInteraction,
   ComponentType,
 } from 'discord.js'
 import { SleetSlashSubcommand } from 'sleetcord'

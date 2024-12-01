@@ -1,4 +1,4 @@
-import { BooruConfig } from '@prisma/client'
+import type { BooruConfig } from '@prisma/client'
 import { prisma } from '../util/db.js'
 
 export interface BooruSettings {

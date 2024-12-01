@@ -1,10 +1,10 @@
 import {
   ApplicationCommandOptionType,
-  ChatInputCommandInteraction,
+  type ChatInputCommandInteraction,
 } from 'discord.js'
-import { AutocompleteHandler, SleetSlashSubcommand } from 'sleetcord'
+import { type AutocompleteHandler, SleetSlashSubcommand } from 'sleetcord'
 import { prisma } from '../../util/db.js'
-import { Reference, settingsCache } from '../SettingsManager.js'
+import { type Reference, settingsCache } from '../SettingsManager.js'
 import { channelOption, getItemsFrom, getReferenceFor } from '../utils.js'
 import { formatBlacklist, getBlacklistFor } from './utils.js'
 
@@ -103,7 +103,7 @@ export const blacklistRemoveTags = new SleetSlashSubcommand(
 type TagAction = (reference: Reference, tags: string[]) => Promise<void>
 
 function makeTagModifier(tagAction: TagAction) {
-  return async function (interaction: ChatInputCommandInteraction) {
+  return async (interaction: ChatInputCommandInteraction) => {
     const reference = await getReferenceFor(interaction)
     const tags = getItemsFrom(interaction.options.getString('tags', true))
 
