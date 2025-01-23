@@ -42,5 +42,7 @@ if ('_activeProvider' in prisma && prisma._activeProvider === 'sqlite') {
   // https://www.sqlite.org/wal.html
   // For speed
   await prisma.$queryRaw`PRAGMA journal_mode=WAL`
+  // https://litestream.io/tips/#busy-timeout
+  await prisma.$queryRaw`PRAGMA busy_timeout = 5000;`
   setInterval(() => void analyzeDatabase(), 12 * HOUR)
 }
