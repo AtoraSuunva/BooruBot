@@ -28,21 +28,21 @@
     "node": ">=22.0.0"
   },
   "dependencies": {
-    "@prisma/client": "6.0.0",
-    "booru": "^2.6.9",
-    "discord.js": "^14.16.3",
+    "@prisma/client": "6.2.1",
+    "booru": "^2.7.0",
+    "discord.js": "^14.17.3",
     "env-var": "^7.5.0",
     "pino": "^9.5.0",
     "pino-dev": "^4.0.3",
     "pretty-ms": "^9.2.0",
-    "sleetcord": "^2.3.0",
-    "sleetcord-common": "^10.0.0"
+    "sleetcord": "^2.3.1",
+    "sleetcord-common": "^11.0.0"
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
-    "@sentry/cli": "^2.39.1",
-    "@types/node": "^22.10.1",
-    "prisma": "6.0.0",
-    "typescript": "^5.7.2"
+    "@sentry/cli": "^2.41.1",
+    "@types/node": "^22.10.9",
+    "prisma": "6.2.1",
+    "typescript": "^5.7.3"
   }
 }
