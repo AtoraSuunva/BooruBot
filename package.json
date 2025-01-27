@@ -6,7 +6,7 @@
   "main": "dist/index.js",
   "scripts": {
     "start:dev": "tsc --build && node --env-file=.env dist/index.js",
-    "start:prod": "npx prisma migrate deploy && node --enable-source-maps dist/index.js",
+    "start:prod": "prisma migrate deploy && node --enable-source-maps dist/index.js",
     "build": "tsc --build",
     "lint": "biome check && tsc --noEmit",
     "lint:fix": "biome check --write && prisma format && tsc --noEmit",
@@ -36,6 +36,7 @@
     "pino": "^9.6.0",
     "pino-dev": "^4.0.3",
     "pretty-ms": "^9.2.0",
+    "prisma": "^6.2.1",
     "sleetcord": "^2.3.1",
     "sleetcord-common": "^11.1.1"
   },
@@ -43,7 +44,6 @@
     "@biomejs/biome": "1.9.4",
     "@sentry/cli": "^2.41.1",
     "@types/node": "^22.10.10",
-    "prisma": "6.2.1",
     "typescript": "^5.7.3"
   }
 }

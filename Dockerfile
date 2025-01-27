@@ -1,5 +1,5 @@
 # Step that pulls in everything needed to build the app and builds it
-FROM node:22-alpine3.20@sha256:db8dcb90326a0116375414e9a7c068a6b87a4422b7da37b5c6cd026f7c7835d3 AS dev-build
+FROM node:22-alpine3.20@sha256:c52e20859a92b3eccbd3a36c5e1a90adc20617d8d421d65e8a622e87b5dac963 AS dev-build
 ARG GIT_COMMIT_SHA
 ENV GIT_COMMIT_SHA=${GIT_COMMIT_SHA:-development}
 WORKDIR /home/node/app
@@ -17,7 +17,7 @@ RUN pnpm sentry:sourcemaps:inject
 
 
 # Step that only pulls in (production) deps required to run the app
-FROM node:22-alpine3.20@sha256:db8dcb90326a0116375414e9a7c068a6b87a4422b7da37b5c6cd026f7c7835d3 AS prod-build
+FROM node:22-alpine3.20@sha256:c52e20859a92b3eccbd3a36c5e1a90adc20617d8d421d65e8a622e87b5dac963 AS prod-build
 WORKDIR /home/node/app
 RUN npm install -g pnpm
 COPY --from=dev-build /home/node/app/pnpm-lock.yaml ./
@@ -30,7 +30,7 @@ COPY --from=dev-build /home/node/app/resources ./resources/
 
 
 # The actual runtime itself
-FROM node:22-alpine3.20@sha256:db8dcb90326a0116375414e9a7c068a6b87a4422b7da37b5c6cd026f7c7835d3 AS prod-runtime
+FROM node:22-alpine3.20@sha256:c52e20859a92b3eccbd3a36c5e1a90adc20617d8d421d65e8a622e87b5dac963 AS prod-runtime
 # See https://github.com/prisma/prisma/issues/19729, watch in case this changes
 RUN apk upgrade --update-cache --available && \
     apk add openssl && \
