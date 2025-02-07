@@ -245,7 +245,6 @@ export async function runBooruSearch(
   })
 
   // this uses closures so we can't extract it out :(
-  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   collector.on('collect', async (i) => {
     if (i.user.id !== interaction.user.id) {
       return void i.reply({
@@ -330,15 +329,20 @@ export async function runBooruSearch(
       appendContent: noNSFWMessage,
     })
 
-    await i.update({
-      ...newFormattedPost,
-      components: [row],
-    })
+    await i
+      .update({
+        ...newFormattedPost,
+        components: [row],
+      })
+      .catch(() => {
+        collector.stop('error')
+      })
   })
 
-  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   collector.on('end', async () => {
-    await interaction.editReply({ components: [] })
+    await interaction.editReply({ components: [] }).catch(() => {
+      /* ignore */
+    })
   })
 
   return
