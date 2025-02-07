@@ -100,7 +100,7 @@ async function main() {
         MessageManager: {
           maxSize: 0,
           keepOverLimit: (message) =>
-            message.author.id === sleetClient.client.user?.id,
+            message.author && message.author.id === sleetClient.client.user?.id,
         },
         GuildMemberManager: {
           maxSize: 50,
