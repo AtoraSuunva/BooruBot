@@ -84,7 +84,6 @@ async function runDelete(interaction: ChatInputCommandInteraction) {
     time: 60 * 1000,
   })
 
-  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   collector.on('collect', async (i) => {
     if (i.user.id === interaction.user.id) {
       if (i.customId.startsWith('config/cancel:')) {

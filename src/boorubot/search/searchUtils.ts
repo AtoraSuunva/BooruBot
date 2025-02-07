@@ -61,7 +61,6 @@ export async function getParentChannel(
 
   if (parentId == null) {
     const threadChannel = await thread.guild.channels.fetch(thread.id)
-    // eslint-disable-next-line @typescript-eslint/prefer-optional-chain
     if (threadChannel === null || threadChannel.parentId === null) {
       throw new Error(
         `Thread ${thread.id} has no parent ID even after fetching the thread, give up`,
