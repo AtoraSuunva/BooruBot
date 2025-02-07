@@ -359,7 +359,7 @@ async function searchBooru({
   tags,
   blacklistedSites,
 }: SearchBooruParams): Promise<Post[]> {
-  const tagLimit = domain === 'danbooru.domai.us' && tags.length > 1
+  const tagLimit = domain === 'danbooru.donmai.us' && tags.length > 1
   const random = !hasOrderTag(tags) && !tagLimit
 
   if (domain === RANDOM_BOORU_VALUE) {
