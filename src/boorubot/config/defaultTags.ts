@@ -1,6 +1,7 @@
 import {
   ApplicationCommandOptionType,
   type ChatInputCommandInteraction,
+  MessageFlags,
 } from 'discord.js'
 import { type AutocompleteHandler, SleetSlashSubcommand } from 'sleetcord'
 import { prisma } from '../../util/db.js'
@@ -62,14 +63,14 @@ function makeTagModifier(tagAction: TagAction) {
     if (tags.length === 0) {
       return interaction.reply({
         content: 'You must provide at least one tag',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       })
     }
 
     if (tags.some((t) => t.length > 100)) {
       return interaction.reply({
         content: 'Tags must be 100 characters or less',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       })
     }
 

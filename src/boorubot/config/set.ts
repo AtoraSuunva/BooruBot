@@ -6,6 +6,7 @@ import {
   type ChatInputCommandInteraction,
   ComponentType,
   type MessageComponentInteraction,
+  MessageFlags,
 } from 'discord.js'
 import { SleetSlashCommandGroup, SleetSlashSubcommand } from 'sleetcord'
 import { prisma } from '../../util/db.js'
@@ -107,11 +108,13 @@ async function runSetAllowNSFW(interaction: ChatInputCommandInteraction) {
     ? 'NSFW results only will be shown in channels marked as age-restricted.'
     : 'NSFW results will be shown in DMs with the bot.'
 
-  const message = await interaction.reply({
+  const response = await interaction.reply({
     content: `Allow NSFW results? By enabling this, you confirm that you are 18+ and legally able to view NSFW content.\n> ${extraMessage}`,
     components: [row],
-    fetchReply: true,
+    withResponse: true,
   })
+
+  const message = response.resource?.message ?? (await interaction.fetchReply())
 
   const collector = message.createMessageComponentCollector({
     componentType: ComponentType.Button,
@@ -122,7 +125,7 @@ async function runSetAllowNSFW(interaction: ChatInputCommandInteraction) {
     if (i.user.id !== interaction.user.id) {
       return void i.reply({
         content: "You can't confirm this.",
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       })
     }
 
@@ -131,7 +134,7 @@ async function runSetAllowNSFW(interaction: ChatInputCommandInteraction) {
     } else {
       void i.reply({
         content: 'You cancelled this.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       })
     }
 

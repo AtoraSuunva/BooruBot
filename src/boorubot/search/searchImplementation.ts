@@ -5,6 +5,7 @@ import {
   ButtonStyle,
   type ChatInputCommandInteraction,
   ComponentType,
+  MessageFlags,
   codeBlock,
   inlineCode,
 } from 'discord.js'
@@ -67,14 +68,14 @@ export async function runBooruSearch(
   if (settings.user.sites.includes(site.domain)) {
     return interaction.reply({
       content: `${site.domain} is blacklisted in your settings.`,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     })
   }
 
   if (settings.merged.sites.includes(site.domain)) {
     return interaction.reply({
       content: `${site.domain} is blacklisted here.`,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     })
   }
 
@@ -95,7 +96,7 @@ export async function runBooruSearch(
 
     return interaction.reply({
       content: `Sorry, but Danbooru only lets you search for 2 tags at a time.${appended}`,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     })
   }
 
@@ -109,7 +110,7 @@ export async function runBooruSearch(
       content: `Search contains blacklisted tags: ${codeBlock(
         formatTags(blacklistedTagsUsed),
       )}`,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     })
   }
 
@@ -129,12 +130,15 @@ export async function runBooruSearch(
   if (!allowNSFW && getTagsMatchingBlacklist(tags, NSFW_RATINGS).length > 0) {
     return interaction.reply({
       content: `NSFW is not allowed in this channel.${noNSFWMessage}`,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     })
   }
 
   // Then search
-  const defer = interaction.deferReply({ fetchReply: true, ephemeral })
+  const defer = interaction.deferReply({
+    withResponse: true,
+    flags: ephemeral ? MessageFlags.Ephemeral : '0',
+  })
 
   const startTime = process.hrtime.bigint()
 
@@ -229,7 +233,8 @@ export async function runBooruSearch(
     defaultTags,
   })
 
-  const message = await defer
+  const response = await defer
+  const message = response.resource?.message ?? (await interaction.fetchReply())
 
   await interaction.editReply({
     ...formattedPost,
@@ -250,7 +255,7 @@ export async function runBooruSearch(
       return void i.reply({
         content:
           "You didn't initiate this search, so you can't interact with it.",
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       })
     }
 
@@ -291,7 +296,7 @@ export async function runBooruSearch(
       if (postNumber <= 1) {
         return void i.reply({
           content: 'There is no previous post.',
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         })
       }
 
@@ -302,7 +307,7 @@ export async function runBooruSearch(
       if (postNumber >= postCount) {
         return void i.reply({
           content: 'There is no next post.',
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         })
       }
 

@@ -1,4 +1,4 @@
-import type { ChatInputCommandInteraction } from 'discord.js'
+import { type ChatInputCommandInteraction, MessageFlags } from 'discord.js'
 import { SleetSlashSubcommand } from 'sleetcord'
 
 export const viewSites = new SleetSlashSubcommand(
@@ -18,6 +18,6 @@ const SITES_MESSAGE = `You can view all supported sites at ${SITES_URL}`
 function runViewSites(interaction: ChatInputCommandInteraction) {
   return interaction.reply({
     content: SITES_MESSAGE,
-    ephemeral: true,
+    flags: MessageFlags.Ephemeral,
   })
 }

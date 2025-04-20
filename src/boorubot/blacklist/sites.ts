@@ -1,6 +1,7 @@
 import {
   ApplicationCommandOptionType,
   type ChatInputCommandInteraction,
+  MessageFlags,
 } from 'discord.js'
 import { type AutocompleteHandler, SleetSlashSubcommand } from 'sleetcord'
 import { prisma } from '../../util/db.js'
@@ -114,7 +115,7 @@ function makeSiteAction(siteAction: SiteAction) {
     if (sites.length < 1) {
       return interaction.reply({
         content: "Couldn't resolve any sites, try using the autocomplete",
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       })
     }
 

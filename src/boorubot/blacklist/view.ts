@@ -2,6 +2,7 @@ import {
   ApplicationCommandOptionType,
   type ChatInputCommandInteraction,
   type InteractionReplyOptions,
+  MessageFlags,
 } from 'discord.js'
 import { SleetSlashSubcommand } from 'sleetcord'
 import { notNullish } from 'sleetcord-common'
@@ -57,7 +58,7 @@ export async function runView(interaction: ChatInputCommandInteraction) {
   if (!formattedBlacklists.content && !formattedBlacklists.files) {
     return interaction.reply({
       content: 'No blacklist found.',
-      ephemeral,
+      flags: ephemeral ? MessageFlags.Ephemeral : '0',
     })
   }
 
@@ -81,6 +82,6 @@ export async function runView(interaction: ChatInputCommandInteraction) {
 
   return interaction.reply({
     ...reply,
-    ephemeral,
+    flags: ephemeral ? MessageFlags.Ephemeral : '0',
   })
 }

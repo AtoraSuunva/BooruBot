@@ -1,6 +1,7 @@
 import {
   ApplicationCommandOptionType,
   type ChatInputCommandInteraction,
+  MessageFlags,
 } from 'discord.js'
 import { SleetSlashCommand } from 'sleetcord'
 
@@ -79,14 +80,14 @@ function runLink(interaction: ChatInputCommandInteraction) {
   } catch {
     return interaction.reply({
       content: 'Failed to parse url, did you enter a valid url?',
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     })
   }
 
   if (!(parsedUrl.hostname in siteFormats)) {
     return interaction.reply({
       content: 'That is not a recognized site, did you enter the right url?',
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     })
   }
 
@@ -101,7 +102,7 @@ function runLink(interaction: ChatInputCommandInteraction) {
     return interaction.reply({
       content:
         'Failed to parse a post ID from that url, did you enter the right url?',
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     })
   }
 

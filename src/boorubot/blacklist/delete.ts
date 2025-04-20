@@ -6,6 +6,7 @@ import {
   ButtonStyle,
   type ChatInputCommandInteraction,
   ComponentType,
+  MessageFlags,
 } from 'discord.js'
 import { SleetSlashSubcommand } from 'sleetcord'
 import { prisma } from '../../util/db.js'
@@ -36,14 +37,14 @@ export const blacklistDelete = new SleetSlashSubcommand(
 )
 
 async function runDelete(interaction: ChatInputCommandInteraction) {
-  const defer = interaction.deferReply({ fetchReply: true })
+  const defer = interaction.deferReply({ withResponse: true })
 
   const confirm = interaction.options.getBoolean('confirm', false) ?? false
   const full = interaction.options.getBoolean('full', false) ?? false
 
   const reference = await getReferenceFor(interaction)
 
-  const message = await defer
+  const response = await defer
 
   if (confirm) {
     await deleteBlacklist(reference.id, full)
@@ -78,6 +79,8 @@ async function runDelete(interaction: ChatInputCommandInteraction) {
     components: [row],
   })
 
+  const message = response.resource?.message ?? (await interaction.fetchReply())
+
   const collector = message.createMessageComponentCollector({
     componentType: ComponentType.Button,
     time: 60 * 1000,
@@ -88,13 +91,13 @@ async function runDelete(interaction: ChatInputCommandInteraction) {
       if (i.customId.startsWith('blacklist/cancel:')) {
         await i.reply({
           content: 'Cancelled.',
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         })
         collector.stop()
         return
       }
 
-      const defer = i.deferReply({ ephemeral: true })
+      const defer = i.deferReply({ flags: MessageFlags.Ephemeral })
 
       const isFull = i.customId.startsWith('blacklist/fulldelete:')
       await deleteBlacklist(reference.id, isFull || full)
@@ -110,7 +113,7 @@ async function runDelete(interaction: ChatInputCommandInteraction) {
       collector.stop()
     } else {
       await i.reply({
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
         content: `Only ${interaction.user} can confirm this deletion.`,
       })
     }
