@@ -1,12 +1,13 @@
 {
   "name": "boorubot",
-  "version": "4.7.1",
+  "version": "4.7.2",
   "description": "A Discord bot to search boorus",
   "type": "module",
   "main": "dist/index.js",
   "scripts": {
     "start:dev": "tsc --build && node --env-file=.env --trace-warnings dist/index.js",
     "start:prod": "prisma migrate deploy && node --enable-source-maps dist/index.js",
+    "generate": "prisma generate && node scripts/fix-prisma-types.js",
     "build": "tsc --build",
     "lint": "biome check && tsc --noEmit",
     "lint:fix": "biome check --write && prisma format && tsc --noEmit",
@@ -28,29 +29,23 @@
     "node": ">=22.0.0"
   },
   "dependencies": {
-    "@prisma/client": "6.3.1",
-    "@prisma/instrumentation": "^6.3.1",
+    "@prisma/client": "6.6.0",
+    "@prisma/instrumentation": "^6.6.0",
     "booru": "^2.7.0",
-    "discord.js": "^14.17.3",
+    "discord.js": "^14.18.0",
     "env-var": "^7.5.0",
     "pino": "^9.6.0",
     "pino-dev": "^4.0.3",
     "pretty-ms": "^9.2.0",
-    "prisma": "^6.3.1",
+    "prisma": "^6.6.0",
     "sleetcord": "^2.3.1",
     "sleetcord-common": "^11.1.1"
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
-    "@sentry/cli": "^2.41.1",
-    "@types/node": "^22.13.1",
-    "typescript": "^5.7.3"
+    "@sentry/cli": "^2.43.0",
+    "@types/node": "^22.14.1",
+    "typescript": "^5.8.3"
   },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "@prisma/client",
-      "@prisma/engines",
-      "prisma"
-    ]
-  }
+  "packageManager": "pnpm@10.8.1+sha512.c50088ba998c67b8ca8c99df8a5e02fd2ae2e2b29aaf238feaa9e124248d3f48f9fb6db2424949ff901cffbb5e0f0cc1ad6aedb602cd29450751d11c35023677"
 }

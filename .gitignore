@@ -1,12 +1,10 @@
 node_modules
-.tsbuildinfo
+*.tsbuildinfo
 *.env
 .vscode
-.swc
 dist/
 prisma/db/
 prisma/**/*.db
 prisma/**/*.sqlite
-
-# Sentry Auth Token
+src/generated
 .sentryclirc

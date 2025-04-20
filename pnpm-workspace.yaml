@@ -1,0 +1,9 @@
+onlyBuiltDependencies:
+  - '@biomejs/biome'
+  - '@prisma/client'
+  - '@prisma/engines'
+  - '@sentry/cli'
+  - '@sentry/profiling-node'
+  - esbuild
+  - prisma
+strictDepBuilds: true

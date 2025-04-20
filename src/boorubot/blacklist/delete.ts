@@ -1,4 +1,3 @@
-import type { Prisma } from '@prisma/client'
 import {
   ActionRowBuilder,
   ApplicationCommandOptionType,
@@ -9,6 +8,7 @@ import {
   MessageFlags,
 } from 'discord.js'
 import { SleetSlashSubcommand } from 'sleetcord'
+import type { Prisma } from '../../generated/prisma/client.js'
 import { prisma } from '../../util/db.js'
 import { channelOption, getReferenceFor } from '../utils.js'
 

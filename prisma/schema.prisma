@@ -2,8 +2,10 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider      = "prisma-client-js"
+  provider      = "prisma-client"
+  // See https://github.com/prisma/prisma/issues/19729, watch in case this changes
   binaryTargets = ["native", "debian-openssl-3.0.x"]
+  output        = "../src/generated/prisma"
 }
 
 datasource db {

@@ -1,7 +1,7 @@
-import type { Prisma } from '@prisma/client'
 import type { ChatInputCommandInteraction } from 'discord.js'
 import { SleetSlashSubcommand } from 'sleetcord'
 import { notNullish } from 'sleetcord-common'
+import type { Prisma } from '../../generated/prisma/client.js'
 import { prisma } from '../../util/db.js'
 import { formatConfig } from '../../util/format.js'
 import { getInteractionChannel } from '../search/searchUtils.js'
