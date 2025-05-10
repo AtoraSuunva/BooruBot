@@ -40,32 +40,18 @@ class SettingsManager {
     reference: Reference,
     tx: PrismaTransaction = prisma,
   ): Promise<BooruConfig> {
-    let config = await tx.booruConfig.findUnique({
+    return await tx.booruConfig.upsert({
       where: { referenceId: reference.id },
+      update: {
+        isGuild: reference.isGuild,
+      },
+      create: {
+        referenceId: reference.id,
+        guildId: reference.guildId,
+        allowNSFW: reference.allowNSFW,
+        isGuild: reference.isGuild,
+      },
     })
-
-    if (config && config.isGuild !== reference.isGuild) {
-      config = await tx.booruConfig.update({
-        where: { referenceId: reference.id },
-        data: {
-          allowNSFW: reference.allowNSFW,
-          isGuild: reference.isGuild,
-        },
-      })
-    }
-
-    if (config === null) {
-      config = await tx.booruConfig.create({
-        data: {
-          referenceId: reference.id,
-          guildId: reference.guildId ?? null,
-          allowNSFW: reference.allowNSFW,
-          isGuild: reference.isGuild,
-        },
-      })
-    }
-
-    return config
   }
 
   async getTags(
