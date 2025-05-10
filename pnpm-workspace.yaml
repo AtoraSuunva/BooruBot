@@ -7,5 +7,6 @@ onlyBuiltDependencies:
   - '@sentry/profiling-node'
   - better-sqlite3
   - prisma
+  - esbuild
 
 strictDepBuilds: true
