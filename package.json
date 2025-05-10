@@ -7,7 +7,7 @@
   "scripts": {
     "start:dev": "tsc --build && node --env-file=.env --trace-warnings dist/index.js",
     "start:prod": "prisma migrate deploy && node --enable-source-maps dist/index.js",
-    "generate": "prisma generate && node scripts/fix-prisma-types.js",
+    "generate": "prisma generate && node --experimental-strip-types scripts/fix-prisma-types.ts",
     "build": "tsc --build",
     "lint": "biome check && tsc --noEmit",
     "lint:fix": "biome check --write && prisma format && tsc --noEmit",
@@ -29,22 +29,24 @@
     "node": ">=22.0.0"
   },
   "dependencies": {
-    "@prisma/client": "6.6.0",
-    "@prisma/instrumentation": "^6.6.0",
+    "@prisma/adapter-better-sqlite3": "^6.7.0",
+    "@prisma/client": "6.7.0",
+    "@prisma/instrumentation": "^6.7.0",
+    "better-sqlite3": "^11.9.1",
     "booru": "^2.7.0",
-    "discord.js": "^14.18.0",
+    "discord.js": "^14.19.3",
     "env-var": "^7.5.0",
     "pino": "^9.6.0",
     "pino-dev": "^4.0.3",
     "pretty-ms": "^9.2.0",
-    "prisma": "^6.6.0",
-    "sleetcord": "^2.3.1",
-    "sleetcord-common": "^11.1.1"
+    "prisma": "^6.7.0",
+    "sleetcord": "^2.4.0",
+    "sleetcord-common": "^12.0.0"
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
-    "@sentry/cli": "^2.43.0",
-    "@types/node": "^22.14.1",
+    "@sentry/cli": "^2.44.0",
+    "@types/node": "^22.15.15",
     "typescript": "^5.8.3"
   },
   "packageManager": "pnpm@10.8.1+sha512.c50088ba998c67b8ca8c99df8a5e02fd2ae2e2b29aaf238feaa9e124248d3f48f9fb6db2424949ff901cffbb5e0f0cc1ad6aedb602cd29450751d11c35023677"

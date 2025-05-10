@@ -31,11 +31,11 @@ Use `/search` for the main bot functionality, and use `/config` and `/blacklist`
 
 ## **Opting into NSFW**
 
-By default, NSFW results (posts not rated `safe`) are *only* shown in age-restricted channels, not anywhere else (including DMs).
+By default, NSFW results (posts not rated `safe`) are _only_ shown in age-restricted channels, not anywhere else (including DMs).
 
-If you want to **opt-out** of NSFW results *anywhere* on your server, run `/config set allow_nsfw allow:False` (You will need "Manage Messages" permissions or an override)
+If you want to **opt-out** of NSFW results _anywhere_ on your server, run `/config set allow_nsfw allow:False` (You will need "Manage Messages" permissions or an override)
 
-If you want to **opt-in** to NSFW results *in DMs*, run `/config set allow_nsfw allow:True` in a DM with the bot
+If you want to **opt-in** to NSFW results _in DMs_, run `/config set allow_nsfw allow:True` in a DM with the bot
 
 NSFW results will **never** be posted in non age-restricted channels, regardless of your settings. If you want NSFW results in a channel, mark it age-restricted.
 
@@ -43,7 +43,7 @@ NSFW results will **never** be posted in non age-restricted channels, regardless
 
 ## **Managing the blacklist**
 
-> ℹ️ Running these commands in-server will manage that server's blacklist, while running them in-DM will manage your *personal* blacklist.
+> ℹ️ Running these commands in-server will manage that server's blacklist, while running them in-DM will manage your _personal_ blacklist.
 > When you search in a server, the server blacklist, channel blacklist, and your personal blacklist are merged together to filter the results
 
 Use the `/blacklist` command to view/edit/delete the blacklist. See the subcommands for what exactly you can do. You'll need "Manage Messages" to use these commands.
@@ -72,9 +72,22 @@ It's MIT licensed, go for it
 
 ## Selfhosting
 
-> ⚠️ ***I make no guarantees about anything if you selfhost the bot.*** You *will* be on your own. I might help you if you're stuck, but **I do not officially provide support for selfhosting.** Don't do this unless you know what you're doing. You revoke all right to complain if something goes wrong when you selfhost if you selfhost.
+> ⚠️ _**I make no guarantees about anything if you selfhost the bot.**_ You _will_ be on your own. I might help you if you're stuck, but **I do not officially provide support for selfhosting.** Don't do this unless you know what you're doing. You revoke all right to complain if something goes wrong when you selfhost if you selfhost.
 
 You can either run the bot via the pre-built Docker image, Docker, or installing the dependencies yourself.
+
+### .env Requirements
+
+```ini
+NODE_ENV=development # or production
+TOKEN=<discord bot token>
+APPLICATION_ID=<discord application id>
+USE_PINO_PRETTY=true # or false for default pino logs
+DATABASE_URL="file:./db/data.db" # or anywhere else you want an sqlite db to be
+ACTIVITIES_FILE="./resources/activities-boorubot.txt" # path to a text file with the activities you want the bot to show
+HEALTHCHECK_PORT=8000 # the port to run an http server on, which will respond to http://localhost:PORT/healthcheck with HTTP 200 once the bot is ready and the database works
+SENTRY_DSN=<access token> # A sentry DSN for error reporting, optional
+```
 
 ### Pre-built Docker image
 
@@ -83,7 +96,6 @@ A pre-built image is available from [GitHub](https://github.com/AtoraSuunva/Boor
 Create a `docker-boorubot.yml` (or whatever name you want):
 
 ```yml
-version: '3.7'
 services:
   bot:
     image: 'ghcr.io/atorasuunva/boorubot:main'
@@ -93,6 +105,12 @@ services:
       - .env
     volumes:
       - boorubot-db:/home/node/app/prisma/db
+    healthcheck:
+      test: [ "CMD-SHELL", "wget --no-verbose --tries=1 -O- http://bot:${HEALTHCHECK_PORT}/healthcheck || exit 1" ]
+      interval: 10s
+      timeout: 30s
+      retries: 5
+      start_period: 5s
 
 volumes:
   boorubot-db:
@@ -100,7 +118,7 @@ volumes:
 
 Then run it via `docker compose -f docker-boorubot.yml`. This avoids needing to clone the repo and wait for builds. A `docker run` will work as well, but require copy-pasting the command to keep the config.
 
-> Currently, the activities files `activities-booru.txt` etc are baked into the image. You can't change the activities without needing to rebuild the image. Someday I'll change it, but it's pretty low priority.
+> Currently, the activities file `activities-booru.txt` is baked into the image. You can't change the activities without needing to rebuild the image. Someday I'll change it, but it's pretty low priority.
 
 ### Docker
 
