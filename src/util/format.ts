@@ -1,4 +1,4 @@
-import { type Guild, codeBlock } from 'discord.js'
+import { codeBlock, type Guild } from 'discord.js'
 import { notNullish } from 'sleetcord-common'
 
 type Value = string | number | boolean | Date | null | undefined

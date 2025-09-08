@@ -2,11 +2,11 @@ import { GatewayIntentBits, Options, type RESTOptions } from 'discord.js'
 import env from 'env-var'
 import { SleetClient, type SleetModuleEventHandlers } from 'sleetcord'
 import {
-  Sentry,
   getModuleRunner,
   initDBLogging,
   initSentry,
   logging,
+  Sentry,
   sentryLogger,
 } from 'sleetcord-common'
 import { booruModules } from './boorubot/index.js'

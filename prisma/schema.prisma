@@ -2,17 +2,9 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider      = "prisma-client"
-  binaryTargets = ["native", "debian-openssl-3.0.x"]
-  // Date types are currently being returned as {} empty objects
-  // See https://github.com/prisma/prisma/issues/27050
-  // See https://github.com/prisma/prisma/issues/27042
-  // Note to future me: don't forget to:
-  //    - remove the `RUN cp *.node` line in the Dockerfile
-  //    - uncomment the `adapter` in `db.ts`
-  //    - Change $queryRaw to $executeRaw
-  // previewFeatures = ["queryCompiler", "driverAdapters"]
-  output        = "../src/generated/prisma"
+  provider        = "prisma-client"
+  previewFeatures = ["queryCompiler", "driverAdapters"]
+  output          = "../src/generated/prisma"
 }
 
 datasource db {

@@ -5,8 +5,8 @@ import {
 } from 'discord.js'
 import { type AutocompleteHandler, SleetSlashSubcommand } from 'sleetcord'
 import { prisma } from '../../util/db.js'
-import { type Reference, settingsCache } from '../SettingsManager.js'
 import { makeTagAutocomplete } from '../blacklist/tag.js'
+import { type Reference, settingsCache } from '../SettingsManager.js'
 import { channelOption, getItemsFrom, getReferenceFor } from '../utils.js'
 import { runView } from './view.js'
 

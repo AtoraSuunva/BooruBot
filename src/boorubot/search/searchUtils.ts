@@ -7,13 +7,13 @@ import {
   type ColorResolvable,
   type CommandInteraction,
   EmbedBuilder,
+  escapeMarkdown,
   type ForumChannel,
   type MediaChannel,
   type NewsChannel,
   type TextBasedChannel,
   type TextChannel,
   type ThreadOnlyChannel,
-  escapeMarkdown,
 } from 'discord.js'
 
 /**

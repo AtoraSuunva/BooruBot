@@ -5,13 +5,12 @@ import {
   ButtonStyle,
   type ChatInputCommandInteraction,
   ComponentType,
-  MessageFlags,
   codeBlock,
   inlineCode,
+  MessageFlags,
 } from 'discord.js'
 import { getMergedSettings, shuffleArray, siteInfo } from '../utils.js'
 import {
-  NSFW_RATINGS,
   filterPosts,
   formatFilteredPosts,
   formatPostToEmbed,
@@ -20,6 +19,7 @@ import {
   getInteractionChannel,
   getTagsMatchingBlacklist,
   hasOrderTag,
+  NSFW_RATINGS,
   nsfwAllowedInChannel,
 } from './searchUtils.js'
 

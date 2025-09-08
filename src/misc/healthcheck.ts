@@ -10,7 +10,7 @@ export const healthcheck = new SleetModule(
     name: 'healthcheck',
   },
   {
-    ready: handleReady,
+    clientReady: handleReady,
   },
 )
 

@@ -1,11 +1,10 @@
+import booru from 'booru'
 import {
   ApplicationCommandOptionType,
   type ChatInputCommandInteraction,
   MessageFlags,
 } from 'discord.js'
 import { SleetSlashCommand } from 'sleetcord'
-
-import booru from 'booru'
 import { runBooruSearch } from './search/searchImplementation.js'
 
 const { sites } = booru
