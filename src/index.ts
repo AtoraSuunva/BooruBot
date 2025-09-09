@@ -10,8 +10,8 @@ import {
   sentryLogger,
 } from 'sleetcord-common'
 import { booruModules } from './boorubot/index.js'
+import { prisma } from './helpers/db.js'
 import { miscModules } from './misc/index.js'
-import { prisma } from './util/db.js'
 
 async function main() {
   const TOKEN = env.get('TOKEN').required().asString()

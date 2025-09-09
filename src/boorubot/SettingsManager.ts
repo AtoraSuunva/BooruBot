@@ -1,5 +1,5 @@
 import type { BooruConfig } from '../generated/prisma/client.js'
-import { prisma } from '../util/db.js'
+import { prisma } from '../helpers/db.js'
 
 export interface BooruSettings {
   config: BooruConfig

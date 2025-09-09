@@ -9,7 +9,7 @@ import {
   MessageFlags,
 } from 'discord.js'
 import { SleetSlashCommandGroup, SleetSlashSubcommand } from 'sleetcord'
-import { prisma } from '../../util/db.js'
+import { prisma } from '../../helpers/db.js'
 import { getInteractionChannel } from '../search/searchUtils.js'
 import { channelOption, getReferenceFor } from '../utils.js'
 import { createConfigView } from './view.js'

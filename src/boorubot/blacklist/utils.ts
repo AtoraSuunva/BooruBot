@@ -1,5 +1,5 @@
 import { type BaseMessageOptions, bold, escapeCodeBlock } from 'discord.js'
-import { prisma } from '../../util/db.js'
+import { prisma } from '../../helpers/db.js'
 
 export interface Blacklist {
   referenceId: string

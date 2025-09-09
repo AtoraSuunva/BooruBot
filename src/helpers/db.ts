@@ -22,7 +22,7 @@ const adapter = new PrismaBetterSQLite3({
 })
 
 export const prisma = new PrismaClient({
-  // adapter,
+  adapter,
   errorFormat: NODE_ENV === 'development' ? 'pretty' : 'colorless',
   log: [
     {
@@ -49,15 +49,15 @@ async function analyzeDatabase() {
   // This should probably *only* happen when actual large changes are made, but every couple hours shouldn't hurt
   // Maybe, though there's also the question of detecting when large things happen (or providing some way to manually trigger it)
   // But this is an sqlite-specific thing, so the rest of the bot shouldn't be tied to it
-  await prisma.$queryRaw`VACUUM`
+  await prisma.$executeRaw`VACUUM`
   // https://www.sqlite.org/lang_analyze.html
   // Maybe add `PRAGMA analysis_limit = 400;` to limit the amount of time it takes? Watch for magic CPU spikes
-  await prisma.$queryRaw`PRAGMA optimize`
+  await prisma.$executeRaw`PRAGMA optimize`
 }
 
 if (adapter.provider === 'sqlite') {
   // https://www.sqlite.org/wal.html
   // For speed
-  await prisma.$queryRaw`PRAGMA journal_mode=WAL`
+  await prisma.$executeRaw`PRAGMA journal_mode=WAL`
   setInterval(() => void analyzeDatabase(), 12 * HOUR)
 }

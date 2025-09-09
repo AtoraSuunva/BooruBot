@@ -32,17 +32,22 @@
     "@prisma/adapter-better-sqlite3": "^6.15.0",
     "@prisma/client": "6.15.0",
     "@prisma/instrumentation": "^6.15.0",
+    "@types/pluralize": "^0.0.33",
     "better-sqlite3": "^12.2.0",
     "booru": "^2.8.1",
     "discord.js": "^14.22.1",
     "dotenv": "^17.2.2",
     "env-var": "^7.5.0",
+    "magic-bytes.js": "^1.12.1",
+    "murmurhash": "^2.0.1",
     "pino": "^9.9.4",
     "pino-dev": "^4.0.3",
+    "pluralize": "^8.0.0",
     "pretty-ms": "^9.2.0",
     "prisma": "^6.15.0",
     "sleetcord": "^3.0.0",
-    "sleetcord-common": "^15.0.1"
+    "sleetcord-common": "^15.0.1",
+    "string-width": "^8.1.0"
   },
   "devDependencies": {
     "@biomejs/biome": "2.2.3",

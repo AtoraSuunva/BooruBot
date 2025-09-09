@@ -2,6 +2,7 @@ import { extname } from 'node:path'
 import type { Post } from 'booru'
 import {
   type AnyThreadChannel,
+  type APIApplicationEmoji,
   type AutocompleteInteraction,
   ChannelType,
   type ColorResolvable,
@@ -15,6 +16,18 @@ import {
   type TextChannel,
   type ThreadOnlyChannel,
 } from 'discord.js'
+import { syncApplicationEmojis } from '../../helpers/syncEmojis.js'
+
+const Emotes = await syncApplicationEmojis('search', {
+  green_arrow_up: './resources/emojis/green_arrow_up.png',
+  rating_explicit: './resources/emojis/rating_explicit.png',
+  rating_general: './resources/emojis/rating_general.png',
+  rating_questionable: './resources/emojis/rating_questionable.png',
+  rating_safe: './resources/emojis/rating_safe.png',
+  rating_unknown: './resources/emojis/rating_unknown.png',
+  red_arrow_down: './resources/emojis/red_arrow_down.png',
+  yellow_tilde: './resources/emojis/yellow_tilde.png',
+})
 
 /**
  * Get the channel that a slash command was called in, for threads, this is the parent channel
@@ -289,28 +302,28 @@ interface FormattedPost {
   embeds: EmbedBuilder[]
 }
 
-const ratingEmojis: Record<string, string | undefined> = {
-  s: '<:rating_safe:1194080016779202610>',
-  g: '<:rating_general:1194080014413615216>',
-  q: '<:rating_questionable:1194080015353127023>',
-  e: '<:rating_explicit:1194080012769431645>',
-  u: '<:rating_unknown:1194080018536603669>',
+const ratingEmojis: Record<string, APIApplicationEmoji> = {
+  s: Emotes.rating_safe,
+  g: Emotes.rating_general,
+  q: Emotes.rating_questionable,
+  e: Emotes.rating_explicit,
+  u: Emotes.rating_unknown,
 }
 
-function formatRating(rating: string): string {
+function formatRating(rating: string): string | APIApplicationEmoji {
   return ratingEmojis[rating] ?? rating.toUpperCase()
 }
 
 function formatScore(score: number): string {
   if (score > 0) {
-    return `<:green_arrow_up:1194080011330801744> ${score}`
+    return `${Emotes.green_arrow_up} ${score}`
   }
 
   if (score < 0) {
-    return `<:red_arrow_down:1194080019719401603> ${score}`
+    return `${Emotes.red_arrow_down} ${score}`
   }
 
-  return `<:yellow_tilde:1194080020956729364> ${score}`
+  return `${Emotes.yellow_tilde} ${score ?? 'unknown'}`
 }
 
 export function formatPostToEmbed({

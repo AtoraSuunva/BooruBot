@@ -57,3 +57,24 @@ model Site {
   @@id([referenceId, name])
   @@map("site")
 }
+
+model ApplicationEmoji {
+  /**
+   * The ID of the emoji
+   */
+  id     String @id
+  /**
+   * The name of the emoji
+   */
+  name   String @unique
+  /**
+   * The module the emoji belongs to
+   */
+  module String
+  /**
+   * The hash of the emoji (murmur3 hash)
+   */
+  hash   Int
+
+  @@index(module)
+}

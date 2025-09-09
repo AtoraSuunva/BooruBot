@@ -9,7 +9,7 @@ import {
 } from 'discord.js'
 import { SleetSlashSubcommand } from 'sleetcord'
 import type { Prisma } from '../../generated/prisma/client.js'
-import { prisma } from '../../util/db.js'
+import { prisma } from '../../helpers/db.js'
 import { channelOption, getReferenceFor } from '../utils.js'
 
 export const configDelete = new SleetSlashSubcommand(

@@ -4,7 +4,7 @@ import {
   MessageFlags,
 } from 'discord.js'
 import { type AutocompleteHandler, SleetSlashSubcommand } from 'sleetcord'
-import { prisma } from '../../util/db.js'
+import { prisma } from '../../helpers/db.js'
 import { makeTagAutocomplete } from '../blacklist/tag.js'
 import { type Reference, settingsCache } from '../SettingsManager.js'
 import { channelOption, getItemsFrom, getReferenceFor } from '../utils.js'
