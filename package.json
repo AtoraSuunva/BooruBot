@@ -1,13 +1,14 @@
 {
   "name": "boorubot",
-  "version": "4.7.2",
+  "version": "4.8.0",
   "description": "A Discord bot to search boorus",
   "type": "module",
   "main": "dist/index.js",
   "scripts": {
-    "start:dev": "tsc --build && node --env-file=.env --trace-warnings dist/index.js",
+    "start:dev": "tsc --build && node --env-file=.env --enable-source-maps --trace-warnings dist/index.js",
+    "start:dist": "node --env-file=.env --enable-source-maps --trace-warnings dist/index.js",
     "start:prod": "prisma migrate deploy && node --enable-source-maps dist/index.js",
-    "generate": "prisma generate && node --experimental-strip-types scripts/fix-prisma-types.ts",
+    "generate": "prisma generate",
     "build": "tsc --build",
     "lint": "biome check && tsc --noEmit",
     "lint:fix": "biome check --write && prisma format && tsc --noEmit",
@@ -25,6 +26,7 @@
     "url": "https://github.com/AtoraSuunva/BooruBot/issues"
   },
   "homepage": "https://github.com/AtoraSuunva/BooruBot#readme",
+  "packageManager": "pnpm@10.15.1",
   "engines": {
     "node": ">=22.0.0"
   },
@@ -54,6 +56,5 @@
     "@sentry/cli": "^2.53.0",
     "@types/node": "^24.3.1",
     "typescript": "^5.9.2"
-  },
-  "packageManager": "pnpm@10.15.1"
+  }
 }
