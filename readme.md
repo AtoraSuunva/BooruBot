@@ -87,6 +87,29 @@ DATABASE_URL="file:./db/data.db" # or anywhere else you want an sqlite db to be
 ACTIVITIES_FILE="./resources/activities-boorubot.txt" # path to a text file with the activities you want the bot to show
 HEALTHCHECK_PORT=8000 # the port to run an http server on, which will respond to http://localhost:PORT/healthcheck with HTTP 200 once the bot is ready and the database works
 SENTRY_DSN=<access token> # A sentry DSN for error reporting, optional
+
+# API Keys, you should provide these are JSON objects that will be mapped to query params.
+# When I get around to updating booru to properly handle auth it will also map this to Authorization
+# Headers instead of query params on boorus that support it
+
+# Required API Keys, these boorus will NOT work without API keys!
+# You can omit this and the bot will still work, but searches on this booru will not work
+GELBOORU_API_KEY='{"api_key":"gelbooru_dummy_key", "user_id": "123456789"}'
+RULE34XXX_API_KEY='{"api_key":"rule34xxx_dummy_key", "user_id": "123456789"}'
+
+# Optional API keys, these boorus work without API keys:
+; DANBOORU_API_KEY='{"api_key": "danbooru_dummy_key", "login": "Your_Username"}'
+; E621_API_KEY='{ ... }'
+; E926_API_KEY='{ ... }'
+; HYPNOHUB_API_KEY='{ ... }'
+; KONACHAN_API_KEY='{ ... }'
+; YANDERE_API_KEY='{ ... }'
+; SAFEBOORU_API_KEY='{ ... }'
+; TBIB_API_KEY='{ ... }'
+; XBOORU_API_KEY='{ ... }'
+; RULE34PAHEAL_API_KEY='{ ... }'
+; DERPIBOORU_API_KEY='{ ... }'
+; REALBOORU_API_KEY='{ ... }'
 ```
 
 ### Pre-built Docker image

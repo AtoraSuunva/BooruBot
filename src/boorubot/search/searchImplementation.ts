@@ -1,4 +1,5 @@
 import booru, { type Post } from 'booru'
+import type { AnySite } from 'booru/dist/Constants.js'
 import {
   ActionRowBuilder,
   ButtonBuilder,
@@ -9,6 +10,7 @@ import {
   inlineCode,
   MessageFlags,
 } from 'discord.js'
+import env from 'env-var'
 import { getMergedSettings, shuffleArray, siteInfo } from '../utils.js'
 import {
   filterPosts,
@@ -353,6 +355,38 @@ export async function runBooruSearch(
   return
 }
 
+type Keys = Record<string, string>
+
+const BOORU_API_KEYS: Record<AnySite | 'api.rule34.xxx', Keys> = {
+  // These boorus require API tokens (we leave them optional in case you run the bot and don't care about these):
+  'gelbooru.com': env.get('GELBOORU_API_KEY').asJsonObject() as Keys,
+  'api.rule34.xxx': env.get('RULE34XXX_API_KEY').asJsonObject() as Keys,
+  'rule34.xxx': (env.get('RULE34XXX_API_KEY').asJsonObject() as Keys) ?? {},
+
+  // Optional:
+  'danbooru.donmai.us':
+    (env.get('DANBOORU_API_KEY').asJsonObject() as Keys) ?? {},
+  'e621.net': (env.get('E621_API_KEY').asJsonObject() as Keys) ?? {},
+  'e926.net': (env.get('E926_API_KEY').asJsonObject() as Keys) ?? {},
+  'hypnohub.net': (env.get('HYPNOHUB_API_KEY').asJsonObject() as Keys) ?? {},
+  'konachan.com': (env.get('KONACHAN_API_KEY').asJsonObject() as Keys) ?? {},
+  'konachan.net': (env.get('KONACHAN_API_KEY').asJsonObject() as Keys) ?? {},
+  'yande.re': (env.get('YANDERE_API_KEY').asJsonObject() as Keys) ?? {},
+  'safebooru.org': (env.get('SAFEBOORU_API_KEY').asJsonObject() as Keys) ?? {},
+  'tbib.org': (env.get('TBIB_API_KEY').asJsonObject() as Keys) ?? {},
+  'xbooru.com': (env.get('XBOORU_API_KEY').asJsonObject() as Keys) ?? {},
+  'rule34.paheal.net':
+    (env.get('RULE34PAHEAL_API_KEY').asJsonObject() as Record<
+      string,
+      string
+    >) ?? {},
+  'derpibooru.org':
+    (env.get('DERPIBOORU_API_KEY').asJsonObject() as Keys) ?? {},
+
+  // Dead API, to be removed later
+  'realbooru.com': (env.get('REALBOORU_API_KEY').asJsonObject() as Keys) ?? {},
+}
+
 interface SearchBooruParams {
   domain: string
   tags: string[]
@@ -378,7 +412,11 @@ async function searchBooru({
     for (const site of sites) {
       try {
         const results = await booru
-          .search(site, tags, { limit: 100, random })
+          .search(site, tags, {
+            limit: 100,
+            random,
+            credentials: BOORU_API_KEYS[site as AnySite] ?? {},
+          })
           .then((res) => res.posts)
         if (results.length > 0) {
           return results
@@ -395,6 +433,7 @@ async function searchBooru({
     .search(domain, tags, {
       limit: 100,
       random,
+      credentials: BOORU_API_KEYS[domain as AnySite] ?? {},
     })
     .then((res) => res.posts)
 }
