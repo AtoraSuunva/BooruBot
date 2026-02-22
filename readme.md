@@ -169,3 +169,4 @@ pnpm start:dev
 ### License
 
 It's MIT, so you can fork the bot, host your own private copy, etc. You just need to keep a copy of the license and copyright notice around.
+
