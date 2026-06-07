@@ -1,22 +1,23 @@
-import { extname } from 'node:path'
-import type { Post } from 'booru'
+import { extname } from 'node:path';
+import type { Post } from 'booru';
 import {
-  type AnyThreadChannel,
-  type APIApplicationEmoji,
-  type AutocompleteInteraction,
-  ChannelType,
-  type ColorResolvable,
-  type CommandInteraction,
-  EmbedBuilder,
-  escapeMarkdown,
-  type ForumChannel,
-  type MediaChannel,
-  type NewsChannel,
-  type TextBasedChannel,
-  type TextChannel,
-  type ThreadOnlyChannel,
-} from 'discord.js'
-import { syncApplicationEmojis } from '../../helpers/syncEmojis.js'
+    type AnyThreadChannel,
+    type APIApplicationEmoji,
+    type AutocompleteInteraction,
+    ChannelType,
+    type ColorResolvable,
+    type CommandInteraction,
+    EmbedBuilder,
+    escapeMarkdown,
+    type ForumChannel,
+    GuildNSFWLevel,
+    type MediaChannel,
+    type NewsChannel,
+    type TextBasedChannel,
+    type TextChannel,
+    type ThreadOnlyChannel,
+} from 'discord.js';
+import { syncApplicationEmojis } from '../../helpers/syncEmojis.js';
 
 const Emotes = await syncApplicationEmojis('search', {
   green_arrow_up: './resources/emojis/green_arrow_up.png',
@@ -105,9 +106,11 @@ export async function nsfwAllowedInChannel(
   channel: TextBasedChannel | ThreadOnlyChannel,
   allowNSFW: boolean,
 ): Promise<boolean> {
-  // There are 3 cases:
+  // There are 4 cases:
   //   - We're in a DM, which can't be age-restricted
   //      - In this case, we'll fall back to a `allowNSFW` config option
+  //   - We're in a guild marked "Age-Restricted", where all channels are considered NSFW (though the API won't explicitly mark them as such)
+  //      - Check if allowNSFW, then check guild
   //   - We're in a thread, where the *parent* channel can be age-restricted or not
   //      - Check if allowNSFW, then check parent channel
   //   - We're in a text guild channel (regular, news, voice) which can be age-restricted or not
@@ -123,12 +126,17 @@ export async function nsfwAllowedInChannel(
     return allowNSFW
   }
 
+  // Check if the guild itself is age-restricted
+  if ([GuildNSFWLevel.Explicit, GuildNSFWLevel.AgeRestricted].includes(channel.guild.nsfwLevel)) {
+    return allowNSFW
+  }
+
+  // Check the parent channel of a thread
   if (channel.isThread()) {
-    // Already checked allowNSFW, check parent channel
     return await getParentChannel(channel).then((parent) => parent.nsfw)
   }
 
-  // Already checked allowNSFW, check channel
+  // Check the channel
   return channel.nsfw
 }
 
