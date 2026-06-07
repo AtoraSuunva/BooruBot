@@ -1,17 +1,19 @@
-import { readFile, stat } from 'node:fs/promises'
-import { resolve } from 'node:path'
+import { readFile, stat } from 'node:fs/promises';
+import { resolve } from 'node:path';
+
+import { murmur3_32 } from '@plus99/murmur-hash';
 import {
-  type APIApplicationEmoji,
-  type APIUser,
-  type ApplicationEmojiCreateOptions,
-  REST,
-  Routes,
-} from 'discord.js'
-import env from 'env-var'
-import filetype from 'magic-bytes.js'
-import murmur from 'murmurhash'
-import { baseLogger } from 'sleetcord-common'
-import { prisma } from './db.js'
+    type APIApplicationEmoji,
+    type APIUser,
+    type ApplicationEmojiCreateOptions,
+    REST,
+    Routes,
+} from 'discord.js';
+import env from 'env-var';
+import filetype from 'magic-bytes.js';
+import { baseLogger } from 'sleetcord-common';
+
+import { prisma } from './db.js';
 
 /** Map of { emojiName: './path/to/image.png' | Buffer } */
 type CreateEmojis = Record<string, ApplicationEmojiCreateOptions['attachment']>
@@ -28,7 +30,7 @@ interface IApplicationEmoji extends APIApplicationEmoji {}
  *
  * All this does is add a `toString` method to format the emoji as a Discord emoji string.
  */
-class WrappedApplicationEmoji implements IApplicationEmoji {
+export class WrappedApplicationEmoji implements IApplicationEmoji {
   id: string
   name: string
   animated: boolean
@@ -158,12 +160,10 @@ export async function syncApplicationEmojis<const T extends CreateEmojis>(
       }
 
       // Emoji is outdated, delete it from Discord and the database, update it at discord, then update the database
-      syncLogger.info(
-        `Updating emoji "${name}" for module "${module}" due to hash mismatch.`,
-      )
+      syncLogger.info(`Updating emoji "${name}" for module "${module}" due to hash mismatch.`)
 
       // Delete the emoji from Discord
-      await deleteEmoji(existingEmoji.id)
+      await deleteEmoji(discordEmoji.id)
 
       await prisma.applicationEmoji.delete({
         where: { id: existingEmoji.id },
@@ -198,22 +198,15 @@ function fetchEmojis() {
 }
 
 function deleteEmoji(emojiId: string) {
-  return rest.delete(
-    Routes.applicationEmoji(APPLICATION_ID, emojiId),
-  ) as Promise<void>
+  return rest.delete(Routes.applicationEmoji(APPLICATION_ID, emojiId)) as Promise<void>
 }
 
-async function createEmoji(
-  module: string,
-  options: ApplicationEmojiCreateOptions,
-) {
+async function createEmoji(module: string, options: ApplicationEmojiCreateOptions) {
   const file = await resolveFile(options.attachment)
   const mime = filetype.filetypemime(file).pop()
 
   if (!mime || !mime.startsWith('image/')) {
-    throw new Error(
-      `Attachment "${options.attachment}" is not a valid image file.`,
-    )
+    throw new Error(`Attachment "${options.attachment}" is not a valid image file.`)
   }
 
   const newEmoji = (await rest.post(Routes.applicationEmojis(APPLICATION_ID), {
@@ -235,9 +228,7 @@ async function createEmoji(
   return newEmoji
 }
 
-async function resolveFile(
-  attachment: string | Buffer<ArrayBufferLike>,
-): Promise<Buffer> {
+async function resolveFile(attachment: string | Buffer): Promise<Buffer> {
   if (Buffer.isBuffer(attachment)) {
     return attachment
   }
@@ -252,10 +243,7 @@ async function resolveFile(
   return file
 }
 
-function resolveBase64(
-  attachment: string | Buffer<ArrayBufferLike>,
-  contentType = 'image/png',
-): string {
+function resolveBase64(attachment: string | Buffer, contentType = 'image/png'): string {
   if (Buffer.isBuffer(attachment)) {
     return `data:${contentType};base64,${attachment.toString('base64')}`
   }
@@ -263,8 +251,7 @@ function resolveBase64(
   return attachment
 }
 
-async function hashAttachment(attachment: string | Buffer<ArrayBufferLike>) {
-  const file =
-    typeof attachment === 'string' ? await readFile(attachment) : attachment
-  return murmur(new Uint8Array(file))
+async function hashAttachment(attachment: string | Buffer) {
+  const file = typeof attachment === 'string' ? await readFile(attachment) : attachment
+  return murmur3_32(new Uint8Array(file))
 }

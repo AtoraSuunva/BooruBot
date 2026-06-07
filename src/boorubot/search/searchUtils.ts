@@ -1,23 +1,23 @@
-import { extname } from 'node:path';
-import type { Post } from 'booru';
+import { extname } from 'node:path'
+import type { Post } from 'booru'
 import {
-    type AnyThreadChannel,
-    type APIApplicationEmoji,
-    type AutocompleteInteraction,
-    ChannelType,
-    type ColorResolvable,
-    type CommandInteraction,
-    EmbedBuilder,
-    escapeMarkdown,
-    type ForumChannel,
-    GuildNSFWLevel,
-    type MediaChannel,
-    type NewsChannel,
-    type TextBasedChannel,
-    type TextChannel,
-    type ThreadOnlyChannel,
-} from 'discord.js';
-import { syncApplicationEmojis } from '../../helpers/syncEmojis.js';
+  type AnyThreadChannel,
+  type APIApplicationEmoji,
+  type AutocompleteInteraction,
+  ChannelType,
+  type ColorResolvable,
+  type CommandInteraction,
+  EmbedBuilder,
+  escapeMarkdown,
+  type ForumChannel,
+  GuildNSFWLevel,
+  type MediaChannel,
+  type NewsChannel,
+  type TextBasedChannel,
+  type TextChannel,
+  type ThreadOnlyChannel,
+} from 'discord.js'
+import { syncApplicationEmojis } from '../../helpers/syncEmojis.js'
 
 const Emotes = await syncApplicationEmojis('search', {
   green_arrow_up: './resources/emojis/green_arrow_up.png',
@@ -127,7 +127,11 @@ export async function nsfwAllowedInChannel(
   }
 
   // Check if the guild itself is age-restricted
-  if ([GuildNSFWLevel.Explicit, GuildNSFWLevel.AgeRestricted].includes(channel.guild.nsfwLevel)) {
+  if (
+    [GuildNSFWLevel.Explicit, GuildNSFWLevel.AgeRestricted].includes(
+      channel.guild.nsfwLevel,
+    )
+  ) {
     return allowNSFW
   }
 

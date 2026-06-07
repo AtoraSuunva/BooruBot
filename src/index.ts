@@ -1,17 +1,16 @@
-import { GatewayIntentBits, Options, type RESTOptions } from 'discord.js'
-import env from 'env-var'
-import { SleetClient, type SleetModuleEventHandlers } from 'sleetcord'
+import { GatewayIntentBits, Options, type RESTOptions } from 'discord.js';
+import env from 'env-var';
+import { SleetClient, type SleetModuleEventHandlers } from 'sleetcord';
 import {
-  getModuleRunner,
-  initDBLogging,
-  initSentry,
-  logging,
-  Sentry,
-  sentryLogger,
-} from 'sleetcord-common'
-import { booruModules } from './boorubot/index.js'
-import { prisma } from './helpers/db.js'
-import { miscModules } from './misc/index.js'
+    initDBLogging,
+    initSentry,
+    logging,
+    Sentry,
+    sentryLogger,
+} from 'sleetcord-common';
+import { booruModules } from './boorubot/index.js';
+import { prisma } from './helpers/db.js';
+import { miscModules } from './misc/index.js';
 
 async function main() {
   const TOKEN = env.get('TOKEN').required().asString()
@@ -52,13 +51,11 @@ async function main() {
       return 0.2
     },
   })
-  initDBLogging(prisma)
 
   const sleetClient: SleetClient = new SleetClient({
     sleet: {
       token: TOKEN,
       applicationId: APPLICATION_ID,
-      moduleRunner: getModuleRunner(),
     },
     client: {
       rest: {
@@ -127,6 +124,8 @@ async function main() {
       },
     },
   })
+
+  initDBLogging(prisma, sleetClient)
 
   sleetClient.addModules([
     ...booruModules,

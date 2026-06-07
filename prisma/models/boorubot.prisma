@@ -1,0 +1,66 @@
+model BooruConfig {
+  // guildId, channelId, userId
+  referenceId String       @id @map("reference_id")
+  // If reference_id is a channel, this is the guild that channel is part of
+  guildId     String?      @map("guild_id")
+  isGuild     Boolean      @map("is_guild")
+  tags        Tag[]
+  defaultTags DefaultTag[]
+  sites       Site[]
+  minScore    Int?         @map("min_score")
+  // default false in DM, true in guilds
+  // true -> NSFW allowed in DMs & age-restricted channels (**ONLY** age-restricted channels)
+  // false -> NSFW not allowed anywhere at all
+  // null -> in channels, use the guild setting
+  allowNSFW   Boolean?     @map("allow_nsfw")
+
+  @@map("booru_config")
+}
+
+model Tag {
+  referenceId String      @map("reference_id")
+  name        String
+  config      BooruConfig @relation(fields: [referenceId], references: [referenceId], onDelete: Cascade)
+
+  @@id([referenceId, name])
+  @@map("tag")
+}
+
+model DefaultTag {
+  referenceId String      @map("reference_id")
+  name        String
+  config      BooruConfig @relation(fields: [referenceId], references: [referenceId], onDelete: Cascade)
+
+  @@id([referenceId, name])
+  @@map("default_tag")
+}
+
+model Site {
+  referenceId String      @map("reference_id")
+  name        String
+  config      BooruConfig @relation(fields: [referenceId], references: [referenceId], onDelete: Cascade)
+
+  @@id([referenceId, name])
+  @@map("site")
+}
+
+model ApplicationEmoji {
+  /**
+   * The ID of the emoji
+   */
+  id     String @id
+  /**
+   * The name of the emoji
+   */
+  name   String @unique
+  /**
+   * The module the emoji belongs to
+   */
+  module String
+  /**
+   * The hash of the emoji (murmur3 hash) stored as an int
+   */
+  hash   Int
+
+  @@index(module)
+}

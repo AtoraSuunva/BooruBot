@@ -31,30 +31,31 @@
     "node": ">=22.0.0"
   },
   "dependencies": {
-    "@prisma/adapter-better-sqlite3": "^6.15.0",
-    "@prisma/client": "6.15.0",
-    "@prisma/instrumentation": "^6.15.0",
+    "@plus99/murmur-hash": "^1.0.2",
+    "@prisma/adapter-better-sqlite3": "^7.8.0",
+    "@prisma/client": "7.8.0",
+    "@prisma/instrumentation": "^7.8.0",
+    "@prisma/sqlcommenter-query-tags": "^7.8.0",
     "@types/pluralize": "^0.0.33",
-    "better-sqlite3": "^12.2.0",
-    "booru": "^2.8.1",
-    "discord.js": "^14.22.1",
-    "dotenv": "^17.2.2",
+    "better-sqlite3": "^12.10.0",
+    "booru": "^2.9.0",
+    "discord.js": "^14.26.4",
+    "dotenv": "^17.4.2",
     "env-var": "^7.5.0",
-    "magic-bytes.js": "^1.12.1",
-    "murmurhash": "^2.0.1",
-    "pino": "^9.9.4",
+    "magic-bytes.js": "^1.13.0",
+    "pino": "^10.3.1",
     "pino-dev": "^4.0.3",
     "pluralize": "^8.0.0",
-    "pretty-ms": "^9.2.0",
-    "prisma": "^6.15.0",
-    "sleetcord": "^3.0.0",
-    "sleetcord-common": "^15.0.1",
-    "string-width": "^8.1.0"
+    "pretty-ms": "^9.3.0",
+    "prisma": "^7.8.0",
+    "sleetcord": "^4.2.0",
+    "sleetcord-common": "^16.0.3",
+    "string-width": "^8.2.1"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.2.3",
-    "@sentry/cli": "^2.53.0",
-    "@types/node": "^24.3.1",
-    "typescript": "^5.9.2"
+    "@biomejs/biome": "2.4.16",
+    "@sentry/cli": "^3.5.0",
+    "@types/node": "^25.9.2",
+    "typescript": "^6.0.3"
   }
 }
