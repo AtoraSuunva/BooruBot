@@ -1,7 +1,7 @@
 services:
   bot:
     # prebuilt image
-    # image: 'ghcr.io/atorasuunva/boorubot:development'
+    # image: 'ghcr.io/atorasuunva/boorubot:main'
     build:
       context: .
       dockerfile: Dockerfile
