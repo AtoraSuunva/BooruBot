@@ -1,19 +1,19 @@
-import { readFile, stat } from 'node:fs/promises';
-import { resolve } from 'node:path';
+import { readFile, stat } from 'node:fs/promises'
+import { resolve } from 'node:path'
 
-import { murmur3_32 } from '@plus99/murmur-hash';
+import { murmur3_32 } from '@plus99/murmur-hash'
 import {
-    type APIApplicationEmoji,
-    type APIUser,
-    type ApplicationEmojiCreateOptions,
-    REST,
-    Routes,
-} from 'discord.js';
-import env from 'env-var';
-import filetype from 'magic-bytes.js';
-import { baseLogger } from 'sleetcord-common';
+  type APIApplicationEmoji,
+  type APIUser,
+  type ApplicationEmojiCreateOptions,
+  REST,
+  Routes,
+} from 'discord.js'
+import env from 'env-var'
+import filetype from 'magic-bytes.js'
+import { baseLogger } from 'sleetcord-common'
 
-import { prisma } from './db.js';
+import { prisma } from './db.js'
 
 /** Map of { emojiName: './path/to/image.png' | Buffer } */
 type CreateEmojis = Record<string, ApplicationEmojiCreateOptions['attachment']>

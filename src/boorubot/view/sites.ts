@@ -11,8 +11,7 @@ export const viewSites = new SleetSlashSubcommand(
   },
 )
 
-const SITES_URL =
-  'https://github.com/AtlasTheBot/Booru-Discord/blob/master/sites.md'
+const SITES_URL = 'https://github.com/AtlasTheBot/Booru-Discord/blob/master/sites.md'
 const SITES_MESSAGE = `You can view all supported sites at ${SITES_URL}`
 
 function runViewSites(interaction: ChatInputCommandInteraction) {

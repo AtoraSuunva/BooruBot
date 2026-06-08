@@ -1,4 +1,5 @@
 import { SleetSlashCommand } from 'sleetcord'
+
 import { viewBlacklist } from './blacklist.js'
 import { viewSites } from './sites.js'
 

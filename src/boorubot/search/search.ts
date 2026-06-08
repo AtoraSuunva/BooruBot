@@ -1,14 +1,8 @@
-import {
-  ApplicationCommandOptionType,
-  type ChatInputCommandInteraction,
-} from 'discord.js'
+import { ApplicationCommandOptionType, type ChatInputCommandInteraction } from 'discord.js'
 import { type AutocompleteHandler, SleetSlashCommand } from 'sleetcord'
+
 import { getMergedSites, resolveSitesFor, siteInfo } from '../utils.js'
-import {
-  RANDOM_BOORU_SITE,
-  RANDOM_BOORU_VALUE,
-  runBooruSearch,
-} from './searchImplementation.js'
+import { RANDOM_BOORU_SITE, RANDOM_BOORU_VALUE, runBooruSearch } from './searchImplementation.js'
 
 const autocompleteSiteWithBlacklist: AutocompleteHandler<string> = async ({
   interaction,

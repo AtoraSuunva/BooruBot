@@ -5,6 +5,7 @@ import {
   MessageFlags,
 } from 'discord.js'
 import { SleetSlashCommand } from 'sleetcord'
+
 import { runBooruSearch } from './search/searchImplementation.js'
 
 const { sites } = booru
@@ -93,14 +94,11 @@ function runLink(interaction: ChatInputCommandInteraction) {
   const format = siteFormats[parsedUrl.hostname]
 
   const id =
-    format.type === 'url'
-      ? getIdInPath(parsedUrl, format)
-      : getIdInQuery(parsedUrl, format)
+    format.type === 'url' ? getIdInPath(parsedUrl, format) : getIdInQuery(parsedUrl, format)
 
   if (!isInteger(id)) {
     return interaction.reply({
-      content:
-        'Failed to parse a post ID from that url, did you enter the right url?',
+      content: 'Failed to parse a post ID from that url, did you enter the right url?',
       flags: MessageFlags.Ephemeral,
     })
   }

@@ -8,6 +8,7 @@ import {
   MessageFlags,
 } from 'discord.js'
 import { SleetSlashSubcommand } from 'sleetcord'
+
 import type { Prisma } from '../../generated/prisma/client.js'
 import { prisma } from '../../helpers/db.js'
 import { channelOption, getReferenceFor } from '../utils.js'
@@ -150,9 +151,7 @@ async function collectDeletePromises(
     })
 
     const allPromises = await Promise.all(
-      guildConfigs.flatMap(({ referenceId }) =>
-        collectDeletePromises(referenceId, false),
-      ),
+      guildConfigs.flatMap(({ referenceId }) => collectDeletePromises(referenceId, false)),
     )
 
     deletePromises.push(...allPromises.flat(1))

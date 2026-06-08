@@ -1,4 +1,5 @@
 import { SleetSlashCommand, SleetSlashCommandGroup } from 'sleetcord'
+
 import { blacklistDelete } from './delete.js'
 import { blacklistAddSite, blacklistRemoveSite } from './sites.js'
 import { blacklistAddTags, blacklistRemoveTags } from './tag.js'

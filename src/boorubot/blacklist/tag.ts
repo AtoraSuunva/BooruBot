@@ -4,6 +4,7 @@ import {
   MessageFlags,
 } from 'discord.js'
 import { type AutocompleteHandler, SleetSlashSubcommand } from 'sleetcord'
+
 import { prisma } from '../../helpers/db.js'
 import { type Reference, settingsCache } from '../SettingsManager.js'
 import { channelOption, getItemsFrom, getReferenceFor } from '../utils.js'
@@ -77,8 +78,8 @@ export function makeTagAutocomplete(
   }
 }
 
-const removeTagAutocomplete: AutocompleteHandler<string> = makeTagAutocomplete(
-  (reference) => settingsCache.getTags(reference.id),
+const removeTagAutocomplete: AutocompleteHandler<string> = makeTagAutocomplete((reference) =>
+  settingsCache.getTags(reference.id),
 )
 
 export const blacklistRemoveTags = new SleetSlashSubcommand(
@@ -126,12 +127,9 @@ function makeTagModifier(tagAction: TagAction) {
     await tagAction(reference, tags)
     await defer
 
-    const formattedBlacklist = formatBlacklist(
-      await getBlacklistFor(reference.id),
-      {
-        highlightTags: tags,
-      },
-    )
+    const formattedBlacklist = formatBlacklist(await getBlacklistFor(reference.id), {
+      highlightTags: tags,
+    })
 
     return interaction.editReply(formattedBlacklist).catch(() => {
       /* ignore */

@@ -15,9 +15,7 @@ export interface Reference {
   allowNSFW: boolean | null
 }
 
-type PrismaTransaction = Parameters<
-  Parameters<typeof prisma.$transaction>[0]
->[0]
+type PrismaTransaction = Parameters<Parameters<typeof prisma.$transaction>[0]>[0]
 
 class SettingsManager {
   async get(reference: Reference): Promise<BooruSettings> {
@@ -36,10 +34,7 @@ class SettingsManager {
     }
   }
 
-  async getConfig(
-    reference: Reference,
-    tx: PrismaTransaction = prisma,
-  ): Promise<BooruConfig> {
+  async getConfig(reference: Reference, tx: PrismaTransaction = prisma): Promise<BooruConfig> {
     return await tx.booruConfig.upsert({
       where: { referenceId: reference.id },
       update: {
@@ -54,10 +49,7 @@ class SettingsManager {
     })
   }
 
-  async getTags(
-    referenceId: string,
-    tx: PrismaTransaction = prisma,
-  ): Promise<string[]> {
+  async getTags(referenceId: string, tx: PrismaTransaction = prisma): Promise<string[]> {
     const tags = await tx.tag
       .findMany({
         where: { referenceId },
@@ -68,10 +60,7 @@ class SettingsManager {
     return tags
   }
 
-  async getDefaultTags(
-    referenceId: string,
-    tx: PrismaTransaction = prisma,
-  ): Promise<string[]> {
+  async getDefaultTags(referenceId: string, tx: PrismaTransaction = prisma): Promise<string[]> {
     const tags = await tx.defaultTag
       .findMany({
         where: { referenceId },
@@ -82,10 +71,7 @@ class SettingsManager {
     return tags
   }
 
-  async getSites(
-    referenceId: string,
-    tx: PrismaTransaction = prisma,
-  ): Promise<string[]> {
+  async getSites(referenceId: string, tx: PrismaTransaction = prisma): Promise<string[]> {
     const sites = await tx.site
       .findMany({
         where: { referenceId },

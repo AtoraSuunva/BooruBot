@@ -4,6 +4,7 @@ import {
   MessageFlags,
 } from 'discord.js'
 import { type AutocompleteHandler, SleetSlashSubcommand } from 'sleetcord'
+
 import { prisma } from '../../helpers/db.js'
 import { type Reference, settingsCache } from '../SettingsManager.js'
 import {
@@ -16,9 +17,7 @@ import { formatBlacklist, getBlacklistFor } from './utils.js'
 
 type AutocompleteType = 'add' | 'remove'
 
-function buildSiteAutocomplete(
-  type: AutocompleteType,
-): AutocompleteHandler<string> {
+function buildSiteAutocomplete(type: AutocompleteType): AutocompleteHandler<string> {
   return async ({ interaction, value }) => {
     const reference = await getReferenceFor(interaction)
     const addedSites = await settingsCache.getSites(reference.id)
@@ -40,11 +39,9 @@ function buildSiteAutocomplete(
               value: s,
             })),
           ]
-        : listSites.filter(
-            (site) => !addedSites.some((guildSite) => guildSite === site.value),
-          )
+        : listSites.filter((site) => !addedSites.some((guildSite) => guildSite === site.value))
 
-    return options.sort().slice(0, 25)
+    return options.sort((a, b) => a.name.localeCompare(b.name)).slice(0, 25)
   }
 }
 
@@ -125,12 +122,9 @@ function makeSiteAction(siteAction: SiteAction) {
     await siteAction(reference, flatSites)
     await defer
 
-    const formattedBlacklist = formatBlacklist(
-      await getBlacklistFor(reference.id),
-      {
-        highlightSites: flatSites,
-      },
-    )
+    const formattedBlacklist = formatBlacklist(await getBlacklistFor(reference.id), {
+      highlightSites: flatSites,
+    })
 
     return interaction.editReply(formattedBlacklist)
   }

@@ -11,6 +11,7 @@ import {
   MessageFlags,
 } from 'discord.js'
 import env from 'env-var'
+
 import { getMergedSettings, shuffleArray, siteInfo } from '../utils.js'
 import {
   filterPosts,
@@ -83,15 +84,10 @@ export async function runBooruSearch(
 
   const { defaultTags } = settings.merged
 
-  if (
-    site.domain === 'danbooru.donmai.us' &&
-    tags.length + defaultTags.length > 2
-  ) {
+  if (site.domain === 'danbooru.donmai.us' && tags.length + defaultTags.length > 2) {
     const appended =
       defaultTags.length > 0
-        ? `\nThere are ${
-            defaultTags.length
-          } default tags set, so you can only add ${
+        ? `\nThere are ${defaultTags.length} default tags set, so you can only add ${
             2 - defaultTags.length
           } more.`
         : ''
@@ -102,16 +98,11 @@ export async function runBooruSearch(
     })
   }
 
-  const blacklistedTagsUsed = getTagsMatchingBlacklist(
-    tags,
-    settings.merged.tags,
-  )
+  const blacklistedTagsUsed = getTagsMatchingBlacklist(tags, settings.merged.tags)
 
   if (blacklistedTagsUsed.length > 0) {
     return interaction.reply({
-      content: `Search contains blacklisted tags: ${codeBlock(
-        formatTags(blacklistedTagsUsed),
-      )}`,
+      content: `Search contains blacklisted tags: ${codeBlock(formatTags(blacklistedTagsUsed))}`,
       flags: MessageFlags.Ephemeral,
     })
   }
@@ -121,13 +112,9 @@ export async function runBooruSearch(
 
   const channel = await getInteractionChannel(interaction)
   // Keep NSFW out of non-NSFW channels
-  const allowNSFW = await nsfwAllowedInChannel(
-    channel,
-    settings.merged.config.allowNSFW,
-  )
+  const allowNSFW = await nsfwAllowedInChannel(channel, settings.merged.config.allowNSFW)
 
-  const noNSFWMessage =
-    !interaction.inGuild() && !allowNSFW ? WHY_NO_NSFW_DM_URL : ''
+  const noNSFWMessage = !interaction.inGuild() && !allowNSFW ? WHY_NO_NSFW_DM_URL : ''
 
   if (!allowNSFW && getTagsMatchingBlacklist(tags, NSFW_RATINGS).length > 0) {
     return interaction.reply({
@@ -157,9 +144,7 @@ export async function runBooruSearch(
     const content =
       e instanceof SearchError
         ? e.message
-        : `Error searching ${inlineCode(site.domain)}:\n${codeBlock(
-            getErrorMessage(e),
-          )}`
+        : `Error searching ${inlineCode(site.domain)}:\n${codeBlock(getErrorMessage(e))}`
 
     return interaction.editReply({ content })
   }
@@ -255,8 +240,7 @@ export async function runBooruSearch(
   collector.on('collect', async (i) => {
     if (i.user.id !== interaction.user.id) {
       return void i.reply({
-        content:
-          "You didn't initiate this search, so you can't interact with it.",
+        content: "You didn't initiate this search, so you can't interact with it.",
         flags: MessageFlags.Ephemeral,
       })
     }
@@ -364,8 +348,7 @@ const BOORU_API_KEYS: Record<AnySite | 'api.rule34.xxx', Keys> = {
   'rule34.xxx': (env.get('RULE34XXX_API_KEY').asJsonObject() as Keys) ?? {},
 
   // Optional:
-  'danbooru.donmai.us':
-    (env.get('DANBOORU_API_KEY').asJsonObject() as Keys) ?? {},
+  'danbooru.donmai.us': (env.get('DANBOORU_API_KEY').asJsonObject() as Keys) ?? {},
   'e621.net': (env.get('E621_API_KEY').asJsonObject() as Keys) ?? {},
   'e926.net': (env.get('E926_API_KEY').asJsonObject() as Keys) ?? {},
   'hypnohub.net': (env.get('HYPNOHUB_API_KEY').asJsonObject() as Keys) ?? {},
@@ -376,12 +359,8 @@ const BOORU_API_KEYS: Record<AnySite | 'api.rule34.xxx', Keys> = {
   'tbib.org': (env.get('TBIB_API_KEY').asJsonObject() as Keys) ?? {},
   'xbooru.com': (env.get('XBOORU_API_KEY').asJsonObject() as Keys) ?? {},
   'rule34.paheal.net':
-    (env.get('RULE34PAHEAL_API_KEY').asJsonObject() as Record<
-      string,
-      string
-    >) ?? {},
-  'derpibooru.org':
-    (env.get('DERPIBOORU_API_KEY').asJsonObject() as Keys) ?? {},
+    (env.get('RULE34PAHEAL_API_KEY').asJsonObject() as Record<string, string>) ?? {},
+  'derpibooru.org': (env.get('DERPIBOORU_API_KEY').asJsonObject() as Keys) ?? {},
 
   // Dead API, to be removed later
   'realbooru.com': (env.get('REALBOORU_API_KEY').asJsonObject() as Keys) ?? {},
@@ -393,20 +372,14 @@ interface SearchBooruParams {
   blacklistedSites: string[]
 }
 
-async function searchBooru({
-  domain,
-  tags,
-  blacklistedSites,
-}: SearchBooruParams): Promise<Post[]> {
+async function searchBooru({ domain, tags, blacklistedSites }: SearchBooruParams): Promise<Post[]> {
   const tagLimit = domain === 'danbooru.donmai.us' && tags.length > 1
   const random = !hasOrderTag(tags) && !tagLimit
 
   if (domain === RANDOM_BOORU_VALUE) {
     // Search every available booru until we get a hit
     const sites = shuffleArray(
-      siteInfo
-        .filter((site) => !blacklistedSites.includes(site.domain))
-        .map((site) => site.domain),
+      siteInfo.filter((site) => !blacklistedSites.includes(site.domain)).map((site) => site.domain),
     )
 
     for (const site of sites) {

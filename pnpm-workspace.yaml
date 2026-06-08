@@ -1,3 +1,19 @@
+allowBuilds:
+  '@prisma/engines': true
+  '@sentry/cli': true
+  better-sqlite3: true
+  prisma: true
+
+minimumReleaseAgeExclude:
+  - '@typescript/native-preview-darwin-arm64@7.0.0-dev.20260607.1'
+  - '@typescript/native-preview-darwin-x64@7.0.0-dev.20260607.1'
+  - '@typescript/native-preview-linux-arm64@7.0.0-dev.20260607.1'
+  - '@typescript/native-preview-linux-arm@7.0.0-dev.20260607.1'
+  - '@typescript/native-preview-linux-x64@7.0.0-dev.20260607.1'
+  - '@typescript/native-preview-win32-arm64@7.0.0-dev.20260607.1'
+  - '@typescript/native-preview-win32-x64@7.0.0-dev.20260607.1'
+  - '@typescript/native-preview@7.0.0-dev.20260607.1'
+
 onlyBuiltDependencies:
   - '@biomejs/biome'
   - '@prisma/client'

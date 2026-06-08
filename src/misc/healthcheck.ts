@@ -1,8 +1,10 @@
 import { createServer } from 'node:http'
+
 import type { Client } from 'discord.js'
 import env from 'env-var'
 import { SleetModule } from 'sleetcord'
 import { baseLogger } from 'sleetcord-common'
+
 import { prisma } from '../helpers/db.js'
 
 export const healthcheck = new SleetModule(

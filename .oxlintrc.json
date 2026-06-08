@@ -1,0 +1,34 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "options": {
+    "typeAware": true,
+    "typeCheck": true
+  },
+  "categories": {
+    "correctness": "error",
+    "suspicious": "error",
+    "perf": "error"
+  },
+  "plugins": ["eslint", "typescript", "unicorn", "oxc", "jsdoc", "promise"],
+  "rules": {
+    "no-param-reassign": "error",
+    "default-param-last": "error",
+    "prefer-enum-initializers": "error",
+    "no-inferrable-types": "error",
+    // most shadowing is fine
+    "no-shadow": "allow",
+    // most sorting is done on temp objects anyway
+    "no-array-sort": "allow",
+    // message ordering is often important and we have to work with ratelimits. This keeps a single module from queueing too many messages and instantly ratelimiting everything else
+    "no-await-in-loop": "allow",
+    // we often use enums to organize string tokens (i.e. Token.Add = "+", Token.Subtract = "-", etc.) and parsing strings to enums is extra work for no extra safety (comparing the strings to enums _is_ the validation)
+    "no-unsafe-enum-comparison": "allow",
+    // we are smarter than the compiler :)
+    "no-unsafe-type-assertion": "allow",
+    // Discord.js offers formatters using .toString() for multiple types and it was becoming a hassle to allowlist them
+    "restrict-template-expressions": "allow",
+    // TS checks this better, we have some cases where we really mess with return types and this false-positives
+    "typescript/consistent-return": "allow"
+  },
+  "ignorePatterns": ["src/generated/**/*", "prisma.config.ts"]
+}

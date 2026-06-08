@@ -1,8 +1,8 @@
 import { extname } from 'node:path'
+
 import type { Post } from 'booru'
 import {
   type AnyThreadChannel,
-  type APIApplicationEmoji,
   type AutocompleteInteraction,
   ChannelType,
   type ColorResolvable,
@@ -17,7 +17,8 @@ import {
   type TextChannel,
   type ThreadOnlyChannel,
 } from 'discord.js'
-import { syncApplicationEmojis } from '../../helpers/syncEmojis.js'
+
+import { syncApplicationEmojis, type WrappedApplicationEmoji } from '../../helpers/syncEmojis.js'
 
 const Emotes = await syncApplicationEmojis('search', {
   green_arrow_up: './resources/emojis/green_arrow_up.png',
@@ -39,8 +40,7 @@ export async function getInteractionChannel(
   interaction: CommandInteraction | AutocompleteInteraction,
 ): Promise<TextBasedChannel | ThreadOnlyChannel> {
   const channel =
-    interaction.channel ??
-    (await interaction.client.channels.fetch(interaction.channelId))
+    interaction.channel ?? (await interaction.client.channels.fetch(interaction.channelId))
 
   if (channel) {
     if (channel.isThread()) {
@@ -90,16 +90,11 @@ export async function getParentChannel(
     throw new Error(`Thread ${thread.id} has no parent channel?`)
   }
 
-  if (
-    parent.type === ChannelType.GuildNews ||
-    parent.type === ChannelType.GuildText
-  ) {
+  if (parent.type === ChannelType.GuildNews || parent.type === ChannelType.GuildText) {
     return parent
   }
 
-  throw new Error(
-    `Thread ${thread.id} has an unexpected parent channel type ${parent.type}`,
-  )
+  throw new Error(`Thread ${thread.id} has an unexpected parent channel type ${parent.type}`)
 }
 
 export async function nsfwAllowedInChannel(
@@ -127,11 +122,7 @@ export async function nsfwAllowedInChannel(
   }
 
   // Check if the guild itself is age-restricted
-  if (
-    [GuildNSFWLevel.Explicit, GuildNSFWLevel.AgeRestricted].includes(
-      channel.guild.nsfwLevel,
-    )
-  ) {
+  if ([GuildNSFWLevel.Explicit, GuildNSFWLevel.AgeRestricted].includes(channel.guild.nsfwLevel)) {
     return allowNSFW
   }
 
@@ -247,10 +238,7 @@ export function postMatchesBlacklist(post: Post, blacklist: string[]): boolean {
  * @param blacklist The blacklist to compare against
  * @returns All tags that matched the blacklist
  */
-export function getTagsMatchingBlacklist(
-  tags: string[],
-  blacklist: string[],
-): string[] {
+export function getTagsMatchingBlacklist(tags: string[], blacklist: string[]): string[] {
   // Get all matches
   return tags.filter((tag) => compareTagAgainstBlacklist(tag, blacklist))
 }
@@ -314,7 +302,7 @@ interface FormattedPost {
   embeds: EmbedBuilder[]
 }
 
-const ratingEmojis: Record<string, APIApplicationEmoji> = {
+const ratingEmojis: Record<string, WrappedApplicationEmoji> = {
   s: Emotes.rating_safe,
   g: Emotes.rating_general,
   q: Emotes.rating_questionable,
@@ -322,7 +310,7 @@ const ratingEmojis: Record<string, APIApplicationEmoji> = {
   u: Emotes.rating_unknown,
 }
 
-function formatRating(rating: string): string | APIApplicationEmoji {
+function formatRating(rating: string): string | WrappedApplicationEmoji {
   return ratingEmojis[rating] ?? rating.toUpperCase()
 }
 
@@ -351,9 +339,7 @@ export function formatPostToEmbed({
 }: PostFormatOptions): FormattedPost {
   const ext = extname(
     // biome-ignore lint/complexity/useLiteralKeys: Typescript doesn't like us access data like this
-    (post['data'] as Record<string, string | undefined>).file_name ??
-      post.fileUrl ??
-      '',
+    (post['data'] as Record<string, string | undefined>).file_name ?? post.fileUrl ?? '',
   ).toLowerCase()
 
   const leadingDescription = [
@@ -377,9 +363,7 @@ export function formatPostToEmbed({
 
   const tagLine = [
     tags.length > 0 ? `**Tags:** ${formatTags(tags)}` : '',
-    defaultTags.length > 0
-      ? `**Default Tags:** ${formatTags(defaultTags)}`
-      : '',
+    defaultTags.length > 0 ? `**Default Tags:** ${formatTags(defaultTags)}` : '',
   ]
     .filter(notEmpty)
     .join(' + ')
@@ -389,10 +373,7 @@ export function formatPostToEmbed({
 
   const hiddenCount =
     filterCount > 0
-      ? `${filterCount} hidden ${pluralize(
-          'post',
-          filterCount,
-        )} (${reasonCount})`
+      ? `${filterCount} hidden ${pluralize('post', filterCount)} (${reasonCount})`
       : ''
 
   const contentLines = [tagLine, hiddenCount]
@@ -416,11 +397,7 @@ export function formatPostToEmbed({
 
     embeds.push(embed)
   } else {
-    contentLines.unshift(
-      `>>> **[Post #${post.id}](<${post.postView}>)**`,
-      description,
-      footerText,
-    )
+    contentLines.unshift(`>>> **[Post #${post.id}](<${post.postView}>)**`, description, footerText)
   }
 
   const content = contentLines.filter(notEmpty).join('\n')

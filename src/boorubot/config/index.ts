@@ -1,4 +1,5 @@
 import { SleetSlashCommand, SleetSlashCommandGroup } from 'sleetcord'
+
 import { configAddDefaultTags, configRemoveDefaultTags } from './defaultTags.js'
 import { configDelete } from './delete.js'
 import { configSet } from './set.js'

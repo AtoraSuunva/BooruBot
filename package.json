@@ -1,7 +1,18 @@
 {
   "name": "boorubot",
-  "version": "4.8.0",
+  "version": "4.9.0",
   "description": "A Discord bot to search boorus",
+  "keywords": [],
+  "homepage": "https://github.com/AtoraSuunva/BooruBot#readme",
+  "bugs": {
+    "url": "https://github.com/AtoraSuunva/BooruBot/issues"
+  },
+  "license": "MIT",
+  "author": "AtoraSuunva",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AtoraSuunva/BooruBot.git"
+  },
   "type": "module",
   "main": "dist/index.js",
   "scripts": {
@@ -9,26 +20,16 @@
     "start:dist": "node --env-file=.env --enable-source-maps --trace-warnings dist/index.js",
     "start:prod": "prisma migrate deploy && node --enable-source-maps dist/index.js",
     "generate": "prisma generate",
-    "build": "tsc --build",
-    "lint": "biome check && tsc --noEmit",
-    "lint:fix": "biome check --write && prisma format && tsc --noEmit",
+    "build": "tsgo --build",
+    "check": "pnpm run '/.*:check/'",
+    "fix": "pnpm run '/.*:fix/'",
+    "lint:check": "oxlint",
+    "format:check": "oxfmt --check",
+    "lint:fix": "oxlint --fix",
+    "format:fix": "oxfmt --write",
+    "prisma:fix": "prisma format",
     "sentry:sourcemaps:inject": "sentry-cli sourcemaps inject ./dist",
     "sentry:sourcemaps:upload": "sentry-cli sourcemaps upload ./dist"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/AtoraSuunva/BooruBot.git"
-  },
-  "keywords": [],
-  "author": "AtoraSuunva",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/AtoraSuunva/BooruBot/issues"
-  },
-  "homepage": "https://github.com/AtoraSuunva/BooruBot#readme",
-  "packageManager": "pnpm@10.15.1",
-  "engines": {
-    "node": ">=22.0.0"
   },
   "dependencies": {
     "@plus99/murmur-hash": "^1.0.2",
@@ -56,6 +57,13 @@
     "@biomejs/biome": "2.4.16",
     "@sentry/cli": "^3.5.0",
     "@types/node": "^25.9.2",
-    "typescript": "^6.0.3"
-  }
+    "@typescript/native-preview": "7.0.0-dev.20260607.1",
+    "oxfmt": "^0.53.0",
+    "oxlint": "^1.68.0",
+    "oxlint-tsgolint": "^0.23.0"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "packageManager": "pnpm@11.5.2"
 }

@@ -1,9 +1,9 @@
-import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
-import { queryTags } from '@prisma/sqlcommenter-query-tags';
-import env from 'env-var';
-import { HOUR } from 'sleetcord-common';
+import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3'
+import { queryTags } from '@prisma/sqlcommenter-query-tags'
+import env from 'env-var'
+import { HOUR } from 'sleetcord-common'
 
-import { PrismaClient } from '../generated/prisma/client.js';
+import { PrismaClient } from '../generated/prisma/client.js'
 
 const NODE_ENV = env.get('NODE_ENV').required().asString()
 const DATABASE_URL = env.get('DATABASE_URL').required().asString()

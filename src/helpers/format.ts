@@ -12,15 +12,8 @@ import pluralize from 'pluralize'
 import { notNullish } from 'sleetcord-common'
 import stringWidth from 'string-width'
 
-type Value =
-  | string
-  | number
-  | boolean
-  | Date
-  | null
-  | undefined
-  | { toString: () => string }
-type GuildFormatter<T> = (value: T, guild?: Guild) => string
+type Value = string | number | boolean | Date | null | undefined | { toString: () => string }
+export type GuildFormatter<T> = (value: T, guild?: Guild) => string
 
 interface FormatConfigOptions<Config extends Record<string, Value>> {
   /** The configuration to format into text */
@@ -39,43 +32,35 @@ interface FormatConfigOptions<Config extends Record<string, Value>> {
   omit?: (keyof Config)[]
   /** Whether to snake_case the keys */
   snakeCase?: boolean
+  /** Whether to omit keys with null or undefined values */
+  omitNullOrUndefined?: boolean
 }
 
-export const guildFormatter: GuildFormatter<Value> = (
-  value: Value,
-  guild?: Guild,
-) =>
-  `${guild && value === guild.id ? guild.name : 'unknown-guild'} (${String(
-    value,
-  )})`
+export const guildFormatter: GuildFormatter<Value> = (value: Value, guild?: Guild) =>
+  value === null
+    ? 'null'
+    : `${guild && value === guild.id ? guild.name : 'unknown-guild'} (${String(value)})`
 
-export const channelFormatter: GuildFormatter<Value> = (
-  value: Value,
-  guild?: Guild,
-) =>
-  `#${
-    guild?.channels.cache.get(value as string)?.name ?? 'unknown-channel'
-  } (${String(value)})`
+export const channelFormatter: GuildFormatter<Value> = (value: Value, guild?: Guild) =>
+  value === null
+    ? 'null'
+    : `#${guild?.channels.cache.get(value as string)?.name ?? 'unknown-channel'} (${String(value)})`
 
-export const roleFormatter: GuildFormatter<Value> = (
-  value: Value,
-  guild?: Guild,
-) =>
-  `@${
-    guild?.roles.cache.get(value as string)?.name ?? 'unknown-role'
-  } (${String(value)})`
+export const roleFormatter: GuildFormatter<Value> = (value: Value, guild?: Guild) =>
+  value === null
+    ? 'null'
+    : `@${guild?.roles.cache.get(value as string)?.name ?? 'unknown-role'} (${String(value)})`
 
-export const makeForumTagFormatter: (
-  forum: ForumChannel,
-) => GuildFormatter<Value> = (forum: ForumChannel) => (value: Value) => {
-  const tag = forum.availableTags.find((t) => t.id === value)
+export const makeForumTagFormatter: (forum: ForumChannel) => GuildFormatter<Value> =
+  (forum: ForumChannel) => (value: Value) => {
+    const tag = forum.availableTags.find((t) => t.id === value)
 
-  if (!tag) {
-    return `unknown-tag (${String(value)})`
+    if (!tag) {
+      return `unknown-tag (${String(value)})`
+    }
+
+    return `${tag.emoji?.name ? `${tag.emoji.name} ` : ''}${tag.name} (${String(value)})`
   }
-
-  return `${tag.emoji?.name ? `${tag.emoji.name} ` : ''}${tag.name} (${String(value)})`
-}
 
 const defaultFormatters: Record<string, GuildFormatter<Value>> = {
   guild_id: guildFormatter,
@@ -84,7 +69,34 @@ const defaultFormatters: Record<string, GuildFormatter<Value>> = {
 }
 
 /**
- * Format a configuration object into a string, with appropriate formatting
+ * Format a configuration object into a codeblock that can be displayed to users
+ *
+ * ```ts
+ * const config = {
+ *   guild_id: '123456789012345678',
+ *   channel_id: '987654321098765432',
+ *   role_id: '111111111111111111',
+ *   some_string: 'hello world',
+ *   some_number: 42,
+ *   some_boolean: true,
+ * }
+ *
+ * const formatted = formatConfig({
+ *   config,
+ *   guild: myGuild, // a Guild object with the above IDs
+ * })
+ * ```
+ *
+ * Formatted output:
+ *
+ * ```ini
+ * guild_id     = myGuildName (123456789012345678)
+ * channel_id   = #myChannelName (987654321098765432)
+ * role_id      = @myRoleName (111111111111111111)
+ * some_string  = hello world
+ * some_number  = 42
+ * some_boolean = true
+ * ```
  * @param options The options for formatting the config
  * @returns The formatted config, as a string
  */
@@ -99,6 +111,7 @@ export function formatConfig<Config extends Record<string, Value>>(
     mapKeys = {} as NonNullable<FormatConfigOptions<Config>['mapKeys']>,
     oldConfig,
     omit = ['guildid', 'updatedat', 'createdat'],
+    omitNullOrUndefined = false,
     snakeCase = true,
   } = options
 
@@ -108,7 +121,11 @@ export function formatConfig<Config extends Record<string, Value>>(
 
   const formatted = Object.entries(config)
     .sort(([key1], [key2]) => key1.localeCompare(key2))
-    .filter(([key]) => !omit.includes(key.toLowerCase()))
+    .filter(
+      ([key, value]) =>
+        !omit.includes(key.toLowerCase()) &&
+        !(omitNullOrUndefined && (value === null || value === undefined)),
+    )
     .map(([key, value]): [string, Value] => {
       const isNew = oldConfig && oldConfig[key] !== value
       let displayKey = mapKeys[key as keyof Config] ?? key
@@ -117,22 +134,18 @@ export function formatConfig<Config extends Record<string, Value>>(
 
       if (displayKey.length > longest) longest = displayKey.length
 
-      value =
-        formatters[key as keyof Config]?.(
-          value as Config[keyof Config],
-          guild,
-        ) ?? value
+      let fValue = formatters[key as keyof Config]?.(value as Config[keyof Config], guild) ?? value
 
-      if (useDefaultFormatters && notNullish(value)) {
+      if (useDefaultFormatters && notNullish(fValue)) {
         for (const [key, formatter] of formatterEntries) {
           if (displayKey.toLowerCase().endsWith(key)) {
-            value = formatter(value, guild)
+            fValue = formatter(fValue, guild)
             break
           }
         }
       }
 
-      return [displayKey, value]
+      return [displayKey, fValue]
     })
     .map(([key, value]) => {
       return `${key.padEnd(longest, ' ')} = ${String(value)}`
@@ -172,16 +185,11 @@ export function plural(
   count: number,
   { includeCount = true, boldNumber = true }: PluralOptions = {},
 ): string {
-  let numberFormat = (n: number) => n.toLocaleString()
+  const numberFormat = boldNumber
+    ? (num: number) => `**${num.toLocaleString()}**`
+    : (n: number) => n.toLocaleString()
 
-  if (boldNumber) {
-    numberFormat = (num) => `**${num.toLocaleString()}**`
-  }
-
-  return `${includeCount ? `${numberFormat(count)} ` : ''}${pluralize(
-    str,
-    count,
-  )}`
+  return `${includeCount ? `${numberFormat(count)} ` : ''}${pluralize(str, count)}`
 }
 
 /**
@@ -224,9 +232,7 @@ export function tableFormat<T extends Record<string, Value>>(
 ): string {
   const {
     keys = Object.keys(data[0]),
-    columnNames: columnsNames = {} as NonNullable<
-      TableFormatOptions<T>['columnNames']
-    >,
+    columnNames: columnsNames = {} as NonNullable<TableFormatOptions<T>['columnNames']>,
     showNullish = true,
     characterLimit = Number.POSITIVE_INFINITY,
     formatters = {} as NonNullable<TableFormatOptions<T>['formatters']>,
@@ -277,9 +283,10 @@ export function tableFormat<T extends Record<string, Value>>(
    * you would need `rollingLongestRow['key'][1] === 3` characters for the "key" column. If you wanted to print
    * 3 rows you would need `rollingLongestRow['key'][3] === 4` characters for the "key" column.
    */
-  const rollingLongestRow = Object.fromEntries(
-    keys.map((key) => [key, [] as number[]]),
-  ) as Record<keyof T, number[]>
+  const rollingLongestRow = Object.fromEntries(keys.map((key) => [key, [] as number[]])) as Record<
+    keyof T,
+    number[]
+  >
 
   /**
    * Measures the total length required to print a row, including the separators. Index 0 are the headers,

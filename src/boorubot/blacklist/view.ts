@@ -6,6 +6,7 @@ import {
 } from 'discord.js'
 import { SleetSlashSubcommand } from 'sleetcord'
 import { notNullish } from 'sleetcord-common'
+
 import { getInteractionChannel } from '../search/searchUtils.js'
 import { getReferenceFor } from '../utils.js'
 import { formatBlacklist, getBlacklistFor } from './utils.js'
@@ -17,8 +18,7 @@ export const blacklistView = new SleetSlashSubcommand(
     options: [
       {
         name: 'ephemeral',
-        description:
-          'Reply with a public post everyone can see (default: false)',
+        description: 'Reply with a public post everyone can see (default: false)',
         type: ApplicationCommandOptionType.Boolean,
       },
     ],
@@ -31,9 +31,7 @@ export const blacklistView = new SleetSlashSubcommand(
 export async function runView(interaction: ChatInputCommandInteraction) {
   const ephemeral = interaction.options.getBoolean('ephemeral') ?? false
   const reference = await getReferenceFor(interaction)
-  const channel = reference.isGuild
-    ? await getInteractionChannel(interaction)
-    : null
+  const channel = reference.isGuild ? await getInteractionChannel(interaction) : null
 
   const blacklists = await Promise.all([
     getBlacklistFor(reference.id),
@@ -64,10 +62,7 @@ export async function runView(interaction: ChatInputCommandInteraction) {
 
   const reply: InteractionReplyOptions = {}
 
-  if (
-    formattedBlacklists.content &&
-    formattedBlacklists.content.length > 2000
-  ) {
+  if (formattedBlacklists.content && formattedBlacklists.content.length > 2000) {
     reply.files = [
       ...(formattedBlacklists.files ?? []),
       {

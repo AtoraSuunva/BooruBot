@@ -4,6 +4,7 @@ import {
   MessageFlags,
 } from 'discord.js'
 import { type AutocompleteHandler, SleetSlashSubcommand } from 'sleetcord'
+
 import { prisma } from '../../helpers/db.js'
 import { makeTagAutocomplete } from '../blacklist/tag.js'
 import { type Reference, settingsCache } from '../SettingsManager.js'
@@ -29,8 +30,8 @@ export const configAddDefaultTags = new SleetSlashSubcommand(
   },
 )
 
-const removeTagAutocomplete: AutocompleteHandler<string> = makeTagAutocomplete(
-  (reference) => settingsCache.getDefaultTags(reference.id),
+const removeTagAutocomplete: AutocompleteHandler<string> = makeTagAutocomplete((reference) =>
+  settingsCache.getDefaultTags(reference.id),
 )
 
 export const configRemoveDefaultTags = new SleetSlashSubcommand(

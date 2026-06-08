@@ -83,7 +83,7 @@ NODE_ENV=development # or production
 TOKEN=<discord bot token>
 APPLICATION_ID=<discord application id>
 USE_PINO_PRETTY=true # or false for default pino logs
-DATABASE_URL="file:./db/data.db" # or anywhere else you want an sqlite db to be
+DATABASE_URL="file:./prisma/db/dev.db" # or anywhere else you want an sqlite db to be
 ACTIVITIES_FILE="./resources/activities-boorubot.txt" # path to a text file with the activities you want the bot to show
 HEALTHCHECK_PORT=8000 # the port to run an http server on, which will respond to http://localhost:PORT/healthcheck with HTTP 200 once the bot is ready and the database works
 SENTRY_DSN=<access token> # A sentry DSN for error reporting, optional
@@ -129,7 +129,11 @@ services:
     volumes:
       - boorubot-db:/home/node/app/prisma/db
     healthcheck:
-      test: [ "CMD-SHELL", "wget --no-verbose --tries=1 -O- http://bot:${HEALTHCHECK_PORT}/healthcheck || exit 1" ]
+      test:
+        [
+          'CMD-SHELL',
+          'wget --no-verbose --tries=1 -O- http://bot:${HEALTHCHECK_PORT}/healthcheck || exit 1',
+        ]
       interval: 10s
       timeout: 30s
       retries: 5

@@ -1,6 +1,6 @@
-import path from 'node:path';
+import path from 'node:path'
 
-import type { PrismaConfig } from 'prisma';
+import type { PrismaConfig } from 'prisma'
 
 if (!process.env.DATABASE_URL) {
   // load env files

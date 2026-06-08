@@ -1,4 +1,5 @@
 import { type BaseMessageOptions, bold, escapeCodeBlock } from 'discord.js'
+
 import { prisma } from '../../helpers/db.js'
 
 export interface Blacklist {
@@ -75,9 +76,7 @@ function formatBlacklistArray(items: string[], highlight: string[]): string {
     .join(', ')
 }
 
-export async function getBlacklistFor(
-  referenceId: string,
-): Promise<Blacklist | null> {
+export async function getBlacklistFor(referenceId: string): Promise<Blacklist | null> {
   const blacklist = await prisma.booruConfig
     .findFirst({
       where: {

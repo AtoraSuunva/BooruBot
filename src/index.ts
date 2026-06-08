@@ -1,16 +1,11 @@
-import { GatewayIntentBits, Options, type RESTOptions } from 'discord.js';
-import env from 'env-var';
-import { SleetClient, type SleetModuleEventHandlers } from 'sleetcord';
-import {
-    initDBLogging,
-    initSentry,
-    logging,
-    Sentry,
-    sentryLogger,
-} from 'sleetcord-common';
-import { booruModules } from './boorubot/index.js';
-import { prisma } from './helpers/db.js';
-import { miscModules } from './misc/index.js';
+import { GatewayIntentBits, Options, type RESTOptions } from 'discord.js'
+import env from 'env-var'
+import { SleetClient, type SleetModuleEventHandlers } from 'sleetcord'
+import { initDBLogging, initSentry, logging, Sentry, sentryLogger } from 'sleetcord-common'
+
+import { booruModules } from './boorubot/index.js'
+import { prisma } from './helpers/db.js'
+import { miscModules } from './misc/index.js'
 
 async function main() {
   const TOKEN = env.get('TOKEN').required().asString()
@@ -24,10 +19,7 @@ async function main() {
 
       if (name.includes(':')) {
         // Transaction names are `${module.name}:${event.name}`
-        const [moduleName, eventName] = name.split(':') as [
-          string,
-          keyof SleetModuleEventHandlers,
-        ]
+        const [moduleName, eventName] = name.split(':') as [string, keyof SleetModuleEventHandlers]
 
         switch (eventName) {
           case 'raw':
@@ -118,8 +110,7 @@ async function main() {
         // Remove all bots every 15 minutes
         users: {
           interval: 900,
-          filter: () => (user) =>
-            user.bot && user.id !== sleetClient.client.user?.id,
+          filter: () => (user) => user.bot && user.id !== sleetClient.client.user?.id,
         },
       },
     },
@@ -127,12 +118,7 @@ async function main() {
 
   initDBLogging(prisma, sleetClient)
 
-  sleetClient.addModules([
-    ...booruModules,
-    ...miscModules,
-    logging,
-    sentryLogger,
-  ])
+  sleetClient.addModules([...booruModules, ...miscModules, logging, sentryLogger])
 
   await sleetClient.putCommands()
   await sleetClient.login()

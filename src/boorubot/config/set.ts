@@ -9,6 +9,7 @@ import {
   MessageFlags,
 } from 'discord.js'
 import { SleetSlashCommandGroup, SleetSlashSubcommand } from 'sleetcord'
+
 import { prisma } from '../../helpers/db.js'
 import { getInteractionChannel } from '../search/searchUtils.js'
 import { channelOption, getReferenceFor } from '../utils.js'
@@ -47,8 +48,7 @@ async function runSetMinScore(interaction: ChatInputCommandInteraction) {
       guildId: reference.guildId,
       isGuild: reference.isGuild,
       // null if in channel, true if in guild, false if in DM
-      allowNSFW:
-        reference.guildId && !channel.isDMBased() ? null : reference.isGuild,
+      allowNSFW: reference.guildId && !channel.isDMBased() ? null : reference.isGuild,
     },
     update: { minScore: score },
     include: { defaultTags: true },

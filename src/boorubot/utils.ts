@@ -15,12 +15,9 @@ import {
 } from 'discord.js'
 import { type AutocompleteHandler, makeChoices } from 'sleetcord'
 import { notNullish } from 'sleetcord-common'
-import {
-  type BooruSettings,
-  type Reference,
-  settingsCache,
-} from './SettingsManager.js'
+
 import { getInteractionChannel } from './search/searchUtils.js'
+import { type BooruSettings, type Reference, settingsCache } from './SettingsManager.js'
 
 export const channelOption = {
   name: 'channel',
@@ -64,15 +61,9 @@ export async function getReferenceFor(
       const channelValue = interaction.options.get(channelOption.name)?.value
 
       if (channelValue) {
-        const chanOpt = await interaction.client.channels.fetch(
-          channelValue as Snowflake,
-        )
+        const chanOpt = await interaction.client.channels.fetch(channelValue as Snowflake)
 
-        if (
-          chanOpt?.isTextBased() &&
-          !chanOpt.isThread() &&
-          !chanOpt.isDMBased()
-        ) {
+        if (chanOpt?.isTextBased() && !chanOpt.isThread() && !chanOpt.isDMBased()) {
           channel = chanOpt
         }
       }
@@ -226,17 +217,16 @@ export const autocompleteSite: AutocompleteHandler<string> = ({ value }) => {
   }))
 }
 
-export const autocompleteSiteOrList: AutocompleteHandler<string> = ({
-  value,
-}) => {
+export const autocompleteSiteOrList: AutocompleteHandler<string> = ({ value }) => {
   return resolveSitesAndListsFor(value).map((opt) => ({
     name: opt.name,
     value: opt.value,
   }))
 }
 
-export const siteChoices: APIApplicationCommandOptionChoice<string>[] =
-  makeChoices(siteInfo.map((site) => site.domain))
+export const siteChoices: APIApplicationCommandOptionChoice<string>[] = makeChoices(
+  siteInfo.map((site) => site.domain),
+)
 
 /**
  * Clones an array and then shuffles the clone in-place using Durstenfeld's algorithm
@@ -321,18 +311,10 @@ export async function getMergedSettings(
       ]),
     ),
     tags: Array.from(
-      new Set([
-        ...guildSettings.tags,
-        ...channelSettings.tags,
-        ...userSettings.tags,
-      ]),
+      new Set([...guildSettings.tags, ...channelSettings.tags, ...userSettings.tags]),
     ),
     sites: Array.from(
-      new Set([
-        ...guildSettings.sites,
-        ...channelSettings.sites,
-        ...userSettings.sites,
-      ]),
+      new Set([...guildSettings.sites, ...channelSettings.sites, ...userSettings.sites]),
     ),
   }
 
@@ -380,8 +362,7 @@ function merge<T extends object[]>(...objs: [...T]): Spread<T> {
   return objs.slice(1).reduce((acc, obj) => {
     for (const [key, value] of Object.entries(obj)) {
       if (notNullish(value)) {
-        acc[key as keyof typeof acc] =
-          value as unknown as (typeof acc)[keyof typeof acc]
+        acc[key as keyof typeof acc] = value as unknown as (typeof acc)[keyof typeof acc]
       }
     }
 

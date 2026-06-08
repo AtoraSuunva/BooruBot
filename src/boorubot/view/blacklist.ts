@@ -1,8 +1,6 @@
-import {
-  ApplicationCommandOptionType,
-  type ChatInputCommandInteraction,
-} from 'discord.js'
+import { ApplicationCommandOptionType, type ChatInputCommandInteraction } from 'discord.js'
 import { SleetSlashSubcommand } from 'sleetcord'
+
 import { runView } from '../blacklist/view.js'
 
 export const viewBlacklist = new SleetSlashSubcommand(
@@ -12,8 +10,7 @@ export const viewBlacklist = new SleetSlashSubcommand(
     options: [
       {
         name: 'ephemeral',
-        description:
-          'Reply with a public post everyone can see (default: false)',
+        description: 'Reply with a public post everyone can see (default: false)',
         type: ApplicationCommandOptionType.Boolean,
       },
     ],

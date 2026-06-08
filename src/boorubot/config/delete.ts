@@ -8,6 +8,7 @@ import {
   MessageFlags,
 } from 'discord.js'
 import { SleetSlashSubcommand } from 'sleetcord'
+
 import type { Prisma } from '../../generated/prisma/client.js'
 import { prisma } from '../../helpers/db.js'
 import { channelOption, getReferenceFor } from '../utils.js'
@@ -19,8 +20,7 @@ export const configDelete = new SleetSlashSubcommand(
     options: [
       {
         name: 'confirm',
-        description:
-          'Confirm the delete, bypassing the confirmation prompt (default: false)',
+        description: 'Confirm the delete, bypassing the confirmation prompt (default: false)',
         type: ApplicationCommandOptionType.Boolean,
       },
       {
@@ -153,9 +153,7 @@ async function collectDeletePromises(
     })
 
     const allPromises = await Promise.all(
-      guildConfigs.flatMap(({ referenceId }) =>
-        collectDeletePromises(referenceId, false),
-      ),
+      guildConfigs.flatMap(({ referenceId }) => collectDeletePromises(referenceId, false)),
     )
 
     deletePromises.push(...allPromises.flat(1))

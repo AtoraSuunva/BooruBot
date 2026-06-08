@@ -1,6 +1,7 @@
 import type { ChatInputCommandInteraction } from 'discord.js'
 import { SleetSlashSubcommand } from 'sleetcord'
 import { notNullish } from 'sleetcord-common'
+
 import type { Prisma } from '../../generated/prisma/client.js'
 import { prisma } from '../../helpers/db.js'
 import { formatConfig } from '../../helpers/format.js'
@@ -24,9 +25,7 @@ export async function runView(
   recurse = true,
 ) {
   const reference = await getReferenceFor(interaction)
-  const channel = reference.isGuild
-    ? await getInteractionChannel(interaction)
-    : null
+  const channel = reference.isGuild ? await getInteractionChannel(interaction) : null
 
   if (shouldDefer) {
     await interaction.deferReply()
@@ -51,11 +50,7 @@ export async function runView(
 
   let modified = false
 
-  if (
-    interaction.guildId === reference.id &&
-    guildOrUserConfig &&
-    !guildOrUserConfig.isGuild
-  ) {
+  if (interaction.guildId === reference.id && guildOrUserConfig && !guildOrUserConfig.isGuild) {
     // For some reason it's not marked as a guild, fix that
     await prisma.booruConfig.update({
       where: { referenceId: interaction.guildId },
@@ -87,9 +82,7 @@ export async function runView(
     return interaction.editReply('No Booru config found, so no config to view.')
   }
 
-  const view = createConfigView(
-    ...[guildOrUserConfig, channelConfig].filter(notNullish),
-  )
+  const view = createConfigView(...[guildOrUserConfig, channelConfig].filter(notNullish))
   return interaction.editReply(view)
 }
 
